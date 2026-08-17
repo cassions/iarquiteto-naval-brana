@@ -32,19 +32,10 @@ A raiz do repositório **é** o plugin nos dois padrões. Os dois manifestos con
 
 ### Hermes
 
-Como tap (recomendado — pega todas as skills e recebe atualizações):
+Como plugin (recomendado — pega todas as skills e recebe atualizações):
 
 ```bash
-hermes skills tap add cassions/iarquiteto-naval-brana
-hermes skills install brana-caso-de-uso
-```
-
-O tap assume o caminho `skills/` por padrão, que é o que este repositório usa.
-
-Uma skill só, sem assinar o repositório inteiro:
-
-```bash
-hermes skills install cassions/iarquiteto-naval-brana/skills/brana-caso-de-uso
+hermes plugins install cassions/iarquiteto-naval-brana
 ```
 
 ### Claude Code
@@ -75,12 +66,9 @@ Se você omitir `version` num plugin servido por git, o SHA do commit vira a ver
 Do lado de quem usa:
 
 ```bash
-hermes skills update brana-caso-de-uso
+hermes plugins update iarquiteto-naval-brana
 claude plugin update iarquiteto-naval-brana
 ```
 
 No Claude.ai a atualização entra na próxima sessão, não no meio de uma conversa em andamento.
 
-## Versionamento
-
-SemVer. `1.0.0` → `1.0.1` para correção de texto, `1.1.0` para pergunta ou seção nova, `2.0.0` se mudar a estrutura do documento gerado.
