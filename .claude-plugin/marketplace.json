@@ -1,0 +1,31 @@
+{
+  "name": "brana-naval",
+  "owner": {
+    "name": "cassions",
+    "url": "https://github.com/cassions"
+  },
+  "metadata": {
+    "description": "Marketplace de skills de arquitetura naval do Brana Projetos Navais.",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "iarquiteto-naval-brana",
+      "source": "./",
+      "description": "Skills de arquitetura naval: entrevista guiada de Caso de Uso, estudo de similares e dimensionamento preliminar de embarcacoes.",
+      "version": "1.0.0",
+      "author": {
+        "name": "cassions"
+      },
+      "homepage": "https://github.com/cassions/iarquiteto-naval-brana",
+      "license": "MIT",
+      "category": "engineering",
+      "keywords": [
+        "naval",
+        "embarcacao",
+        "requisitos",
+        "brana"
+      ]
+    }
+  ]
+}

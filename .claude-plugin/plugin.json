@@ -1,0 +1,19 @@
+{
+  "name": "iarquiteto-naval-brana",
+  "version": "1.0.0",
+  "description": "Skills de arquitetura naval em portugues: entrevista de Caso de Uso, estudo de similares e apoio ao dimensionamento preliminar de embarcacoes.",
+  "author": {
+    "name": "cassions",
+    "url": "https://github.com/cassions"
+  },
+  "homepage": "https://github.com/cassions/iarquiteto-naval-brana",
+  "repository": "https://github.com/cassions/iarquiteto-naval-brana",
+  "license": "MIT",
+  "keywords": [
+    "naval",
+    "embarcacao",
+    "requisitos",
+    "caso-de-uso",
+    "brana"
+  ]
+}

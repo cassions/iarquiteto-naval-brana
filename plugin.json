@@ -1,0 +1,20 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "iarquiteto-naval-brana",
+  "version": "1.0.0",
+  "description": "Ferramenta de apoio ao projeto de embarcacoes com IA. Skills de arquitetura naval: levantamento de requisitos (Caso de Uso), estudo de similares e apoio ao dimensionamento preliminar.",
+  "author": {
+    "name": "cassions"
+  },
+  "homepage": "https://github.com/cassions/iarquiteto-naval-brana",
+  "repository": "https://github.com/cassions/iarquiteto-naval-brana",
+  "license": "MIT",
+  "keywords": [
+    "naval-architecture",
+    "boat-design",
+    "embarcacao",
+    "requisitos",
+    "brana",
+    "pt-br"
+  ]
+}
