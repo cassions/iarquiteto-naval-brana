@@ -1,0 +1,1727 @@
+<title>Plano de Linhas</title>
+<style>
+  /* ---------------------------------------------------------------
+     Identidade Brana (modelo Cursos DPE): fundo grafite, títulos e
+     realces em vermelho #9A3231 — o mesmo vermelho do logotipo —,
+     texto branco, Calibri Light nos títulos e Calibri no corpo.
+     Modelo assumidamente escuro: nada de tema claro, tudo pintado
+     explicitamente para o desenho não pegar o fundo de quem hospeda.
+     --------------------------------------------------------------- */
+  :root{
+    --ground:#333333;      /* fundo da página */
+    --graf:#404040;        /* grafite da folha — o fundo do modelo */
+    --box:#2E2E2E;         /* caixa escura */
+    --card:#F7F7F7;        /* ficha clara (logotipo, arte em traço) */
+    --red:#9A3231;         /* vermelho Brana */
+    --red-l:#EE9A98;       /* rótulo sobre fundo escuro */
+    --red-xl:#F5DADA;      /* texto secundário dentro do vermelho */
+    --white:#FFFFFF;
+    --light:#E8E8E8;
+    --muted:#BFBFBF;
+    --cell-a:#4D4D4D;
+    --cell-b:#585858;
+    --amber:#FBB12F;   /* dourado medido no logotipo */
+    --green:#9BD79B;
+    --rule:#555555;
+    --rule-2:#484848;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -18px rgba(0,0,0,.85);
+    --font-title:"Calibri Light",Calibri,"Segoe UI Light","Segoe UI",system-ui,sans-serif;
+    --font-body:Calibri,"Segoe UI",system-ui,-apple-system,sans-serif;
+    --font-mono:Consolas,"Cascadia Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    background:var(--ground);
+    color:var(--light);
+    font-family:var(--font-body);
+    font-size:16px;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1260px;margin:0 auto;padding:26px 20px 64px;display:flex;flex-direction:column;gap:18px}
+
+  /* ---------- cabeçalho / selo ---------- */
+  .titleblock{
+    border:1px solid var(--rule);
+    background:var(--graf);
+    box-shadow:var(--shadow);
+    display:grid;
+    grid-template-columns:minmax(280px,1.7fr) repeat(3,minmax(96px,.6fr));
+  }
+  .tb-main{padding:0;border-right:1px solid var(--rule);display:flex;flex-direction:column}
+  .logo-card{
+    background:var(--card);padding:11px 20px;display:flex;align-items:center;
+    border-bottom:3px solid var(--red);
+  }
+  .logo-card img{height:38px;width:auto;display:block}
+  .tb-text{padding:15px 20px 17px;display:flex;flex-direction:column;gap:5px}
+  .tb-eyebrow{
+    font-family:var(--font-mono);font-size:10.5px;letter-spacing:.17em;text-transform:uppercase;
+    color:var(--red-l);font-weight:700;
+  }
+  h1{
+    font-family:var(--font-title);font-size:clamp(24px,3.4vw,34px);line-height:1.05;margin:0;
+    font-weight:400;letter-spacing:-.01em;color:var(--red-l);text-wrap:balance;
+  }
+  .tb-sub{color:var(--light);font-size:15px;max-width:60ch}
+  .tb-cell{padding:14px;border-right:1px solid var(--rule);display:flex;flex-direction:column;gap:3px;justify-content:center}
+  .tb-cell:last-child{border-right:0}
+  .tb-k{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted)}
+  .tb-v{font-family:var(--font-mono);font-size:14px;font-variant-numeric:tabular-nums;color:var(--white)}
+  @media (max-width:860px){
+    .titleblock{grid-template-columns:repeat(3,1fr)}
+    .tb-main{grid-column:1/-1;border-right:0;border-bottom:1px solid var(--rule)}
+    .tb-cell:last-child{border-right:0}
+  }
+
+  /* ---------- barra de ferramentas ---------- */
+  .toolbar{
+    border:1px solid var(--rule);background:var(--box);box-shadow:var(--shadow);
+    padding:12px 14px;display:flex;flex-wrap:wrap;gap:13px 22px;align-items:center;
+  }
+  .grp{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .grp-label{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--red-l);font-weight:700}
+  .chips{display:flex;flex-wrap:wrap;gap:5px}
+  .chip{
+    font-family:var(--font-mono);font-size:11px;letter-spacing:.03em;
+    padding:6px 10px;border:1px solid var(--rule);background:var(--graf);color:var(--light);
+    cursor:pointer;border-radius:2px;transition:background .12s,color .12s,border-color .12s;
+  }
+  .chip:hover{border-color:var(--red-l);color:var(--white)}
+  .chip[aria-pressed="true"]{background:var(--red);border-color:var(--red);color:var(--white);font-weight:700}
+  .chip:focus-visible,.btn:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--red-l);outline-offset:2px}
+  .btn{
+    font-family:var(--font-mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;
+    padding:7px 12px;border:1px solid var(--rule);background:var(--graf);color:var(--light);
+    cursor:pointer;border-radius:2px;
+  }
+  .btn:hover{border-color:var(--red-l);color:var(--white)}
+  .toggle{display:inline-flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:11px;color:var(--light);cursor:pointer;user-select:none}
+  .toggle input{accent-color:var(--red);width:15px;height:15px;margin:0}
+  .toggle.strong{color:var(--white);font-weight:700}
+  .numfield{display:inline-flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:11px;color:var(--light)}
+  .numfield input{
+    width:80px;padding:5px 7px;border:1px solid var(--rule);background:var(--graf);color:var(--white);
+    font-family:var(--font-mono);font-size:12px;font-variant-numeric:tabular-nums;border-radius:2px;
+  }
+
+  /* ---------- folha de desenho ---------- */
+  .sheet{
+    border:1px solid var(--rule);background:var(--graf);box-shadow:var(--shadow);
+    padding:14px;display:flex;flex-direction:column;position:relative;
+    -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;
+  }
+  .sheet::before{content:"";position:absolute;inset:6px;border:1px solid var(--rule-2);pointer-events:none}
+  .panel{position:relative;border-bottom:1px solid var(--rule-2)}
+  .panel:last-child{border-bottom:0}
+  .panel-head{display:flex;align-items:baseline;gap:12px;padding:9px 6px 5px;flex-wrap:wrap}
+  .panel-title{font-family:var(--font-mono);font-size:11px;letter-spacing:.19em;text-transform:uppercase;font-weight:700;color:var(--red-l)}
+  .panel-note{font-family:var(--font-mono);font-size:10.5px;color:var(--muted);letter-spacing:.02em}
+  .scroller{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
+  svg.draw{display:block;width:100%;max-width:none;height:auto;touch-action:pan-x pan-y;cursor:crosshair}
+  svg.draw:focus-visible{outline:2px solid var(--red-l);outline-offset:-2px}
+
+  .lower{display:grid;grid-template-columns:minmax(320px,1fr) minmax(280px,.82fr);gap:14px;align-items:start}
+  @media (max-width:900px){.lower{grid-template-columns:1fr}}
+
+  .status{
+    display:flex;align-items:center;gap:8px;min-height:26px;padding:4px 6px 8px;
+    font-family:var(--font-mono);font-size:11px;color:var(--muted);flex-wrap:wrap;
+  }
+  .status.warn{color:var(--red-l)}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--green);flex:none}
+  .status.warn .dot{background:var(--red-l)}
+  .status.manual .dot{background:var(--amber)}
+  .fairflag{
+    margin-left:auto;font-family:var(--font-mono);font-size:10px;letter-spacing:.07em;
+    text-transform:uppercase;padding:2px 7px;border-radius:2px;border:1px solid var(--amber);color:var(--amber);
+  }
+  .fairflag[hidden]{display:none}
+
+  .stretchbar{
+    border:1px solid var(--rule);background:var(--box);box-shadow:var(--shadow);
+    padding:12px 14px;display:grid;grid-template-columns:repeat(4,1fr);gap:12px 22px;
+  }
+  .sb-item{display:flex;flex-direction:column;gap:4px;min-width:0}
+  .sb-item input[type=range]{width:100%;accent-color:var(--red);height:22px;margin:0}
+  .sb-val{
+    font-family:var(--font-mono);font-size:15px;font-variant-numeric:tabular-nums;
+    color:var(--white);letter-spacing:-.01em;
+  }
+  @media (max-width:1040px){ .stretchbar{grid-template-columns:repeat(2,1fr)} }
+  @media (max-width:700px){ .stretchbar{grid-template-columns:1fr;gap:14px} }
+
+  .stationbar{display:flex;align-items:center;gap:10px;padding:6px 6px 8px}
+  .stationbar input[type=range]{flex:1;min-width:110px;accent-color:var(--red-l);height:22px}
+  .stnval{font-family:var(--font-mono);font-size:13px;font-variant-numeric:tabular-nums;color:var(--red-l);font-weight:700;min-width:1.4em;text-align:right}
+
+  /* ---------- leituras ---------- */
+  .readouts{border:1px solid var(--rule);background:var(--box);box-shadow:var(--shadow)}
+  .ro-head{padding:11px 14px 9px;border-bottom:1px solid var(--rule);font-family:var(--font-mono);font-size:10px;letter-spacing:.19em;text-transform:uppercase;color:var(--red-l);font-weight:700}
+  .ro-grid{display:grid;grid-template-columns:1fr 1fr}
+  .ro{padding:10px 14px;border-bottom:1px solid var(--rule-2);border-right:1px solid var(--rule-2)}
+  .ro:nth-child(even){border-right:0}
+  .ro-k{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+  .ro-v{font-family:var(--font-mono);font-size:17px;font-variant-numeric:tabular-nums;color:var(--white)}
+  .ro-v small{font-size:11px;color:var(--muted)}
+
+  /* ---------- blocos e tabelas ---------- */
+  .block{border:1px solid var(--rule);background:var(--box);box-shadow:var(--shadow)}
+  .block-head{padding:12px 16px;border-bottom:1px solid var(--rule);display:flex;flex-wrap:wrap;gap:8px 14px;align-items:baseline;justify-content:space-between}
+  .block-title{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.19em;text-transform:uppercase;font-weight:700;color:var(--red-l)}
+  .block-sub{font-family:var(--font-mono);font-size:10.5px;color:var(--muted)}
+  .block-body{padding:14px 16px}
+  .tablewrap{overflow-x:auto}
+  table{border-collapse:collapse;width:100%;font-family:var(--font-mono);font-size:12px;font-variant-numeric:tabular-nums}
+  th,td{padding:6px 9px;text-align:right;white-space:nowrap}
+  th{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--white);font-weight:700;background:var(--red)}
+  tbody tr:nth-child(odd) td{background:var(--cell-a)}
+  tbody tr:nth-child(even) td{background:var(--cell-b)}
+  td{color:var(--light)}
+  th:first-child,td:first-child{text-align:left}
+  td.hl{color:var(--white);font-weight:700}
+
+  /* ---------- registro ---------- */
+  details.rec{border:1px solid var(--rule);background:var(--box);box-shadow:var(--shadow)}
+  details.rec>summary{
+    padding:12px 16px;cursor:pointer;list-style:none;display:flex;align-items:center;gap:10px;
+    font-family:var(--font-mono);font-size:10.5px;letter-spacing:.19em;text-transform:uppercase;font-weight:700;color:var(--red-l);
+  }
+  details.rec>summary::-webkit-details-marker{display:none}
+  details.rec>summary::before{content:"▸";font-size:12px;line-height:1}
+  details.rec[open]>summary::before{content:"▾"}
+  details.rec[open]>summary{border-bottom:1px solid var(--rule)}
+  .rec-body{padding:18px 20px 22px;display:flex;flex-direction:column;gap:20px}
+  .rec-body h3{font-family:var(--font-mono);font-size:10px;letter-spacing:.17em;text-transform:uppercase;color:var(--red-l);margin:0 0 6px;font-weight:700}
+  .rec-body p{font-size:15.5px;line-height:1.6;color:var(--light);margin:0 0 9px;max-width:70ch}
+  .rec-body p:last-child{margin-bottom:0}
+  .rec-body strong{color:var(--white)}
+  .rec-body code{font-family:var(--font-mono);font-size:12.5px;background:var(--graf);padding:1px 4px;border-radius:2px;color:var(--red-xl)}
+  .matrix{
+    font-family:var(--font-mono);font-size:12px;font-variant-numeric:tabular-nums;
+    background:var(--graf);border:1px solid var(--rule-2);padding:12px 14px;overflow-x:auto;white-space:pre;color:var(--light);
+  }
+  ul.tight{margin:0;padding-left:18px;font-size:15.5px;color:var(--light);line-height:1.58}
+  ul.tight li{margin-bottom:5px;max-width:68ch}
+  ul.tight li::marker{color:var(--red-l)}
+  .flag{display:inline-block;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;
+        padding:1px 6px;border:1px solid var(--amber);color:var(--amber);border-radius:2px;vertical-align:2px}
+  textarea.data{
+    width:100%;min-height:180px;resize:vertical;background:var(--graf);color:var(--light);
+    border:1px solid var(--rule-2);padding:10px 12px;font-family:var(--font-mono);font-size:11.5px;line-height:1.5;
+    white-space:pre;border-radius:2px;
+  }
+  .legend{display:flex;flex-wrap:wrap;gap:6px 18px;padding:8px 6px 2px;font-family:var(--font-mono);font-size:10.5px;color:var(--muted)}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .swatch{width:16px;height:0;border-top-width:2.5px;border-top-style:solid;flex:none}
+
+  /* rodapé com a barra vermelha do modelo */
+  footer{
+    background:var(--red);color:var(--white);padding:12px 18px;display:flex;flex-wrap:wrap;
+    gap:6px 16px;align-items:center;justify-content:space-between;
+    font-family:var(--font-mono);font-size:10.5px;letter-spacing:.07em;
+  }
+  footer .f-brand{font-weight:700;letter-spacing:.16em;text-transform:uppercase}
+  footer .f-note{color:var(--red-xl)}
+
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+  /* ---------- desenho ---------- */
+  svg.draw{--lw:1}
+  svg.draw .gl{stroke:#4A4A4A;stroke-width:calc(1px * var(--lw))}
+  svg.draw .gl.gs{stroke:#5C5C5C;stroke-width:calc(1.2px * var(--lw))}
+  svg.draw .grid{pointer-events:none}
+  svg.draw .stn{stroke:#5C5C5C;stroke-width:calc(1.3px * var(--lw));stroke-dasharray:calc(7px * var(--lw)) calc(5px * var(--lw))}
+  svg.draw .stn.act{stroke:var(--red-l);stroke-width:calc(1.8px * var(--lw));stroke-dasharray:none;opacity:.6}
+  svg.draw .cl{stroke:var(--muted);stroke-width:calc(1.1px * var(--lw));opacity:.55;
+               stroke-dasharray:calc(20px * var(--lw)) calc(5px * var(--lw)) calc(3px * var(--lw)) calc(5px * var(--lw))}
+  svg.draw .base{stroke:var(--muted);stroke-width:calc(1.4px * var(--lw));opacity:.7}
+  svg.draw .hull{fill:none;stroke:var(--light);stroke-width:calc(3.4px * var(--lw));stroke-linecap:round;stroke-linejoin:round}
+  svg.draw .hull.sec{stroke-width:calc(2.4px * var(--lw));opacity:.6}
+  svg.draw .hull.act{stroke:var(--white);stroke-width:calc(4.2px * var(--lw));opacity:1}
+  svg.draw .hull.pick{stroke:transparent;stroke-width:calc(20px * var(--lw));fill:none;cursor:pointer}
+  svg.draw .transom{fill:none;stroke:var(--light);stroke-width:calc(2.6px * var(--lw));stroke-linecap:round}
+  svg.draw .sect{fill:none;stroke:var(--light);stroke-width:calc(2px * var(--lw));opacity:.5;stroke-linejoin:round}
+  svg.draw .sect.act{stroke:var(--red-l);stroke-width:calc(3.4px * var(--lw));opacity:1}
+  svg.draw .photo{fill:none;stroke:var(--muted);stroke-width:calc(2.4px * var(--lw));
+                  stroke-dasharray:calc(9px * var(--lw)) calc(6px * var(--lw));stroke-linejoin:round;opacity:.85}
+  svg.draw .tangent{stroke:var(--red-l);stroke-width:calc(2.6px * var(--lw));stroke-linecap:round}
+  svg.draw .knob{fill:var(--graf);stroke:var(--red-l);stroke-width:calc(2.4px * var(--lw));cursor:grab}
+  svg.draw .knob.lock{fill:var(--red-l)}
+  svg.draw .node{fill:var(--graf);stroke:var(--white);stroke-width:calc(3px * var(--lw));cursor:grab}
+  svg.draw .node.pinned{fill:var(--white);stroke:var(--white)}
+  svg.draw .node.sel{stroke:var(--red-l);stroke-width:calc(4px * var(--lw))}
+  svg.draw .hit{fill:transparent;stroke:none;touch-action:none;cursor:grab}
+  svg.draw .comb line{stroke:var(--amber);stroke-width:calc(1px * var(--lw));opacity:.45}
+  svg.draw .combenv{fill:none;stroke:var(--amber);stroke-width:calc(1.7px * var(--lw));opacity:.85}
+  svg.draw .raw path{stroke:var(--green);stroke-width:calc(1.8px * var(--lw));opacity:.9}
+  svg.draw .lbl{font-family:var(--font-mono);fill:var(--muted);letter-spacing:.05em}
+  svg.draw .lbl.b{fill:var(--light);font-weight:700}
+  svg.draw .lbl.a{fill:var(--red-l);font-weight:700}
+  svg.draw .vlbl{font-family:var(--font-mono);fill:var(--muted);letter-spacing:.19em}
+  svg.draw .dimx{stroke:var(--muted);stroke-width:calc(1px * var(--lw));opacity:.55}
+  svg.draw .diml{stroke:var(--red-l);stroke-width:calc(1.5px * var(--lw))}
+
+  @media (max-width:700px){
+    .wrap{padding:14px 10px 44px;gap:13px}
+    .sheet{padding:8px}
+    .sheet::before{inset:3px}
+    .rec-body{padding:14px 13px 18px}
+    .block-body{padding:11px 12px}
+    .panel-head{padding:8px 4px 4px;gap:3px 10px}
+    .toolbar{padding:10px;gap:11px 16px}
+    .ro-v{font-size:15px}
+    .ro{padding:8px 11px}
+    .tb-text{padding:13px 15px 15px}
+    .logo-card{padding:9px 15px}
+    .logo-card img{height:32px}
+    .rec-body p,ul.tight{font-size:15px}
+    .chip,.btn{padding:9px 12px;font-size:11.5px}
+    .toggle input{width:17px;height:17px}
+    .numfield input[type=range]{width:100%;min-width:150px;height:26px}
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="titleblock">
+    <div class="tb-main">
+      <div class="logo-card"><img src="{{LOGO}}" alt="Brana — Projetos Navais" width="466" height="102"></div>
+      <div class="tb-text">
+        <div class="tb-eyebrow">Croqui → CAD · reconstruído a partir da fotografia</div>
+        <h1>Plano de Linhas</h1>
+        <div class="tb-sub">Casco de chine vivo digitalizado do croqui em papel quadriculado, corrigido em perspectiva e recortado como splines editáveis. Toda curva é obrigada a manter um único sentido de curvatura — arraste um ponto além do alisamento e ele para.</div>
+      </div>
+    </div>
+    <div class="tb-cell"><div class="tb-k">Boca (máx)</div><div class="tb-v" id="tbBoa">2.016 mm</div></div>
+    <div class="tb-cell"><div class="tb-k">Comprimento</div><div class="tb-v" id="tbLoa">6,000 m</div></div>
+    <div class="tb-cell"><div class="tb-k">Unidades</div><div class="tb-v">mm</div></div>
+  </header>
+
+  <div class="toolbar">
+    <div class="grp">
+      <span class="grp-label">Curva</span>
+      <div class="chips" id="curveChips"></div>
+    </div>
+    <div class="grp">
+      <span class="grp-label">Alisamento</span>
+      <label class="toggle strong"><input type="checkbox" id="tFair" checked> auto-alisar</label>
+    </div>
+    <div class="grp">
+      <span class="grp-label">Sobrepor</span>
+      <label class="toggle"><input type="checkbox" id="tGrid" checked> malha</label>
+      <label class="toggle"><input type="checkbox" id="tComb"> pente de curvatura</label>
+      <label class="toggle"><input type="checkbox" id="tPts" checked> pontos digitalizados</label>
+    </div>
+    <div class="grp">
+      <span class="grp-label">Zoom</span>
+      <div class="chips" id="zoomChips"></div>
+    </div>
+    <div class="grp">
+      <button class="btn" id="reset" type="button">Restaurar croqui</button>
+    </div>
+  </div>
+
+  <div class="stretchbar">
+    <div class="sb-item">
+      <label class="grp-label" for="sLoa">LOA · comprimento total</label>
+      <input type="range" id="sLoa" min="3" max="12" step="0.1" value="6">
+      <output class="sb-val" id="sLoaV" for="sLoa">6,000 m</output>
+    </div>
+    <div class="sb-item">
+      <label class="grp-label" for="sBoa">BOA · boca</label>
+      <input type="range" id="sBoa" min="0.55" max="1.15" step="0.01" value="1">
+      <output class="sb-val" id="sBoaV" for="sBoa">2.016 mm</output>
+    </div>
+    <div class="sb-item">
+      <label class="grp-label" for="sDep">D · pontal</label>
+      <input type="range" id="sDep" min="0.55" max="1.25" step="0.01" value="1">
+      <output class="sb-val" id="sDepV" for="sDep">834 mm</output>
+    </div>
+    <div class="sb-item">
+      <label class="grp-label" for="sPos">Posição da boca máx.</label>
+      <input type="range" id="sPos" min="20" max="55" step="0.5" value="31.5">
+      <output class="sb-val" id="sPosV" for="sPos">31,4 %</output>
+    </div>
+  </div>
+
+  <div class="sheet">
+    <section class="panel">
+      <div class="panel-head">
+        <span class="panel-title">Vista em planta — meias-bocas</span>
+        <span class="panel-note">os dois bordos · arraste um nó, ou um botão vermelho para girar a tangente · toque numa curva para selecioná-la</span>
+      </div>
+      <div class="scroller"><svg class="draw" id="svgPlan" viewBox="0 0 1400 572" preserveAspectRatio="xMidYMid meet"
+           tabindex="0" role="application" aria-label="Vista em planta. Toque num nó e use as setas do teclado para deslocá-lo."></svg></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <span class="panel-title">Perfil longitudinal</span>
+        <span class="panel-note">borda · chine · quilha — as três se encontram no topo da roda de proa</span>
+      </div>
+      <div class="scroller"><svg class="draw" id="svgProf" viewBox="0 0 1400 298" preserveAspectRatio="xMidYMid meet"
+           tabindex="0" role="application" aria-label="Perfil longitudinal. Toque num nó e use as setas do teclado para deslocá-lo."></svg></div>
+    </section>
+
+    <div class="status" id="status"><span class="dot"></span><span id="statusText">Todas as curvas alisadas. Arraste um nó ou um botão vermelho.</span><span class="fairflag" id="fairFlag" hidden></span></div>
+
+    <div class="lower">
+      <section class="panel" style="border-bottom:0">
+        <div class="panel-head">
+          <span class="panel-title">Plano de balizas</span>
+          <span class="panel-note">gerado a partir das duas vistas — ré à esquerda, vante à direita</span>
+        </div>
+        <div class="stationbar">
+          <label class="grp-label" for="stn">Baliza</label>
+          <input type="range" id="stn" min="1" max="8" step="1" value="4">
+          <output class="stnval" id="stnLbl" for="stn">4</output>
+        </div>
+        <div class="scroller"><svg class="draw" id="svgBody" viewBox="0 0 508 298" preserveAspectRatio="xMidYMid meet" style="cursor:default"
+             role="img" aria-label="Plano de balizas gerado a partir das curvas de planta e perfil."></svg></div>
+        <div class="legend">
+          <span><i class="swatch" style="border-top-color:var(--light)"></i>baliza CAD</span>
+          <span><i class="swatch" style="border-top-color:var(--muted);border-top-style:dashed"></i>seção da foto @ 4</span>
+          <span><i class="swatch" style="border-top-color:var(--red-l)"></i>baliza selecionada</span>
+        </div>
+      </section>
+
+      <div class="readouts">
+        <div class="ro-head">Dimensões principais</div>
+        <div class="ro-grid" id="roGrid"></div>
+      </div>
+    </div>
+  </div>
+
+  <section class="block">
+    <div class="block-head">
+      <span class="block-title">Tabela de cotas</span>
+      <span class="block-sub" id="offNote">mm da linha de centro, alturas acima do ponto mais baixo da quilha</span>
+    </div>
+    <div class="block-body">
+      <div class="tablewrap"><table id="offTable"></table></div>
+    </div>
+  </section>
+
+  <details class="rec">
+    <summary>Exportar — tabela de cotas</summary>
+    <div class="rec-body">
+      <div class="grp" style="gap:6px">
+        <button class="btn" id="expOff" type="button">Cotas (TSV)</button>
+        <button class="btn" id="expCopy" type="button">Copiar</button>
+        <span class="block-sub" id="expNote"></span>
+      </div>
+      <textarea class="data" id="expBox" readonly spellcheck="false"></textarea>
+    </div>
+  </details>
+
+  <details class="rec">
+    <summary>Registro da extração — malha, calibração, reconciliação</summary>
+    <div class="rec-body">
+
+      <div>
+        <h3>1 · Geometria da malha</h3>
+        <p>A folha é papel quadriculado. O próprio desenho serviu de escala: as oito marcas de baliza rotuladas <em>SECTIONS 1…8</em> estão a dois quadrados uma da outra, de modo que o casco tem exatamente 14 quadrados do espelho de popa à roda de proa, e a linha das marcas cai sobre um traço da malha 2,77 quadrados abaixo da linha de centro da planta. Isso dá um retângulo de proporções conhecidas — 14 × 2,77 quadrados — cujos quatro cantos são identificáveis na fotografia.</p>
+        <p>A linha de centro da planta foi recuperada de forma independente, bissectando o contorno em cada baliza: as duas metades concordam dentro de 0,02 a 0,11 quadrado, que é a assimetria do próprio desenho à mão, não erro de calibração.</p>
+      </div>
+
+      <div>
+        <h3>2 · Calibração da perspectiva</h3>
+        <p>Quatro pontos de referência — as verticais das balizas 1 e 8 cruzadas com a linha de centro da planta e com a linha das marcas — fixam uma homografia plano a plano. Resolvida exatamente (resíduo nulo por construção nos quatro pontos):</p>
+        <div class="matrix">papel (X,Y em quadrados)  →  imagem (u,v em pixels)
+
+      ⎡ 59,7620   −2,58850   68,0000 ⎤
+  H = ⎢  0,78000   55,48900  147,5000 ⎥      u = (H₀·p)/(H₂·p)
+      ⎣  0,0030170 −0,0068126   1,0   ⎦      v = (H₁·p)/(H₂·p)</div>
+        <ul class="tight">
+          <li>Escala na origem: <code>59,76 px</code> por quadrado ao longo do X do papel, <code>55,49 px</code> ao longo do Y. Os 7,1 % de anisotropia são a câmera olhando de cima para o caderno — uma inclinação fora do plano de cerca de <strong>21,8°</strong>.</li>
+          <li>Rotação no plano de <strong>0,75°</strong>; as verticais do papel cisalham <strong>2,67°</strong> na imagem.</li>
+          <li>O denominador projetivo vai de 0,981 a 1,042 ao longo da folha — uma variação de escala de <strong>6,2 %</strong> de canto a canto. É justamente essa parte que um decalque feito contando pixels erra.</li>
+        </ul>
+        <p><strong>Verificação independente.</strong> A calibração foi resolvida só com a vista em planta e depois usada para reprojetar a seção mestra, desenhada à parte. A meia-boca do convés resulta em <code>2,340</code> quadrados contra a meia-boca máxima da planta, de <code>2,356</code> — concordância de 0,7 %, numa medida que o ajuste nunca viu. O pontal da seção contra o pontal do perfil concorda em 5,5 %.</p>
+      </div>
+
+      <div>
+        <h3>3 · Cotas digitalizadas, antes do alisamento</h3>
+        <p>Cada ponto abaixo é uma leitura de pixel devolvida pela inversa de H. Meias-bocas em quadrados a partir da linha de centro, alturas em quadrados acima do ponto mais baixo da quilha. São as cruzes desenhadas nas vistas.</p>
+        <div class="tablewrap"><table id="rawTable"></table></div>
+      </div>
+
+      <div>
+        <h3>4 · Alisamento e reconciliação</h3>
+        <ul class="tight">
+          <li>Os dados digitalizados já não têm inflexão em nenhuma curva — a sequência de declividades é monótona do começo ao fim —, de modo que alisar significou ajustar splines de Hermite pelos pontos, não corrigir a forma do croqui.</li>
+          <li><span class="flag">corrigido</span> O perfil foi desenhado cerca de 0,55 quadrado à direita da planta e 0,55 curto no espelho de popa. Aqui as duas vistas estão normalizadas para X ∈ [0, 14].</li>
+          <li><span class="flag">acrescentado</span> O croqui não tem o chine em planta, então o casco não podia ser seccionado em nenhum lugar além da meia-nau. Foi acrescentada uma curva de meia-boca do chine, fixada em 76 % da borda na baliza 4 para casar exatamente com a seção desenhada, afinando para 80 % no espelho e 74 % à vante.</li>
+          <li><span class="flag">conflito</span> As duas vistas discordam sobre a altura do chine. O perfil o põe 0,944 quadrado acima da quilha na baliza 4 (ângulo de V de 28,3°); a seção desenhada o põe em 0,759 (23,3°). As alturas vêm do perfil, como manda a prática, e a seção reprojetada é desenhada sobre o plano de balizas em traço tracejado cinza para que a diferença de 0,19 quadrado continue visível. Arraste o chine do perfil para baixo até coincidir, se preferir a seção.</li>
+          <li>A borda, como desenhada, é quase reta — sobe apenas 0,27 quadrado em todo o comprimento. Isso foi preservado em vez de embelezado; ela é alisada como um único arco convexo.</li>
+        </ul>
+      </div>
+
+      <div>
+        <h3>5 · A restrição de alisamento</h3>
+        <p>Cada curva é uma cadeia de segmentos de Bézier cúbicos unidos em G1 — os dois botões de um nó compartilham a mesma reta tangente, exatamente como no punho de referência. Uma Bézier plana não pode inflexionar se o seu polígono de controle não inflexiona, então a verificação é puramente combinatória: toma-se o produto vetorial de cada par de arestas consecutivas ao longo de todo o polígono e exige-se um único sinal, admitindo giros colineares.</p>
+        <p>Um arrasto que quebraria isso não é recusado de imediato. O movimento é bissectado entre o último estado válido e o pedido, de modo que o punho desliza até a restrição e para. A mesma máquina mantém a monotonicidade em x, limita os punhos a 92 % da sua corda para que nenhum segmento faça laço, mantém todo nó dentro da folha e impõe chine ≤ borda em planta e quilha ≤ chine ≤ borda em perfil.</p>
+        <p>Mover um nó com a tangente congelada trava contra a convexidade quase de imediato numa curva rasa como a borda, então o arrasto de nó primeiro tenta com as suas tangentes intactas e só re-alisa quando isso falha: o nó e os dois vizinhos recebem direções de Catmull-Rom e os comprimentos dos punhos encolhem até o estado ficar legal. Como os comprimentos tendem a zero, o polígono de controle tende à poligonal dos nós, de modo que qualquer arranjo convexo de posições continua alcançável — é por isso que a restrição morde na forma que você está desenhando, e não na parametrização. Arraste um botão vermelho e a tangente daquele nó trava, preenchendo o botão; ela passa a ser sua e o re-alisamento a deixa em paz.</p>
+        <p><strong>Auto-alisar</strong> governa apenas a regra de curvatura. Desligado, os pontos de controle vão exatamente para onde você os põe, as tangentes nunca são re-alisadas pelas suas costas e as curvas podem inflexionar — o pente de curvatura acende para você ver, e um selo conta quantas curvas inflexionam. Todo o resto continua imposto, porque essas restrições são o que mantém o modelo avaliável, e não apenas bonito. Ao religar, cada curva que puder ser recuperada só com tangentes e comprimentos de punho é re-alisada; uma curva cujos <em>nós</em> formam um S não pode ser, então ela é dispensada em vez de ser jogada para onde você não pediu, e volta à regra assim que você a traz de novo ao alisamento.</p>
+        <p>Uma curva ainda pode passar pela reta e sair curvando para o outro lado — é uma viagem contínua sem inflexão em nenhum instante, e é assim que uma borda oca vira convexa. Varrer o nó central da borda do perfil por 0,6 quadrado de curso faz exatamente isso: treze estados convexos, um reto, dezoito côncavos, e nenhuma inflexão em ponto algum do caminho.</p>
+      </div>
+
+      <div>
+        <h3>6 · Onde isto é estimativa</h3>
+        <p>A fotografia foi lida a olho — nenhum processamento de imagem teve acesso aos pixels —, então os pontos de referência e os pontos traçados carregam um erro de operador da ordem de ±3 px, cerca de 0,05 quadrado, ou 22 mm num comprimento total de 6 m. A homografia em si é exata dadas essas leituras; a incerteza está na leitura, e é menor que a espessura do traço do próprio croqui.</p>
+      </div>
+
+    </div>
+  </details>
+
+  <footer>
+    <span class="f-brand">Brana · Projetos Navais</span>
+    <span class="f-note">sinal de curvatura travado · cadeias de Bézier G1 · plano de balizas gerado da planta e do perfil</span>
+  </footer>
+</div>
+
+<script>
+"use strict";
+(function(){
+
+/* ============================================================
+   MODELO
+   Unidades: quadrados do papel. X = 0 no espelho de popa, 14 na roda.
+   Planta  Y = meia-boca a partir da linha de centro.
+   Perfil  Z = altura acima do ponto mais baixo da quilha.
+   Nó: [x, valor, declividade]
+   ============================================================ */
+
+var LOA_SQ = 14;
+NST = 8;                          /* numero de balizas do croqui */
+
+var SPEC = {
+  planSheer:{
+    view:'plan', label:'Planta · borda', layer:'PLANTA_BORDA',
+    pts:[[0.00,1.690, 0.400],[1.90,2.210, 0.130],[4.40,2.350, 0.000],[9.50,1.720,-0.240],[14.00,0.000,-0.520]],
+    fixLast:'both'
+  },
+  planChine:{
+    view:'plan', label:'Planta · chine', layer:'PLANTA_CHINE',
+    pts:[[0.00,1.352, 0.340],[1.90,1.724, 0.055],[4.40,1.791, 0.000],[9.50,1.273,-0.200],[14.00,0.000,-0.370]],
+    fixLast:'both'
+  },
+  profSheer:{
+    view:'prof', label:'Perfil · borda', layer:'PERFIL_BORDA',
+    pts:[[0.00,1.831,0.036],[6.00,1.992,0.018],[14.00,2.100,0.009]],
+    fixLast:'x', link:'stem'
+  },
+  profChine:{
+    view:'prof', label:'Perfil · chine', layer:'PERFIL_CHINE',
+    pts:[[0.00,0.910,0.002],[6.00,0.983,0.022],[10.50,1.180,0.066],[12.70,1.570,0.290],[14.00,2.100,0.525]],
+    fixLast:'x', link:'stem'
+  },
+  profKeel:{
+    view:'prof', label:'Perfil · quilha', layer:'PERFIL_QUILHA',
+    pts:[[0.00,0.081,-0.078],[2.20,0.000,0.000],[7.00,0.075,0.032],[11.00,0.560,0.210],[12.80,1.140,0.435],[14.00,2.100,1.165]],
+    fixLast:'x', link:'stem'
+  }
+};
+var ORDER = ['planSheer','planChine','profSheer','profChine','profKeel'];
+
+/* ---- geometria de vista, derivada do modelo -------------------------------------
+   As constantes de escala e de caixa saiam erradas duas vezes quando eram acertadas na
+   mao: o casco esticado invadia a cota, ou os nos podiam ser arrastados para fora da
+   folha. Aqui elas sao calculadas a partir das proprias curvas, com folga para o
+   estiramento, e as viewBox dos tres SVG sao gravadas no arranque. */
+var NST, S, PLAN, PROF, BODY, VIEW, STEP;
+function layout(){
+  var yMax = 0, zMax = 0, zMin = 0;
+  ORDER.forEach(function(k){
+    SPEC[k].pts.forEach(function(p){
+      if(SPEC[k].view === 'plan'){ if(p[1] > yMax) yMax = p[1]; }
+      else { if(p[1] > zMax) zMax = p[1]; if(p[1] < zMin) zMin = p[1]; }
+    });
+  });
+  STEP = LOA_SQ/(NST-1);                       /* espacamento entre balizas, em quadrados */
+  var yV = yMax*1.24 + 0.20;                   /* folga para o cursor de boca */
+  var zV = zMax*1.24 + 0.20;                   /* folga para o cursor de pontal */
+  var zB = Math.min(-0.45, zMin - 0.45);
+  S = 1400/(LOA_SQ + 2.0);
+  var faixa = 96;                              /* tira dos numeros de baliza e da cota */
+  PLAN = { w:1400, h: Math.round(2*yV*S) + faixa, x0:-1.0, cy: Math.round(yV*S) };
+  PROF = { w:1400, h: Math.round((zV - zB)*S), x0:-1.0, ztop: zV };
+  BODY = { w: Math.round(2*yV*S), h: PROF.h, y0: -yV, ztop: zV };
+  VIEW = { y: yMax*1.21, zTop: zMax*1.21, zBot: zB + 0.05 };
+}
+layout();                              /* uma vez, antes de qualquer uso */
+
+/* Pontos lidos na fotografia e devolvidos pela inversa de H. */
+var RAW = {
+  planSheer:[[0.00,1.690],[1.80,2.226],[3.78,2.356],[5.80,2.271],[7.82,2.031],[9.89,1.597],[11.94,0.963],[13.98,0.000]],
+  profSheer:[[0.06,1.831],[5.91,1.990],[9.97,2.093],[14.00,2.064]],
+  profChine:[[0.04,0.910],[6.06,0.985],[10.41,1.174],[12.64,1.564]],
+  profKeel :[[0.00,0.081],[1.87,0.000],[6.11,0.041],[10.44,0.430],[12.66,1.095]]
+};
+/* Seção mestra reprojetada da foto, assentada na altura inicial da quilha na baliza 4. */
+var PHOTO_SECT = { keel:[0,0.047], chine:[1.765,0.806], deck:[2.340,2.104] };
+
+function buildCurve(key){
+  var s = SPEC[key], n = s.pts.length, i;
+  var nodes = s.pts.map(function(p){ return {x:p[0], y:p[1], a:Math.atan(p[2]), li:0, lo:0, fx:false, fy:false, tanLock:false}; });
+  for(i=0;i<n;i++){
+    var c = Math.cos(nodes[i].a);
+    if(i<n-1) nodes[i].lo = (nodes[i+1].x - nodes[i].x)/3/c;
+    if(i>0)   nodes[i].li = (nodes[i].x - nodes[i-1].x)/3/c;
+  }
+  nodes[0].fx = true;
+  nodes[n-1].fx = true;
+  if(s.fixLast === 'both') nodes[n-1].fy = true;
+  return {key:key, view:s.view, label:s.label, layer:s.layer, link:s.link||null, nodes:nodes};
+}
+function cloneModel(m){
+  var out = {};
+  ORDER.forEach(function(k){
+    out[k] = {key:k, view:m[k].view, label:m[k].label, layer:m[k].layer, link:m[k].link,
+              nodes:m[k].nodes.map(function(n){ return {x:n.x,y:n.y,a:n.a,li:n.li,lo:n.lo,fx:n.fx,fy:n.fy,tanLock:n.tanLock}; })};
+  });
+  return out;
+}
+var INITIAL = {}; ORDER.forEach(function(k){ INITIAL[k] = buildCurve(k); });
+var model = cloneModel(INITIAL);
+
+/* ============================================================
+   GEOMETRIA
+   ============================================================ */
+
+function segments(nodes){
+  var segs = [], j;
+  for(j=0;j<nodes.length-1;j++){
+    var a = nodes[j], b = nodes[j+1];
+    segs.push([
+      a.x, a.y,
+      a.x + a.lo*Math.cos(a.a), a.y + a.lo*Math.sin(a.a),
+      b.x - b.li*Math.cos(b.a), b.y - b.li*Math.sin(b.a),
+      b.x, b.y
+    ]);
+  }
+  return segs;
+}
+function ctrlPoly(nodes){
+  var cp = [], i;
+  for(i=0;i<nodes.length;i++){
+    var n = nodes[i], c = Math.cos(n.a), s = Math.sin(n.a);
+    if(i>0) cp.push([n.x - n.li*c, n.y - n.li*s]);
+    cp.push([n.x, n.y]);
+    if(i<nodes.length-1) cp.push([n.x + n.lo*c, n.y + n.lo*s]);
+  }
+  return cp;
+}
+function bez(s,t){
+  var u = 1-t, u2 = u*u, t2 = t*t;
+  var b0 = u2*u, b1 = 3*u2*t, b2 = 3*u*t2, b3 = t2*t;
+  return [ b0*s[0]+b1*s[2]+b2*s[4]+b3*s[6], b0*s[1]+b1*s[3]+b2*s[5]+b3*s[7] ];
+}
+function bezD(s,t){
+  var u = 1-t;
+  return [ 3*(u*u*(s[2]-s[0]) + 2*u*t*(s[4]-s[2]) + t*t*(s[6]-s[4])),
+           3*(u*u*(s[3]-s[1]) + 2*u*t*(s[5]-s[3]) + t*t*(s[7]-s[5])) ];
+}
+function bezDD(s,t){
+  var u = 1-t;
+  return [ 6*(u*(s[4]-2*s[2]+s[0]) + t*(s[6]-2*s[4]+s[2])),
+           6*(u*(s[5]-2*s[3]+s[1]) + t*(s[7]-2*s[5]+s[3])) ];
+}
+function curvature(s,t){
+  var d = bezD(s,t), dd = bezDD(s,t);
+  var n = d[0]*dd[1] - d[1]*dd[0];
+  var m = Math.pow(d[0]*d[0] + d[1]*d[1], 1.5);
+  return m < 1e-12 ? 0 : n/m;
+}
+function sampleXY(segs, per){
+  var pts = [], j, i;
+  for(j=0;j<segs.length;j++)
+    for(i=(j?1:0); i<=per; i++) pts.push(bez(segs[j], i/per));
+  return pts;
+}
+function lerpAt(pts,x){
+  var n = pts.length;
+  if(x <= pts[0][0]) return pts[0][1];
+  if(x >= pts[n-1][0]) return pts[n-1][1];
+  var lo = 0, hi = n-1, m;
+  while(hi - lo > 1){ m = (lo+hi) >> 1; if(pts[m][0] <= x) lo = m; else hi = m; }
+  var a = pts[lo], b = pts[hi], dx = b[0] - a[0];
+  return dx > 1e-12 ? a[1] + (x - a[0])/dx*(b[1] - a[1]) : a[1];
+}
+function evalAt(segs,x){
+  var i, s;
+  if(x <= segs[0][0]) return segs[0][1];
+  var last = segs[segs.length-1];
+  if(x >= last[6]) return last[7];
+  for(i=0;i<segs.length;i++){
+    s = segs[i];
+    if(x >= s[0]-1e-9 && x <= s[6]+1e-9){
+      var lo = 0, hi = 1, k, m;
+      for(k=0;k<16;k++){ m = (lo+hi)*0.5; if(bez(s,m)[0] < x) lo = m; else hi = m; }
+      return bez(s,(lo+hi)*0.5)[1];
+    }
+  }
+  return last[7];
+}
+function slopeAt(segs,x){
+  var h = 0.02;
+  return (evalAt(segs, Math.min(LOA_SQ, x+h)) - evalAt(segs, Math.max(0, x-h))) /
+         (Math.min(LOA_SQ, x+h) - Math.max(0, x-h));
+}
+
+/* ============================================================
+   RESTRIÇÕES
+   ============================================================ */
+
+var FAIR_TOL = 1e-5;
+
+function convexOK(cp){
+  var sign = 0, k;
+  for(k=0;k+2<cp.length;k++){
+    var e1x = cp[k+1][0]-cp[k][0],   e1y = cp[k+1][1]-cp[k][1];
+    var e2x = cp[k+2][0]-cp[k+1][0], e2y = cp[k+2][1]-cp[k+1][1];
+    var l1 = Math.sqrt(e1x*e1x+e1y*e1y), l2 = Math.sqrt(e2x*e2x+e2y*e2y);
+    if(l1 < 1e-7 || l2 < 1e-7) return false;
+    var cr = (e1x*e2y - e1y*e2x)/(l1*l2);
+    if(Math.abs(cr) < FAIR_TOL) continue;
+    var s = cr > 0 ? 1 : -1;
+    if(sign === 0) sign = s; else if(s !== sign) return false;
+  }
+  return true;
+}
+function xMonoOK(cp){
+  for(var k=0;k+1<cp.length;k++) if(cp[k+1][0] - cp[k][0] < 1e-6) return false;
+  return true;
+}
+function handlesOK(nodes){
+  for(var j=0;j<nodes.length-1;j++){
+    var a = nodes[j], b = nodes[j+1];
+    var ch = Math.sqrt((b.x-a.x)*(b.x-a.x) + (b.y-a.y)*(b.y-a.y));
+    if(a.lo > 0.92*ch || b.li > 0.92*ch) return false;
+    if(a.lo < 0.004 || b.li < 0.004) return false;
+  }
+  return true;
+}
+
+var ORD_SAMPLES = 26, ORD_TOL = 1e-4;
+
+function belowOK(lo, hi){
+  var i;
+  for(i=0;i<lo.length;i++) if(lo[i][1] - lerpAt(hi, lo[i][0]) > ORD_TOL) return false;
+  for(i=0;i<hi.length;i++) if(lerpAt(lo, hi[i][0]) - hi[i][1] > ORD_TOL) return false;
+  return true;
+}
+
+var GRAND = {};
+function isFair(curve){ return convexOK(ctrlPoly(curve.nodes)); }
+function unfairList(m){
+  var out = [];
+  for(var i=0;i<ORDER.length;i++) if(!isFair(m[ORDER[i]])) out.push(ORDER[i]);
+  return out;
+}
+
+function validate(m){
+  var k, i, S_ = {};
+  for(i=0;i<ORDER.length;i++){
+    k = ORDER[i];
+    var nd = m[k].nodes;
+    var cp = ctrlPoly(nd);
+    if(!xMonoOK(cp))    return 'a curva dobraria sobre si mesma';
+    if(ui.autoFair && !GRAND[k] && !convexOK(cp)) return 'isso poria uma inflexão em ' + m[k].label;
+    if(!handlesOK(nd))  return 'o punho ficaria maior que o vão que ele controla';
+    S_[k] = sampleXY(segments(nd), ORD_SAMPLES);
+  }
+  if(!belowOK(S_.planChine, S_.planSheer)) return 'o chine ficaria por fora da borda';
+  if(!belowOK(S_.profKeel,  S_.profChine)) return 'a quilha subiria acima do chine';
+  if(!belowOK(S_.profChine, S_.profSheer)) return 'o chine subiria acima da borda';
+  return null;
+}
+
+function slopeTargets(nodes){
+  var n = nodes.length, m = new Array(n), i;
+  for(i=1;i<n-1;i++) m[i] = (nodes[i+1].y - nodes[i-1].y)/(nodes[i+1].x - nodes[i-1].x);
+  function chord(j){ return (nodes[j+1].y - nodes[j].y)/(nodes[j+1].x - nodes[j].x); }
+  m[0]   = (n > 2) ? 1.5*chord(0)   - 0.5*m[1]   : chord(0);
+  m[n-1] = (n > 2) ? 1.5*chord(n-2) - 0.5*m[n-2] : chord(0);
+  return m;
+}
+function refair(curve, moved, k){
+  var nodes = curve.nodes, n = nodes.length;
+  var tgt = slopeTargets(nodes);
+  var lo = moved < 0 ? 0 : Math.max(0, moved-1);      /* moved < 0: re-alisa a curva inteira */
+  var hi = moved < 0 ? n-1 : Math.min(n-1, moved+1), i;
+  for(i=lo;i<=hi;i++) if(!nodes[i].tanLock) nodes[i].a = Math.atan(tgt[i]);
+  for(i=0;i<n;i++){
+    var c = Math.cos(nodes[i].a);
+    if(nodes[i].tanLock) continue;
+    if(i<n-1) nodes[i].lo = k*(nodes[i+1].x - nodes[i].x)/3/c;
+    if(i>0)   nodes[i].li = k*(nodes[i].x - nodes[i-1].x)/3/c;
+  }
+  for(i=0;i<n;i++){
+    if(!nodes[i].tanLock) continue;
+    if(i<n-1) nodes[i].lo = Math.min(nodes[i].lo, 0.9*Math.hypot(nodes[i+1].x-nodes[i].x, nodes[i+1].y-nodes[i].y));
+    if(i>0)   nodes[i].li = Math.min(nodes[i].li, 0.9*Math.hypot(nodes[i].x-nodes[i-1].x, nodes[i].y-nodes[i-1].y));
+  }
+}
+function refairAll(list,k){ for(var i=0;i<list.length;i++) refair(list[i].c, list[i].i, k); }
+
+var K_MIN = 0.06;
+function bestK(list){
+  refairAll(list,1);
+  if(!validate(model)) return 1;
+  var lo = 0, hi = 1, i, m;
+  for(i=0;i<7;i++){
+    m = (lo+hi)*0.5;
+    refairAll(list,m);
+    if(!validate(model)) lo = m; else hi = m;
+  }
+  /* lo e o maior k que a busca achou VALIDO. O piso K_MIN so existe para o caso em que
+     nenhum k serve — sem ele o estado cairia em k=0, degenerado, e o motivo relatado seria
+     a parametrizacao em vez da restricao real. Aplicar o piso por cima de um lo valido
+     devolvia um estado invalido e matava o movimento inteiro. */
+  refairAll(list, lo > 0 ? lo : K_MIN);
+  return lo;
+}
+function clampLengths(curve){
+  var n = curve.nodes, j;
+  for(j=0;j<n.length-1;j++){
+    var ch = 0.9*Math.hypot(n[j+1].x-n[j].x, n[j+1].y-n[j].y);
+    if(n[j].lo > ch) n[j].lo = ch;
+    if(n[j+1].li > ch) n[j+1].li = ch;
+  }
+}
+function attempt(setter){
+  setter(1);
+  var why = validate(model);
+  if(!why) return null;
+  var lo = 0, hi = 1, i, m;
+  for(i=0;i<16;i++){
+    m = (lo+hi)*0.5;
+    setter(m);
+    if(!validate(model)) lo = m; else hi = m;
+  }
+  setter(lo);
+  return why;
+}
+
+/* Nada nas regras de alisamento impede arrastar um no para fora da folha — uma borda pode
+   subir para sempre e continuar convexa. VIEW e o quanto cabe desenhado, ja em unidades de
+   vista; como o casco estica por ky/kz, o limite em unidades de modelo encolhe na mesma
+   proporcao. Sem isso, esticar depois de arrastar joga a geometria por cima da cota. */
+function boxFor(view){
+  return view === 'plan' ? [0.02, VIEW.y/ui.ky]
+                         : [VIEW.zBot/ui.kz, VIEW.zTop/ui.kz];
+}
+/* ---- deslocar a boca maxima ao longo do comprimento -------------------------------
+   Uma reparametrizacao longitudinal  φ(x) = x + s·sen(πx/L)  desliza o meio do casco
+   sem mexer nas pontas: φ(0)=0 e φ(L)=L. Aplicada aos pontos de controle das curvas de
+   planta ela devolve outra cadeia de Bezier, entao o teste de convexidade que ja existe
+   continua valendo — e um deslocamento que inflexionaria a borda e barrado como qualquer
+   outro arrasto. Nao mexe no perfil: mover a boca maxima e operacao de planta.
+
+   Primeira ordem: no no, a declividade vira y'/φ' e a projecao em x do punho escala por
+   φ'. Com isso os dois punhos do no giram juntos e o G1 se mantem. */
+function phi(x, sh){ return x + sh*Math.sin(Math.PI*x/LOA_SQ); }
+function dphi(x, sh){ return 1 + sh*(Math.PI/LOA_SQ)*Math.cos(Math.PI*x/LOA_SQ); }
+
+var beamBase = null;                 /* forma de partida do deslocamento */
+function captureBeam(){
+  beamBase = {};
+  ['planSheer','planChine'].forEach(function(k){
+    beamBase[k] = model[k].nodes.map(function(n){
+      return {x:n.x,y:n.y,a:n.a,li:n.li,lo:n.lo,fx:n.fx,fy:n.fy,tanLock:n.tanLock};
+    });
+  });
+}
+function applyShift(sh){
+  if(!beamBase) captureBeam();
+  ['planSheer','planChine'].forEach(function(k){
+    var nodes = model[k].nodes, base = beamBase[k], i;
+    for(i=0;i<nodes.length;i++){
+      var b = base[i], d = dphi(b.x, sh);
+      if(d < 0.05) d = 0.05;                       /* φ tem de continuar crescente */
+      var na = Math.atan(Math.tan(b.a)/d);
+      nodes[i].x = phi(b.x, sh);
+      nodes[i].y = b.y;
+      nodes[i].a = na;
+      nodes[i].li = b.li*Math.cos(b.a)*d/Math.cos(na);
+      nodes[i].lo = b.lo*Math.cos(b.a)*d/Math.cos(na);
+    }
+  });
+}
+/* Deslocamento que leva a boca maxima ate `pct`. φ nao move o maximo exatamente por
+   sen(πx₀/L) — a curva se deforma —, entao mede e corrige. */
+function beamPosNow(){
+  var segs = segments(model.planSheer.nodes), i, m = 0, at = 0, y;
+  for(i=0;i<=140;i++){ y = evalAt(segs, LOA_SQ*i/140); if(y > m){ m = y; at = LOA_SQ*i/140; } }
+  var lo = Math.max(0, at-0.1), hi = Math.min(LOA_SQ, at+0.1);
+  for(i=0;i<20;i++){
+    var m1 = lo+(hi-lo)/3, m2 = hi-(hi-lo)/3;
+    if(evalAt(segs,m1) < evalAt(segs,m2)) lo = m1; else hi = m2;
+  }
+  return (lo+hi)/2/LOA_SQ*100;
+}
+function setBeamPos(pct){
+  if(!beamBase) captureBeam();
+  applyShift(0);
+  var x0 = beamPosNow()/100*LOA_SQ, xt = pct/100*LOA_SQ;
+  var sh = (xt - x0)/Math.max(0.2, Math.sin(Math.PI*x0/LOA_SQ)), i;
+  for(i=0;i<4;i++){                                /* corrige o que φ nao acerta de primeira */
+    applyShift(sh);
+    var err = (xt - beamPosNow()/100*LOA_SQ);
+    if(Math.abs(err) < 0.002) break;
+    sh += err/Math.max(0.2, Math.sin(Math.PI*x0/LOA_SQ));
+  }
+  /* Mesma escada do arrasto de no: primeiro tenta com as tangentes do usuario; se travar,
+     deixa as curvas de planta se re-alisarem. Sem isso, uma forma que esteja parada bem na
+     fronteira da convexidade — o que acontece sempre que um arrasto anterior foi segurado —
+     deixa este cursor completamente morto. */
+  var lista = [{c:model.planSheer, i:-1}, {c:model.planChine, i:-1}];
+  var why = attempt(function(al){
+    applyShift(sh*al);
+    if(!ui.autoFair) return;
+    if(!validate(model)) return;
+    bestK(lista);
+  });
+  return why;
+}
+
+/* Maior extensao ocupada agora, para o estiramento nao empurrar nada para fora. */
+function extentY(){
+  var p = sampleXY(segments(model.planSheer.nodes), 12), i, m = 0;
+  for(i=0;i<p.length;i++) if(Math.abs(p[i][1]) > m) m = Math.abs(p[i][1]);
+  return m;
+}
+function extentZ(){
+  var lo = 0, hi = 0, i, j, ks = ['profSheer','profChine','profKeel'];
+  for(j=0;j<ks.length;j++){
+    var p = sampleXY(segments(model[ks[j]].nodes), 12);
+    for(i=0;i<p.length;i++){ if(p[i][1] > hi) hi = p[i][1]; if(p[i][1] < lo) lo = p[i][1]; }
+  }
+  return {min:lo, max:hi};
+}
+function clampStretch(){
+  var ey = extentY(); if(ey > 1e-6) ui.ky = Math.min(ui.ky, VIEW.y/ey);
+  var ez = extentZ();
+  if(ez.max >  1e-6) ui.kz = Math.min(ui.kz, VIEW.zTop/ez.max);
+  if(ez.min < -1e-6) ui.kz = Math.min(ui.kz, VIEW.zBot/ez.min);
+  ui.ky = Math.max(0.55, ui.ky); ui.kz = Math.max(0.55, ui.kz);
+}
+
+function moveNode(curve, i, tX, tY){
+  var nodes = curve.nodes, isLast = (i === nodes.length-1);
+  var lim = boxFor(curve.view);
+  tY = nodes[i].fy ? nodes[i].y : Math.max(lim[0], Math.min(lim[1], tY));
+  tX = nodes[i].fx ? nodes[i].x
+     : Math.max(i === 0 ? 0 : nodes[i-1].x + 0.30,
+                Math.min(isLast ? LOA_SQ : nodes[i+1].x - 0.30, tX));
+  var base = nodes.map(function(n){ return {x:n.x,y:n.y,a:n.a,li:n.li,lo:n.lo}; });
+  var list = [{c:curve, i:i}], linkBase = {};
+  if(curve.link && isLast){
+    ORDER.forEach(function(k){
+      if(model[k].link === curve.link && k !== curve.key){
+        var arr = model[k].nodes, L = arr.length-1;
+        linkBase[k] = arr.map(function(n){ return {x:n.x,y:n.y,a:n.a,li:n.li,lo:n.lo}; });
+        list.push({c:model[k], i:L});
+      }
+    });
+  }
+  var b = base[i];
+  return attempt(function(al){
+    nodes.forEach(function(n,q){ n.x=base[q].x; n.y=base[q].y; n.a=base[q].a; n.li=base[q].li; n.lo=base[q].lo; });
+    list.forEach(function(e){
+      if(e.c === curve) return;
+      var bb = linkBase[e.c.key];
+      e.c.nodes.forEach(function(n,q){ n.x=bb[q].x; n.y=bb[q].y; n.a=bb[q].a; n.li=bb[q].li; n.lo=bb[q].lo; });
+    });
+    var dy = al*(tY - b.y);
+    nodes[i].x = b.x + al*(tX - b.x);
+    nodes[i].y = b.y + dy;
+    list.forEach(function(e){
+      if(e.c === curve) return;
+      e.c.nodes[e.i].y = linkBase[e.c.key][e.i].y + dy;
+    });
+    list.forEach(function(e){ clampLengths(e.c); });
+    if(!ui.autoFair) return;
+    if(!validate(model)) return;
+    bestK(list);
+  });
+}
+
+function repair(curve){
+  var n = curve.nodes, i, f;
+  var snap = n.map(function(d){ return {a:d.a, li:d.li, lo:d.lo, tanLock:d.tanLock}; });
+  var tgt = slopeTargets(n);
+  for(i=0;i<n.length;i++){ n[i].tanLock = false; n[i].a = Math.atan(tgt[i]); }
+  for(f=1; f>=0.06; f-=0.04){
+    for(i=0;i<n.length;i++){
+      var c = Math.cos(n[i].a);
+      if(i<n.length-1) n[i].lo = f*(n[i+1].x - n[i].x)/3/c;
+      if(i>0)          n[i].li = f*(n[i].x - n[i-1].x)/3/c;
+    }
+    if(convexOK(ctrlPoly(n)) && handlesOK(n)) return true;
+  }
+  for(i=0;i<n.length;i++){ n[i].a = snap[i].a; n[i].li = snap[i].li; n[i].lo = snap[i].lo; n[i].tanLock = snap[i].tanLock; }
+  return false;
+}
+
+function settleGrandfathered(){
+  var freed = [], k;
+  for(k in GRAND){
+    if(!GRAND[k]) continue;
+    if(!isFair(model[k])){
+      var nodes = model[k].nodes;
+      var snap = nodes.map(function(d){ return {a:d.a, li:d.li, lo:d.lo, tanLock:d.tanLock}; });
+      if(repair(model[k]) && validate(model)){
+        for(var i=0;i<nodes.length;i++){
+          nodes[i].a = snap[i].a; nodes[i].li = snap[i].li;
+          nodes[i].lo = snap[i].lo; nodes[i].tanLock = snap[i].tanLock;
+        }
+      }
+    }
+    if(isFair(model[k])){ delete GRAND[k]; freed.push(model[k].label); }
+  }
+  return freed;
+}
+
+/* ============================================================
+   TRANSFORMAÇÕES DE VISTA
+   ============================================================ */
+
+/* S, PLAN, PROF, BODY e VIEW sao calculados por layout(), logo apos o modelo. */
+
+/* ...r() = moldura (malha, balizas, cotas): nunca estica.
+   sem sufixo = geometria do casco: estica com ky/kz. */
+function pX(x){ return (x - PLAN.x0)*S; }
+function pYr(y){ return PLAN.cy - y*S; }
+function pY(y){ return PLAN.cy - y*ui.ky*S; }
+function fX(x){ return (x - PROF.x0)*S; }
+function fYr(z){ return (PROF.ztop - z)*S; }
+function fY(z){ return (PROF.ztop - z*ui.kz)*S; }
+function bXr(y){ return (y - BODY.y0)*S; }
+function bX(y){ return (y*ui.ky - BODY.y0)*S; }
+function bYr(z){ return (BODY.ztop - z)*S; }
+function bY(z){ return (BODY.ztop - z*ui.kz)*S; }
+function n2(v){ return Math.round(v*100)/100; }
+
+/* ============================================================
+   DESENHO
+   ============================================================ */
+
+function pathD(segs, tx, ty){
+  var d = 'M' + n2(tx(segs[0][0])) + ' ' + n2(ty(segs[0][1])), i;
+  for(i=0;i<segs.length;i++){
+    var s = segs[i];
+    d += 'C' + n2(tx(s[2])) + ' ' + n2(ty(s[3])) + ' ' +
+               n2(tx(s[4])) + ' ' + n2(ty(s[5])) + ' ' +
+               n2(tx(s[6])) + ' ' + n2(ty(s[7]));
+  }
+  return d;
+}
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+
+function gridLines(view){
+  var o = '', i;
+  if(view === 'plan'){
+    for(i=-1;i<=Math.ceil(LOA_SQ)+1;i++) o += '<line x1="'+n2(pX(i))+'" y1="0" x2="'+n2(pX(i))+'" y2="'+n2(pYr(-(VIEW.y+0.15)))+'" class="gl'+(i%2===0?' gs':'')+'"/>';
+    for(i=-Math.floor(VIEW.y);i<=Math.floor(VIEW.y);i++)  o += '<line x1="0" y1="'+n2(pYr(i))+'" x2="'+PLAN.w+'" y2="'+n2(pYr(i))+'" class="gl"/>';
+  } else if(view === 'prof'){
+    for(i=-1;i<=Math.ceil(LOA_SQ)+1;i++) o += '<line x1="'+n2(fX(i))+'" y1="0" x2="'+n2(fX(i))+'" y2="'+PROF.h+'" class="gl'+(i%2===0?' gs':'')+'"/>';
+    for(i=0;i<=Math.floor(VIEW.zTop);i++)   o += '<line x1="0" y1="'+n2(fYr(i))+'" x2="'+PROF.w+'" y2="'+n2(fYr(i))+'" class="gl"/>';
+  } else {
+    for(i=-Math.floor(VIEW.y);i<=Math.floor(VIEW.y);i++)  o += '<line x1="'+n2(bXr(i))+'" y1="0" x2="'+n2(bXr(i))+'" y2="'+BODY.h+'" class="gl"/>';
+    for(i=0;i<=Math.floor(VIEW.zTop);i++)   o += '<line x1="0" y1="'+n2(bYr(i))+'" x2="'+BODY.w+'" y2="'+n2(bYr(i))+'" class="gl"/>';
+  }
+  return '<g class="grid">'+o+'</g>';
+}
+
+function combFor(segs, tx, ty, sign){
+  var pts = [], o = '', i, t, j;
+  var maxK = 0, samp = [];
+  for(j=0;j<segs.length;j++){
+    for(i=0;i<=18;i++){
+      t = i/18;
+      if(j>0 && i===0) continue;
+      var p = bez(segs[j],t), d = bezD(segs[j],t), k = curvature(segs[j],t);
+      var L = Math.sqrt(d[0]*d[0]+d[1]*d[1]) || 1;
+      samp.push([p[0],p[1], -d[1]/L, d[0]/L, k]);
+      if(Math.abs(k) > maxK) maxK = Math.abs(k);
+    }
+  }
+  var sc = maxK > 1e-9 ? 0.55/maxK : 0;
+  for(i=0;i<samp.length;i++){
+    var s = samp[i];
+    var ex = s[0] + s[2]*s[4]*sc*sign, ey = s[1] + s[3]*s[4]*sc*sign;
+    o += '<line x1="'+n2(tx(s[0]))+'" y1="'+n2(ty(s[1]))+'" x2="'+n2(tx(ex))+'" y2="'+n2(ty(ey))+'"/>';
+    pts.push(n2(tx(ex))+','+n2(ty(ey)));
+  }
+  return '<g class="comb">'+o+'<polyline class="combenv" points="'+pts.join(' ')+'"/></g>';
+}
+
+var R_NODE = 11, R_KNOB = 8, R_HIT = 21;
+
+function handlesFor(curve, tx, ty, k){
+  var o = '', hits = '', i, nodes = curve.nodes;
+  for(i=0;i<nodes.length;i++){
+    var n = nodes[i], c = Math.cos(n.a), s = Math.sin(n.a);
+    var last = (i === nodes.length-1);
+    var ax = n.x - (i>0 ? n.li*c : 0), ay = n.y - (i>0 ? n.li*s : 0);
+    var bx = n.x + (!last ? n.lo*c : 0), by = n.y + (!last ? n.lo*s : 0);
+    var lk = n.tanLock ? ' lock' : '';
+    o += '<line class="tangent" x1="'+n2(tx(ax))+'" y1="'+n2(ty(ay))+'" x2="'+n2(tx(bx))+'" y2="'+n2(ty(by))+'"/>';
+    if(i>0){
+      o += '<circle class="knob'+lk+'" cx="'+n2(tx(ax))+'" cy="'+n2(ty(ay))+'" r="'+n2(R_KNOB*k)+'"/>';
+      hits += '<circle class="hit" data-kind="in" data-node="'+i+'" cx="'+n2(tx(ax))+'" cy="'+n2(ty(ay))+'" r="'+n2(R_HIT*k)+'"/>';
+    }
+    if(!last){
+      o += '<circle class="knob'+lk+'" cx="'+n2(tx(bx))+'" cy="'+n2(ty(by))+'" r="'+n2(R_KNOB*k)+'"/>';
+      hits += '<circle class="hit" data-kind="out" data-node="'+i+'" cx="'+n2(tx(bx))+'" cy="'+n2(ty(by))+'" r="'+n2(R_HIT*k)+'"/>';
+    }
+  }
+  for(i=0;i<nodes.length;i++){
+    var nn = nodes[i];
+    var pinned = nn.fx && nn.fy;
+    var sel = (selected && selected.curve === curve.key && selected.node === i);
+    o += '<circle class="node'+(pinned?' pinned':'')+(sel?' sel':'')+'" cx="'+n2(tx(nn.x))+'" cy="'+n2(ty(nn.y))+'" r="'+n2(R_NODE*k)+'"/>';
+    if(!pinned)
+      hits += '<circle class="hit" data-kind="node" data-node="'+i+'" cx="'+n2(tx(nn.x))+'" cy="'+n2(ty(nn.y))+'" r="'+n2(R_HIT*k)+'"/>';
+  }
+  return '<g class="handles">'+o+hits+'</g>';
+}
+
+function rawMarks(key, tx, ty, mirror){
+  if(!RAW[key]) return '';
+  var o = '', i, r = 5.5;
+  for(i=0;i<RAW[key].length;i++){
+    var p = RAW[key][i], X = tx(p[0]), Y = ty(p[1]);
+    o += '<path d="M'+n2(X-r)+' '+n2(Y)+'H'+n2(X+r)+'M'+n2(X)+' '+n2(Y-r)+'V'+n2(Y+r)+'"/>';
+    if(mirror){ var Y2 = ty(-p[1]);
+      o += '<path d="M'+n2(X-r)+' '+n2(Y2)+'H'+n2(X+r)+'M'+n2(X)+' '+n2(Y2-r)+'V'+n2(Y2+r)+'"/>'; }
+  }
+  return '<g class="raw">'+o+'</g>';
+}
+
+/* ky e kz esticam o casco em boca e pontal. Sao fatores afins aplicados na hora de
+   desenhar e de medir — o modelo em quadrados nao muda, e como toda transformacao afim
+   preserva convexidade, o estiramento nao interfere no alisamento. */
+var ui = { active:'planSheer', station:4, grid:true, comb:false, pts:true, photo:true,
+           loa:6.0, ky:1, kz:1, zoom:1, zoomAuto:true, autoFair:true };
+var MID_X = 6;                 /* baliza 4 — a meia-nau do croqui, onde o pontal e medido */
+var selected = null;
+var VS = { plan:1.2, prof:1.2, body:1.2 };
+function fsz(k, px){ return ' font-size="'+n2(px*k)+'"'; }
+function stationX(i){ return (i-1)*STEP; }
+
+function renderPlan(){
+  var o = '', i, k = VS.plan;
+  if(ui.grid) o += gridLines('plan');
+  o += '<line class="cl" x1="'+n2(pX(-0.6))+'" y1="'+PLAN.cy+'" x2="'+n2(pX(LOA_SQ+0.7))+'" y2="'+PLAN.cy+'"/>';
+
+  for(i=1;i<=NST;i++){
+    var x = pX(stationX(i)), act = (i===ui.station);
+    o += '<line class="stn'+(act?' act':'')+'" x1="'+n2(x)+'" y1="'+n2(pYr(VIEW.y+0.05))+'" x2="'+n2(x)+'" y2="'+n2(pYr(-(VIEW.y+0.05)))+'"/>';
+    o += '<text class="lbl'+(act?' a':' b')+'"'+fsz(k,12)+' x="'+n2(x)+'" y="'+n2(pYr(-2.88))+'" text-anchor="middle">'+i+'</text>';
+  }
+  o += '<text class="lbl"'+fsz(k,12)+' x="'+n2(pX(LOA_SQ+0.4))+'" y="'+n2(pYr(-2.88))+'">BALIZAS</text>';
+
+  /* cota do espacamento entre balizas, tirada entre a 1 e a 2 */
+  var c1 = pX(stationX(1)), c2 = pX(stationX(2)), dimY = PLAN.h-18, tk = 7*k;
+  o += '<line class="dimx" x1="'+n2(c1)+'" y1="'+(PLAN.h-46)+'" x2="'+n2(c1)+'" y2="'+(PLAN.h-10)+'"/>';
+  o += '<line class="dimx" x1="'+n2(c2)+'" y1="'+(PLAN.h-46)+'" x2="'+n2(c2)+'" y2="'+(PLAN.h-10)+'"/>';
+  o += '<line class="diml" x1="'+n2(c1)+'" y1="'+dimY+'" x2="'+n2(c2)+'" y2="'+dimY+'"/>';
+  o += '<line class="diml" x1="'+n2(c1-tk)+'" y1="'+n2(dimY+tk)+'" x2="'+n2(c1+tk)+'" y2="'+n2(dimY-tk)+'"/>';
+  o += '<line class="diml" x1="'+n2(c2-tk)+'" y1="'+n2(dimY+tk)+'" x2="'+n2(c2+tk)+'" y2="'+n2(dimY-tk)+'"/>';
+  o += '<text class="lbl a"'+fsz(k,12)+' x="'+n2((c1+c2)/2)+'" y="'+n2(dimY-7*k)+'" text-anchor="middle">'+fmt(STEP*unitX(),0)+' mm</text>';
+  o += '<text class="lbl"'+fsz(k,11)+' x="'+n2(c2+14*k)+'" y="'+n2(dimY+4*k)+'">espaçamento entre balizas</text>';
+
+  var sSeg = segments(model.planSheer.nodes);
+  var cSeg = segments(model.planChine.nodes);
+  o += '<line class="transom" x1="'+n2(pX(0))+'" y1="'+n2(pY(sSeg[0][1]))+'" x2="'+n2(pX(0))+'" y2="'+n2(pY(-sSeg[0][1]))+'"/>';
+
+  ['planChine','planSheer'].forEach(function(kk){
+    var segs = (kk==='planSheer') ? sSeg : cSeg;
+    var act = (ui.active === kk);
+    var dUp = pathD(segs, pX, pY);
+    var dDn = pathD(segs, pX, function(y){ return pY(-y); });
+    var cls = 'hull' + (act ? ' act' : (kk==='planChine' ? ' sec' : ''));
+    o += '<path class="'+cls+'" d="'+dUp+'"/><path class="'+cls+'" d="'+dDn+'"/>';
+    o += '<path class="hull pick" data-curve="'+kk+'" d="'+dUp+'"/>';
+  });
+
+  if(ui.pts) o += rawMarks('planSheer', pX, pY, true);
+  if(ui.comb && SPEC[ui.active].view === 'plan')
+    o += combFor(segments(model[ui.active].nodes), pX, pY, 1);
+  if(SPEC[ui.active].view === 'plan') o += handlesFor(model[ui.active], pX, pY, k);
+
+  o += '<text class="vlbl"'+fsz(k,15)+' x="'+n2(pX(14.6))+'" y="'+n2(pY(0.55))+'">PLANTA</text>';
+  return o;
+}
+
+function renderProf(){
+  var o = '', i, k = VS.prof;
+  if(ui.grid) o += gridLines('prof');
+  o += '<line class="base" x1="'+n2(fX(-0.6))+'" y1="'+n2(fYr(0))+'" x2="'+n2(fX(LOA_SQ+0.7))+'" y2="'+n2(fYr(0))+'"/>';
+
+  for(i=1;i<=NST;i++){
+    var x = fX(stationX(i)), act = (i===ui.station);
+    o += '<line class="stn'+(act?' act':'')+'" x1="'+n2(x)+'" y1="'+n2(fYr(VIEW.zTop))+'" x2="'+n2(x)+'" y2="'+n2(fYr(-0.12))+'"/>';
+  }
+
+  var kSeg = segments(model.profKeel.nodes);
+  var sSeg = segments(model.profSheer.nodes);
+  o += '<line class="transom" x1="'+n2(fX(0))+'" y1="'+n2(fY(kSeg[0][1]))+'" x2="'+n2(fX(0))+'" y2="'+n2(fY(sSeg[0][1]))+'"/>';
+
+  ['profKeel','profChine','profSheer'].forEach(function(kk){
+    var segs = segments(model[kk].nodes);
+    var act = (ui.active === kk);
+    var d = pathD(segs, fX, fY);
+    o += '<path class="hull'+(act?' act':(kk==='profChine'?' sec':''))+'" d="'+d+'"/>';
+    o += '<path class="hull pick" data-curve="'+kk+'" d="'+d+'"/>';
+  });
+
+  if(ui.pts){ o += rawMarks('profSheer', fX, fY, false) + rawMarks('profChine', fX, fY, false) + rawMarks('profKeel', fX, fY, false); }
+  if(ui.comb && SPEC[ui.active].view === 'prof')
+    o += combFor(segments(model[ui.active].nodes), fX, fY, 1);
+  if(SPEC[ui.active].view === 'prof') o += handlesFor(model[ui.active], fX, fY, k);
+
+  o += '<text class="vlbl"'+fsz(k,15)+' x="'+n2(fX(14.6))+'" y="'+n2(fY(1.35))+'">PERFIL</text>';
+  return o;
+}
+
+function sectionAt(x, segs){
+  return {
+    ys: evalAt(segs.planSheer,x), yc: evalAt(segs.planChine,x),
+    zs: evalAt(segs.profSheer,x), zc: evalAt(segs.profChine,x), zk: evalAt(segs.profKeel,x)
+  };
+}
+function allSegs(){
+  var s = {}; ORDER.forEach(function(k){ s[k] = segments(model[k].nodes); }); return s;
+}
+
+function renderBody(){
+  var o = '', i, k = VS.body;
+  if(ui.grid) o += gridLines('body');
+  var segs = allSegs();
+  o += '<line class="cl" x1="'+n2(bXr(0))+'" y1="'+n2(bYr(VIEW.zTop+0.1))+'" x2="'+n2(bXr(0))+'" y2="'+n2(bYr(-0.35))+'"/>';
+  o += '<line class="base" x1="'+n2(bXr(-(VIEW.y+0.1)))+'" y1="'+n2(bYr(0))+'" x2="'+n2(bXr(VIEW.y+0.1))+'" y2="'+n2(bYr(0))+'"/>';
+
+  function half(sc, sgn){
+    return 'M'+n2(bX(0))+' '+n2(bY(sc.zk))+
+           'L'+n2(bX(sgn*sc.yc))+' '+n2(bY(sc.zc))+
+           'L'+n2(bX(sgn*sc.ys))+' '+n2(bY(sc.zs))+
+           'L'+n2(bX(0))+' '+n2(bY(sc.zs));
+  }
+  for(i=1;i<=NST;i++){
+    if(i === ui.station) continue;
+    var sc = sectionAt(stationX(i), segs);
+    var sgn = (i <= 4) ? -1 : 1;
+    o += '<path class="sect" d="'+half(sc,sgn)+'"/>';
+  }
+  if(ui.photo){
+    var P = PHOTO_SECT;
+    o += '<path class="photo" d="M'+n2(bX(0))+' '+n2(bY(P.keel[1]))+
+         'L'+n2(bX(-P.chine[0]))+' '+n2(bY(P.chine[1]))+
+         'L'+n2(bX(-P.deck[0]))+' '+n2(bY(P.deck[1]))+
+         'M'+n2(bX(0))+' '+n2(bY(P.keel[1]))+
+         'L'+n2(bX(P.chine[0]))+' '+n2(bY(P.chine[1]))+
+         'L'+n2(bX(P.deck[0]))+' '+n2(bY(P.deck[1]))+
+         'M'+n2(bX(-P.deck[0]))+' '+n2(bY(P.deck[1]))+'H'+n2(bX(P.deck[0]))+'"/>';
+  }
+  var a = sectionAt(stationX(ui.station), segs);
+  o += '<path class="sect act" d="'+half(a,-1)+'"/><path class="sect act" d="'+half(a,1)+'"/>';
+  o += '<text class="vlbl"'+fsz(k,15)+' x="'+n2(bXr(-(VIEW.y+0.16)))+'" y="'+n2(bYr(VIEW.zTop))+'">BALIZA '+ui.station+'</text>';
+  return o;
+}
+
+/* ============================================================
+   LEITURAS · COTAS
+   ============================================================ */
+
+/* Um milimetro por quadrado em cada eixo. X vem do comprimento total; Y e Z carregam
+   ainda o fator de estiramento, de modo que boca e pontal sao grandezas independentes. */
+function unitX(){ return ui.loa*1000/LOA_SQ; }
+function unitY(){ return unitX()*ui.ky; }
+function unitZ(){ return unitX()*ui.kz; }
+
+/* Proporcoes do casco base, para converter fator de estiramento em milimetros. */
+function baseBeamSq(){
+  var segs = segments(model.planSheer.nodes), i, m = 0, y;
+  for(i=0;i<=140;i++){ y = evalAt(segs, LOA_SQ*i/140); if(y > m) m = y; }
+  return 2*m;
+}
+function baseDepthSq(){
+  var s = sectionAt(MID_X, allSegs());
+  return s.zs - s.zk;
+}
+
+function metrics(){
+  var segs = allSegs(), i, x;
+  /* A varredura grossa so localiza o maximo com 0,1 quadrado de resolucao — 0,7 % do
+     comprimento, grosseiro demais para mostrar como porcentagem. Como a borda em planta e
+     convexa, e portanto unimodal, uma busca ternaria fecha o intervalo com precisao. */
+  var maxY = 0, maxAt = 0;
+  for(i=0;i<=140;i++){
+    x = LOA_SQ*i/140;
+    var y = evalAt(segs.planSheer,x);
+    if(y > maxY){ maxY = y; maxAt = x; }
+  }
+  var tlo = Math.max(0, maxAt - LOA_SQ/140), thi = Math.min(LOA_SQ, maxAt + LOA_SQ/140);
+  for(i=0;i<24;i++){
+    var m1 = tlo + (thi-tlo)/3, m2 = thi - (thi-tlo)/3;
+    if(evalAt(segs.planSheer,m1) < evalAt(segs.planSheer,m2)) tlo = m1; else thi = m2;
+  }
+  maxAt = (tlo+thi)/2;
+  maxY = evalAt(segs.planSheer, maxAt);
+  var mid = sectionAt(stationX(ui.station), segs);
+  var tr  = sectionAt(0, segs);
+  var uY = unitY(), uZ = unitZ(), uX = unitX();
+  /* angulos passam a depender do estiramento, como tem de ser: alargar a boca sem mexer
+     no pontal abre o V, e o numero mostrado tem de acompanhar. */
+  function dead(sc){ return sc.yc > 1e-4 ? Math.atan(((sc.zc-sc.zk)*uZ)/(sc.yc*uY))*180/Math.PI : 0; }
+  function flare(sc){ return (sc.zs-sc.zc) > 1e-4 ? Math.atan(((sc.ys-sc.yc)*uY)/((sc.zs-sc.zc)*uZ))*180/Math.PI : 0; }
+  var entry = Math.abs(slopeAt(segs.planSheer, LOA_SQ-0.35))*uY/uX;
+  var boaMM = 2*maxY*uY;
+  return {
+    loa: ui.loa*1000, boa: boaMM, maxAt: maxAt,
+    maxAtPct: maxAt/LOA_SQ*100,      /* a partir da popa, que e onde as balizas comecam */
+    depth: (mid.zs-mid.zk)*uZ, deadMid: dead(mid), deadTr: dead(tr), flareMid: flare(mid),
+    sheerRise: (evalAt(segs.profSheer,LOA_SQ)-evalAt(segs.profSheer,0))*uZ,
+    entry: Math.atan(entry)*180/Math.PI,
+    ratio: ui.loa*1000/boaMM,
+    depthMid: (function(){ var m = sectionAt(MID_X, segs); return (m.zs - m.zk)*uZ; })(),
+    mid: mid, segs: segs
+  };
+}
+function fmt(v,d){ return v.toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d}); }
+/* Para exportar: vírgula decimal (o Excel brasileiro espera isso) mas sem ponto de
+   milhar, que faria "1.234,5" ser lido como dois campos por quem separa por ponto. */
+function fmtx(v,d){ return v.toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d,useGrouping:false}); }
+
+function renderReadouts(M){
+  var rows = [
+    ['Compr. total', fmt(M.loa,0), 'mm'],
+    ['Boca (máx)', fmt(M.boa,0), 'mm'],
+    ['Boca máx. na', fmt(M.maxAt/2+1,2), 'baliza'],
+    ['Posição da boca máx.', fmt(M.maxAtPct,1), '% do CT, da popa'],
+    ['C / B', fmt(M.ratio,2), ''],
+    ['Tosamento', fmt(M.sheerRise,0), 'mm'],
+    ['Ângulo de V, popa', fmt(M.deadTr,1), '°']
+  ];
+  document.getElementById('roGrid').innerHTML = rows.map(function(r){
+    return '<div class="ro"><div class="ro-k">'+esc(r[0])+'</div><div class="ro-v">'+r[1]+(r[2]?' <small>'+r[2]+'</small>':'')+'</div></div>';
+  }).join('');
+}
+
+function offsetRows(M){
+  var uY = unitY(), uZ = unitZ(), out = [], i;
+  for(i=1;i<=NST;i++){
+    var sc = sectionAt(stationX(i), M.segs);
+    out.push({ stn:i,
+      ys:sc.ys*uY, yc:sc.yc*uY, zs:sc.zs*uZ, zc:sc.zc*uZ, zk:sc.zk*uZ,
+      dead: sc.yc>1e-4 ? Math.atan(((sc.zc-sc.zk)*uZ)/(sc.yc*uY))*180/Math.PI : 0 });
+  }
+  return out;
+}
+
+function renderOffsets(M){
+  var rows = offsetRows(M);
+  var h = '<thead><tr><th>Baliza</th><th>½-boca borda</th><th>½-boca chine</th><th>Altura borda</th><th>Altura chine</th><th>Altura quilha</th><th>Ângulo de V</th></tr></thead><tbody>';
+  h += rows.map(function(r){
+    var hl = (r.stn === ui.station) ? ' class="hl"' : '';
+    return '<tr><td'+hl+'>'+r.stn+'</td><td'+hl+'>'+fmt(r.ys,0)+'</td><td'+hl+'>'+fmt(r.yc,0)+'</td><td'+hl+'>'+
+           fmt(r.zs,0)+'</td><td'+hl+'>'+fmt(r.zc,0)+'</td><td'+hl+'>'+fmt(r.zk,0)+'</td><td'+hl+'>'+fmt(r.dead,1)+'°</td></tr>';
+  }).join('');
+  document.getElementById('offTable').innerHTML = h + '</tbody>';
+  document.getElementById('offNote').textContent =
+    'mm da linha de centro, alturas acima do ponto mais baixo da quilha · espaçamento entre balizas ' + fmt(STEP*unitX(),0) + ' mm';
+}
+
+function renderRaw(){
+  var h = '<thead><tr><th>Baliza</th><th>X (qd)</th><th>½-boca borda</th><th>Altura borda</th><th>Altura chine</th><th>Altura quilha</th></tr></thead><tbody>';
+  var rs = RAW.planSheer, i;
+  var lut = function(arr,x){
+    var best = null, bd = 9;
+    for(var j=0;j<arr.length;j++){ var d = Math.abs(arr[j][0]-x); if(d<bd){bd=d;best=arr[j];} }
+    return bd < 1.25 ? fmt(best[1],3) : '—';
+  };
+  for(i=0;i<rs.length;i++){
+    h += '<tr><td>'+(i+1)+'</td><td>'+fmt(rs[i][0],2)+'</td><td>'+fmt(rs[i][1],3)+'</td><td>'+
+         lut(RAW.profSheer,rs[i][0])+'</td><td>'+lut(RAW.profChine,rs[i][0])+'</td><td>'+
+         lut(RAW.profKeel,rs[i][0])+'</td></tr>';
+  }
+  h += '<tr><td colspan="2">seção da foto @ 4</td><td>2,340 convés</td><td colspan="3">½-boca chine 1,765 · chine acima da quilha 0,759 · pontal 2,057</td></tr>';
+  document.getElementById('rawTable').innerHTML = h + '</tbody>';
+}
+
+/* ============================================================
+   PINTURA
+   ============================================================ */
+
+var elPlan = document.getElementById('svgPlan');
+var elProf = document.getElementById('svgProf');
+var elBody = document.getElementById('svgBody');
+var PANELS = [[elPlan,'plan',PLAN.w],[elProf,'prof',PROF.w],[elBody,'body',BODY.w]];
+
+function measure(){
+  for(var i=0;i<PANELS.length;i++){
+    var el = PANELS[i][0], w = el.getBoundingClientRect().width;
+    var k = w > 4 ? PANELS[i][2]/w : 1.2;
+    VS[PANELS[i][1]] = k;
+    el.style.setProperty('--lw', Math.max(0.75, Math.min(6, k/1.2)).toFixed(3));
+  }
+}
+function applyZoom(){
+  elPlan.style.width = (100*ui.zoom) + '%';
+  elProf.style.width = (100*ui.zoom) + '%';
+  measure();
+}
+
+function paint(){
+  elPlan.innerHTML = renderPlan();
+  elProf.innerHTML = renderProf();
+  elBody.innerHTML = renderBody();
+  var M = metrics();
+  renderReadouts(M);
+  renderOffsets(M);
+  document.getElementById('tbLoa').textContent = fmt(ui.loa,3) + ' m';
+  document.getElementById('tbBoa').textContent = fmt(M.boa,0) + ' mm';
+  document.getElementById('stnLbl').textContent = ui.station;
+  document.getElementById('sLoaV').textContent = fmt(ui.loa,3) + ' m';
+  document.getElementById('sBoaV').textContent = fmt(M.boa,0) + ' mm';
+  document.getElementById('sDepV').textContent = fmt(M.depthMid,0) + ' mm';
+  document.getElementById('sPosV').textContent = fmt(M.maxAtPct,1) + ' %';
+  renderFairFlag();
+  refreshExport();
+}
+
+function renderFairFlag(){
+  var el = document.getElementById('fairFlag');
+  if(!el) return;
+  var bad = unfairList(model);
+  var show = bad.length > 0;
+  el.hidden = !show;
+  if(show) el.textContent = bad.length + (bad.length === 1 ? ' curva inflexiona' : ' curvas inflexionam');
+  statusEl.classList.toggle('manual', !ui.autoFair);
+}
+
+var statusEl = document.getElementById('status'), statusTx = document.getElementById('statusText');
+var statusTimer = null;
+var REST = 'Todas as curvas alisadas. Arraste um nó ou um botão vermelho.';
+function say(msg, warn){
+  statusTx.textContent = msg;
+  statusEl.classList.toggle('warn', !!warn);
+  if(statusTimer) clearTimeout(statusTimer);
+  if(warn) statusTimer = setTimeout(function(){
+    statusTx.textContent = REST;
+    statusEl.classList.remove('warn');
+  }, 2600);
+}
+
+/* ============================================================
+   INTERAÇÃO
+   ============================================================ */
+
+function svgPoint(el, ev, vbw, vbh){
+  var r = el.getBoundingClientRect();
+  var sc = vbw / r.width;
+  return { x:(ev.clientX - r.left)*sc, y:(ev.clientY - r.top)*sc };
+}
+
+var drag = null;
+var rafPending = false, pendingEv = null;
+
+function beginDrag(el, ev, view){
+  var isPlan = (view === 'plan');
+  var vbw = isPlan ? PLAN.w : PROF.w, vbh = isPlan ? PLAN.h : PROF.h;
+  var tgt = ev.target, get = (tgt && tgt.getAttribute) ? function(a){ return tgt.getAttribute(a); } : function(){ return null; };
+
+  var pick = get('data-curve');
+  if(pick){
+    if(pick !== ui.active){
+      ui.active = pick; selected = null; syncChips(); paint();
+      say(model[pick].label + ' selecionada — os punhos agora são dela.');
+      ev.preventDefault();
+    }
+    return;
+  }
+  var kind = get('data-kind');
+  if(!kind) return;
+  if(SPEC[ui.active].view !== view) return;
+
+  var node = parseInt(get('data-node'), 10);
+  el.setPointerCapture(ev.pointerId);
+  var curve = model[ui.active];
+  var base = curve.nodes.map(function(n){ return {x:n.x,y:n.y,a:n.a,li:n.li,lo:n.lo}; });
+  if(kind !== 'node') curve.nodes[node].tanLock = true;
+  drag = { curve:curve.key, base:base, kind:kind, node:node,
+           view:view, vbw:vbw, vbh:vbh, el:el, moved:false };
+  selected = { curve:curve.key, node:node };
+  paint();
+  ev.preventDefault();
+}
+
+function invX(view, vx){ return view==='plan' ? vx/S + PLAN.x0 : vx/S + PROF.x0; }
+function invY(view, vy){ return view==='plan' ? (PLAN.cy - vy)/S/ui.ky : (PROF.ztop - vy/S)/ui.kz; }
+
+function doDrag(ev){
+  if(!drag) return;
+  var p = svgPoint(drag.el, ev, drag.vbw, drag.vbh);
+  var mx = invX(drag.view, p.x), my = invY(drag.view, p.y);
+  var curve = model[drag.curve], nodes = curve.nodes, i = drag.node;
+  var base = drag.base, b = base[i];
+  var isLast = (i === nodes.length-1);
+  drag.moved = true;
+
+  var why = null;
+
+  if(drag.kind === 'node'){
+    why = moveNode(curve, i, mx, my);
+  } else {
+    var sgn = (drag.kind === 'out') ? 1 : -1;
+    var dx = (mx - nodes[i].x)*sgn, dy = (my - nodes[i].y)*sgn;
+    var len = Math.hypot(dx,dy);
+    if(len < 0.02) return;
+    var ang = Math.atan2(dy,dx);
+    if(ang >  1.45) ang =  1.45;
+    if(ang < -1.45) ang = -1.45;
+    var da = ang - b.a;
+    while(da >  Math.PI) da -= 2*Math.PI;
+    while(da < -Math.PI) da += 2*Math.PI;
+    var baseLen = (drag.kind === 'out') ? b.lo : b.li;
+    why = attempt(function(al){
+      nodes[i].a = b.a + al*da;
+      var L = baseLen + al*(len - baseLen);
+      if(drag.kind === 'out') nodes[i].lo = Math.max(0.02, L);
+      else                    nodes[i].li = Math.max(0.02, L);
+      nodes[i].li = (drag.kind==='in')  ? nodes[i].li : b.li;
+      nodes[i].lo = (drag.kind==='out') ? nodes[i].lo : b.lo;
+    });
+  }
+
+  var freed = settleGrandfathered();
+  if(curve.view === 'plan') beamBase = null;   /* a forma mudou: o deslocamento parte daqui */
+  clampStretch(); syncStretch();      /* arrastar um no pode reduzir o estiramento que cabe */
+  paint();
+  if(why) say('Travado — ' + why + '.', true);
+  else if(freed.length) say(freed.join(' e ') + ' voltou ao alisamento — a regra vale de novo para ela.');
+  else say(ui.autoFair ? 'Editando ' + curve.label + '.' : 'Editando ' + curve.label + ' — auto-alisar desligado.');
+}
+
+function endDrag(ev){
+  if(!drag) return;
+  if(pendingEv){ doDrag(pendingEv); pendingEv = null; }
+  rafPending = false;
+  try{ drag.el.releasePointerCapture(ev.pointerId); }catch(e){}
+  drag = null;
+  if(!statusEl.classList.contains('warn')) say(REST);
+}
+
+[[elPlan,'plan'],[elProf,'prof']].forEach(function(pair){
+  var el = pair[0], view = pair[1];
+  el.addEventListener('pointerdown', function(ev){ beginDrag(el, ev, view); });
+  el.addEventListener('pointermove', function(ev){
+    if(!drag) return;
+    pendingEv = ev;
+    if(rafPending) return;
+    rafPending = true;
+    requestAnimationFrame(function(){ rafPending = false; if(drag && pendingEv) doDrag(pendingEv); });
+  });
+  el.addEventListener('pointerup', endDrag);
+  el.addEventListener('pointercancel', endDrag);
+  el.addEventListener('keydown', function(ev){
+    if(!selected || selected.curve !== ui.active) return;
+    var step = ev.shiftKey ? 0.20 : 0.04, dx = 0, dy = 0;
+    if(ev.key === 'ArrowLeft')  dx = -step;
+    else if(ev.key === 'ArrowRight') dx = step;
+    else if(ev.key === 'ArrowUp')    dy = step;
+    else if(ev.key === 'ArrowDown')  dy = -step;
+    else return;
+    ev.preventDefault();
+    var curve = model[ui.active], n = curve.nodes[selected.node];
+    var why = moveNode(curve, selected.node, n.x + dx, n.y + dy);
+    settleGrandfathered();
+    paint();
+    if(why) say('Travado — ' + why + '.', true);
+    else say('Deslocando ' + curve.label + '.');
+  });
+});
+
+/* ---------- controles ---------- */
+
+function syncChips(){
+  var box = document.getElementById('curveChips');
+  box.innerHTML = ORDER.map(function(k){
+    return '<button type="button" class="chip" data-k="'+k+'" aria-pressed="'+(ui.active===k)+'">'+esc(SPEC[k].label)+'</button>';
+  }).join('');
+  Array.prototype.forEach.call(box.querySelectorAll('.chip'), function(btn){
+    btn.addEventListener('click', function(){
+      ui.active = btn.getAttribute('data-k'); selected = null; syncChips(); paint();
+    });
+  });
+}
+syncChips();
+
+document.getElementById('tGrid').addEventListener('change', function(e){ ui.grid = e.target.checked; paint(); });
+document.getElementById('tComb').addEventListener('change', function(e){ ui.comb = e.target.checked; paint(); });
+document.getElementById('tPts').addEventListener('change',  function(e){ ui.pts  = e.target.checked; paint(); });
+document.getElementById('stn').addEventListener('input', function(e){ ui.station = +e.target.value; paint(); });
+
+document.getElementById('tFair').addEventListener('change', function(e){
+  ui.autoFair = e.target.checked;
+  if(!ui.autoFair){
+    GRAND = {};
+    ui.comb = true; document.getElementById('tComb').checked = true;
+    paint();
+    say('Auto-alisar desligado — os pontos de controle vão para onde você quiser. O pente de curvatura acendeu para você ver o que está fazendo.');
+    return;
+  }
+  var fixed = [], stuck = [];
+  ORDER.forEach(function(k){
+    if(isFair(model[k])) return;
+    if(repair(model[k])) fixed.push(model[k].label);
+    else { GRAND[k] = true; stuck.push(model[k].label); }
+  });
+  paint();
+  if(stuck.length)      say('Auto-alisar ligado. ' + (fixed.length ? 'Re-alisada ' + fixed.join(' e ') + '. ' : '') +
+                            stuck.join(' e ') + ' ainda inflexiona — o S está nos nós dela, mova um e ela volta à regra.', true);
+  else if(fixed.length) say('Auto-alisar ligado — re-alisada ' + fixed.join(' e ') + '.');
+  else                  say('Auto-alisar ligado. Toda curva já mantém um único sentido de curvatura.');
+});
+
+/* Estiramento. O comprimento total escala o barco inteiro — boca e pontal acompanham,
+   porque ky e kz sao proporcoes, nao medidas fixas. Os outros dois cursores mexem numa
+   dimensao de cada vez, que e onde a forma do casco de fato muda. */
+var sLoa = document.getElementById('sLoa'),
+    sBoa = document.getElementById('sBoa'),
+    sDep = document.getElementById('sDep'),
+    sPos = document.getElementById('sPos');
+sLoa.addEventListener('input', function(e){
+  var v = parseFloat(e.target.value);
+  if(isFinite(v) && v > 0.5){ ui.loa = v; paint(); say('Comprimento total ' + fmt(ui.loa,3) + ' m — o casco inteiro acompanha.'); }
+});
+sBoa.addEventListener('input', function(e){
+  ui.ky = parseFloat(e.target.value); clampStretch(); sBoa.value = ui.ky; paint();
+  say('Boca ' + fmt(metrics().boa,0) + ' mm.');
+});
+sDep.addEventListener('input', function(e){
+  ui.kz = parseFloat(e.target.value); clampStretch(); sDep.value = ui.kz; paint();
+  say('Pontal ' + fmt(metrics().depthMid,0) + ' mm na meia-nau.');
+});
+sPos.addEventListener('input', function(e){
+  var why = setBeamPos(parseFloat(e.target.value));
+  settleGrandfathered(); clampStretch(); syncStretch();
+  paint();
+  var M = metrics();
+  /* Deslocar estica os vaos de forma desigual, entao uma forma que ja esteja parada na
+     fronteira da convexidade — o que acontece sempre que um arrasto anterior foi segurado
+     ali — nao tem folga para andar. Dizer isso, em vez de so travar. */
+  if(why) say('Travado em ' + fmt(M.maxAtPct,1) + ' % — ' + why +
+              '. A forma está no limite do alisamento; afrouxe um nó da planta e tente de novo.', true);
+  else say('Boca máxima a ' + fmt(M.maxAtPct,1) + ' % do comprimento, medida da popa.');
+});
+/* O cursor mostra onde a boca maxima esta de fato, nao onde foi pedida: se a restricao
+   segurou o deslocamento, ele volta para o valor alcancado. */
+function syncStretch(){
+  sLoa.value = ui.loa; sBoa.value = ui.ky; sDep.value = ui.kz;
+  sPos.value = metrics().maxAtPct;
+}
+
+document.getElementById('reset').addEventListener('click', function(){
+  model = cloneModel(INITIAL); selected = null; GRAND = {}; beamBase = null;
+  ui.loa = 6.0; ui.ky = 1; ui.kz = 1; syncStretch();
+  paint();
+  say('Restaurado ao croqui digitalizado.');
+});
+
+var ZOOMS = [1,2];
+function syncZoom(){
+  var box = document.getElementById('zoomChips');
+  box.innerHTML = ZOOMS.map(function(z){
+    return '<button type="button" class="chip" data-z="'+z+'" aria-pressed="'+(ui.zoom===z)+'">'+z+'×</button>';
+  }).join('');
+  Array.prototype.forEach.call(box.querySelectorAll('.chip'), function(btn){
+    btn.addEventListener('click', function(){
+      ui.zoom = +btn.getAttribute('data-z');
+      ui.zoomAuto = false;
+      syncZoom(); applyZoom(); paint();
+      say(ui.zoom > 1 ? 'Desenho a ' + ui.zoom + '× — arraste de lado para percorrer.' : 'Desenho ajustado à largura.');
+    });
+  });
+}
+function autoZoom(){
+  if(!ui.zoomAuto) return false;
+  var avail = elPlan.parentNode.clientWidth || 0;
+  var want = avail > 8 && avail < 520 ? 2 : 1;
+  if(want === ui.zoom) return false;
+  ui.zoom = want; syncZoom(); applyZoom();
+  return true;
+}
+syncZoom();
+
+var lastW = 0;
+function onResize(){
+  var w = elPlan.getBoundingClientRect().width;
+  if(Math.abs(w - lastW) < 0.5) return;
+  lastW = w;
+  autoZoom();
+  measure(); paint();
+  lastW = elPlan.getBoundingClientRect().width;
+}
+window.addEventListener('resize', onResize);
+window.addEventListener('orientationchange', function(){ setTimeout(onResize, 260); });
+if(window.ResizeObserver){
+  try{ new ResizeObserver(onResize).observe(elPlan.parentNode); }catch(e){}
+}
+
+/* ---------- exportação ---------- */
+
+function tsv(){
+  var M = metrics(), rows = offsetRows(M), u = unitX();
+  var L = ['# Plano de linhas — tabela de cotas',
+           '# Comprimento total ' + fmtx(ui.loa,3) + ' m   1 quadrado da malha = ' + fmtx(u,2) + ' mm',
+           '# meias-bocas a partir da linha de centro, alturas acima da linha de base (ponto mais baixo da quilha), em milimetros',
+           'baliza\tx\tmeia_boca_borda\tmeia_boca_chine\taltura_borda\taltura_chine\taltura_quilha\tangulo_V_graus'];
+  rows.forEach(function(r){
+    L.push(r.stn + '\t' + fmtx(stationX(r.stn)*u,0) + '\t' + fmtx(r.ys,1) + '\t' + fmtx(r.yc,1) + '\t' +
+           fmtx(r.zs,1) + '\t' + fmtx(r.zc,1) + '\t' + fmtx(r.zk,1) + '\t' + fmtx(r.dead,2));
+  });
+  return L.join('\n');
+}
+function refreshExport(){
+  var box = document.getElementById('expBox');
+  if(!box) return;
+  box.value = tsv();
+  document.getElementById('expNote').textContent = 'separado por tabulação · mm';
+}
+document.getElementById('expOff').addEventListener('click', refreshExport);
+document.getElementById('expCopy').addEventListener('click', function(){
+  var box = document.getElementById('expBox');
+  box.focus(); box.select();
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(box.value).then(function(){
+      document.getElementById('expNote').textContent = 'copiado';
+    }, function(){ document.getElementById('expNote').textContent = 'selecionado — tecle Ctrl/⌘+C'; });
+  } else {
+    document.getElementById('expNote').textContent = 'selecionado — tecle Ctrl/⌘+C';
+  }
+});
+
+/* ---------- início ---------- */
+elPlan.setAttribute('viewBox','0 0 '+PLAN.w+' '+PLAN.h);
+elProf.setAttribute('viewBox','0 0 '+PROF.w+' '+PROF.h);
+elBody.setAttribute('viewBox','0 0 '+BODY.w+' '+BODY.h);
+document.getElementById('stn').max = NST;
+renderRaw();
+applyZoom();
+paint();
+syncStretch();
+function settle(){ autoZoom(); measure(); paint(); lastW = elPlan.getBoundingClientRect().width; }
+settle();
+requestAnimationFrame(settle);
+window.addEventListener('load', settle);
+
+})();
+</script>
