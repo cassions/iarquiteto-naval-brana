@@ -510,29 +510,10 @@
    Nó: [x, valor, declividade]
    ============================================================ */
 
-var LOA_SQ = 20;                 /* 6 balizas a 4 quadrados */
-NST = 6;                          /* numero de balizas do croqui */
-
-var SPEC = {
-  planSheer:{
-    view:'plan', label:'Planta · borda', layer:'PLANTA_BORDA',
-    pts:[[0.00,2.542, 0.2552],[3.96,3.288, 0.1216],[8.00,3.455,-0.0390],
-         [11.94,2.994,-0.1950],[15.98,1.826,-0.3832],[20.00,0.000,-0.5252]],
-    fixLast:'both'
-  },
-  profSheer:{
-    view:'prof', label:'Perfil · borda', layer:'PERFIL_BORDA',
-    pts:[[0.00,2.969,0.04676],[8.06,3.369,0.05250],[15.98,3.791,0.05406],[20.00,4.011,0.05540]],
-    fixLast:'x', link:'stem'
-  },
-  profKeel:{
-    view:'prof', label:'Perfil · quilha', layer:'PERFIL_QUILHA',
-    pts:[[0.00,0.945,-0.24418],[4.25,0.203,-0.10500],[8.06,0.000,-0.00156],
-         [12.12,0.104,0.05280],[20.00,4.011,0.93882]],
-    fixLast:'x', link:'stem'
-  }
-};
-var ORDER = ['planSheer','profSheer','profKeel'];
+var LOA_SQ, NST, SPEC, ORDER, RAW, MID_X, PHOTO_SECT, PHOTO_PTS, LOA_INICIAL, PMID_INICIAL, FULL_RE, FULL_VANTE;
+/* O bloco abaixo e injetado por scripts/montar.py a partir do projeto.json.
+   E a unica coisa que muda de croqui para croqui. Nao edite este arquivo. */
+/*{{PROJETO}}*/
 
 /* ---- geometria de vista, derivada do modelo -------------------------------------
    As constantes de escala e de caixa saiam erradas duas vezes quando eram acertadas na
@@ -560,14 +541,6 @@ function layout(){
   VIEW = { y: yMax*1.21, zTop: zMax*1.21, zBot: zB + 0.05 };
 }
 layout();                              /* uma vez, antes de qualquer uso */
-
-/* Pontos lidos na fotografia e devolvidos pela inversa de H. */
-var RAW = {
-  planSheer:[[0.00,2.542],[4.02,3.288],[8.01,3.455],[11.97,2.994],[16.00,1.826],[19.98,0.000]],
-  profSheer:[[0.08,2.969],[8.06,3.369],[15.98,3.791],[20.21,4.011]],
-  profKeel :[[0.08,0.945],[4.25,0.203],[8.06,0.000],[12.12,0.104],[20.21,4.011]]
-};
-
 /* ---- forma da baliza -------------------------------------------------------------
    Casco redondo nao tem chine, entao a baliza nao e uma poligonal: e uma curva unica da
    quilha ate a borda. Vale uma super-elipse  (y/Y)^p + (1 - z/D)^p = 1 , que da topo
@@ -586,18 +559,12 @@ function sectCm(p){
 }
 /* Distribuicao de cheia ao longo do comprimento: mais cheia a meia-nau, afinando para a
    proa. Suavizada com smoothstep, que chega derivada nula dos dois lados da meia-nau. */
-var MID_X = 8;
 function fullAt(x){
   var r, f;
-  if(x <= MID_X){ r = x/MID_X;              f = 0.93 + 0.07*(3*r*r - 2*r*r*r); }
-  else          { r = (x-MID_X)/(LOA_SQ-MID_X); f = 1.00 - 0.38*(3*r*r - 2*r*r*r); }
+  if(x <= MID_X){ r = x/MID_X;              f = FULL_RE + (1-FULL_RE)*(3*r*r - 2*r*r*r); }
+  else          { r = (x-MID_X)/(LOA_SQ-MID_X); f = 1.00 - (1-FULL_VANTE)*(3*r*r - 2*r*r*r); }
   return Math.max(1.05, ui.pmid*f);
 }
-
-/* Seçao mestra do croqui, reprojetada: meia-boca e altura acima da quilha, em quadrados. */
-var PHOTO_PTS = [[0.000,0.000],[0.735,0.039],[1.700,0.234],[2.473,0.683],
-                 [3.053,1.366],[3.440,2.147],[3.536,3.083]];
-
 function buildCurve(key){
   var s = SPEC[key], n = s.pts.length, i;
   var nodes = s.pts.map(function(p){ return {x:p[0], y:p[1], a:Math.atan(p[2]), li:0, lo:0, fx:false, fy:false, tanLock:false}; });
@@ -1140,7 +1107,7 @@ function rawMarks(key, tx, ty, mirror){
    desenhar e de medir — o modelo em quadrados nao muda, e como toda transformacao afim
    preserva convexidade, o estiramento nao interfere no alisamento. */
 var ui = { active:'planSheer', station:3, grid:true, comb:false, pts:true, photo:true,
-           loa:6.0, ky:1, kz:1, pmid:2.32, zoom:1, zoomAuto:true, autoFair:true };
+           loa:LOA_INICIAL, ky:1, kz:1, pmid:PMID_INICIAL, zoom:1, zoomAuto:true, autoFair:true };
 var selected = null;
 var VS = { plan:1.2, prof:1.2, body:1.2 };
 function fsz(k, px){ return ' font-size="'+n2(px*k)+'"'; }
@@ -1670,7 +1637,7 @@ function syncStretch(){
 
 document.getElementById('reset').addEventListener('click', function(){
   model = cloneModel(INITIAL); selected = null; GRAND = {}; beamBase = null;
-  ui.loa = 6.0; ui.ky = 1; ui.kz = 1; ui.pmid = 2.32; syncStretch();
+  ui.loa = LOA_INICIAL; ui.ky = 1; ui.kz = 1; ui.pmid = PMID_INICIAL; syncStretch();
   paint();
   say('Restaurado ao croqui digitalizado.');
 });

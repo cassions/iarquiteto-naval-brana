@@ -1,0 +1,10 @@
+# Plano de linhas, casco redondo — tabela de cotas
+# Comprimento total 6,000 m   1 quadrado da malha = 300,00 mm
+# meias-bocas a partir da linha de centro, alturas acima da linha de base (ponto mais baixo da quilha), em milimetros
+baliza	x	altura_quilha	altura_borda	mb_25pc	mb_50pc	mb_75pc	meia_boca_borda
+1	0	283,5	890,7	533,4	678,0	744,6	762,6
+2	1200	69,1	948,5	708,3	888,2	967,8	987,8
+3	2400	0,0	1009,8	760,1	941,3	1018,4	1036,5
+4	3600	29,3	1073,2	612,1	787,3	870,8	894,7
+5	4800	346,6	1137,6	305,7	434,8	512,4	545,5
+6	6000	1203,3	1203,3	0,0	0,0	0,0	0,0

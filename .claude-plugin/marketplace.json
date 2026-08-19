@@ -13,7 +13,7 @@
       "name": "iarquiteto-naval-brana",
       "source": "./",
       "description": "Skills de arquitetura naval: entrevista guiada de Caso de Uso, estudo de similares e dimensionamento preliminar de embarcacoes.",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "author": {
         "name": "cassions"
       },

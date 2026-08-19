@@ -1,0 +1,1030 @@
+<title>{{TITLE}}</title>
+<style>
+  /* ---------------------------------------------------------------
+     Identidade Brana: fundo grafite, ficha clara para o logotipo,
+     vermelho #9A3231 nos realces e nos cabeçalhos de tabela, Calibri
+     no texto e Consolas nos números. Tema único, como a folha impressa.
+     --------------------------------------------------------------- */
+  :root{
+    --ground:#333333;      /* fundo da página */
+    --graf:#404040;        /* grafite da folha */
+    --box:#2E2E2E;         /* caixa escura */
+    --card:#F7F7F7;        /* ficha clara (logotipo) */
+    --red:#9A3231;         /* vermelho Brana */
+    --red-l:#EE9A98;
+    --red-xl:#F5DADA;
+    --white:#FFFFFF;
+    --light:#E8E8E8;
+    --muted:#BFBFBF;
+    --cell-a:#4D4D4D;
+    --cell-b:#585858;
+    --amber:#FBB12F;
+    --green:#9BD79B;
+    --blue:#7FB6DE;
+    --rule:#555555;
+    --rule-2:#484848;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -18px rgba(0,0,0,.85);
+    /* lidos pelo renderizador e entregues aos shaders */
+    --scene-bg:#3A3A3A;
+    --hull-top:#C9CDD1;
+    --hull-bot:#9A3231;
+    --hull-deck:#8B9196;
+    --line-ink:#E8E8E8;
+    --font-title:"Calibri Light",Calibri,"Segoe UI Light","Segoe UI",system-ui,sans-serif;
+    --font-body:Calibri,"Segoe UI",system-ui,-apple-system,sans-serif;
+    --font-mono:Consolas,"Cascadia Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ground);color:var(--light);font-family:var(--font-body);
+       font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1260px;margin:0 auto;padding:26px 20px 64px;display:flex;flex-direction:column;gap:18px}
+
+  /* ---------- cabeçalho / selo ---------- */
+  .titleblock{border:1px solid var(--rule);background:var(--graf);box-shadow:var(--shadow);
+              display:grid;grid-template-columns:minmax(300px,1.7fr) repeat(3,minmax(96px,.6fr))}
+  .tb-main{padding:0;border-right:1px solid var(--rule);display:flex;flex-direction:column}
+  .logo-card{background:var(--card);padding:11px 20px;display:flex;align-items:center;
+             border-bottom:1px solid var(--rule)}
+  .logo-card img{height:38px;width:auto;display:block}
+  .tb-text{padding:15px 20px 17px;display:flex;flex-direction:column;gap:5px}
+  .tb-eyebrow{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.16em;
+              text-transform:uppercase;color:var(--red-l);font-weight:700}
+  h1{font-family:var(--font-title);font-size:clamp(23px,3.2vw,32px);line-height:1.05;margin:0;
+     font-weight:300;letter-spacing:-.01em;color:var(--white);text-wrap:balance}
+  .tb-sub{color:var(--muted);font-size:14px;max-width:58ch}
+  .tb-cell{padding:14px;border-right:1px solid var(--rule);display:flex;flex-direction:column;
+           gap:3px;justify-content:center}
+  .tb-cell:last-child{border-right:0}
+  .tb-k{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .tb-v{font-family:var(--font-mono);font-size:14px;font-variant-numeric:tabular-nums;color:var(--white)}
+  @media (max-width:860px){
+    .titleblock{grid-template-columns:repeat(3,1fr)}
+    .tb-main{grid-column:1/-1;border-right:0;border-bottom:1px solid var(--rule)}
+    .tb-cell:last-child{border-right:0}
+  }
+
+  /* ---------- barra de comandos ---------- */
+  .toolbar{border:1px solid var(--rule);background:var(--box);box-shadow:var(--shadow);
+           padding:12px 14px;display:flex;flex-wrap:wrap;gap:13px 20px;align-items:center}
+  .grp{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .grp-label{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.14em;
+             text-transform:uppercase;color:var(--muted)}
+  .chips{display:flex;flex-wrap:wrap;gap:5px}
+  .chip{font-family:var(--font-mono);font-size:11px;letter-spacing:.03em;padding:6px 10px;
+        border:1px solid var(--rule);background:var(--graf);color:var(--light);cursor:pointer;
+        border-radius:2px;transition:background .12s,color .12s,border-color .12s}
+  .chip:hover{border-color:var(--red-l);color:var(--white)}
+  .chip[aria-pressed="true"]{background:var(--red);border-color:var(--red);color:var(--white);font-weight:700}
+  .chip:focus-visible,.btn:focus-visible,input:focus-visible,textarea:focus-visible{
+        outline:2px solid var(--red-l);outline-offset:2px}
+  .btn{font-family:var(--font-mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;
+       padding:7px 12px;border:1px solid var(--rule);background:var(--graf);color:var(--light);
+       cursor:pointer;border-radius:2px}
+  .btn:hover{border-color:var(--red-l);color:var(--white)}
+  .toggle{display:inline-flex;align-items:center;gap:6px;font-family:var(--font-mono);
+          font-size:11px;color:var(--light);cursor:pointer;user-select:none}
+  .toggle input{accent-color:var(--red);width:14px;height:14px;margin:0}
+
+  /* ---------- palco ---------- */
+  .stage{border:1px solid var(--rule);background:var(--graf);box-shadow:var(--shadow);
+         position:relative;overflow:hidden}
+  #gl{display:block;width:100%;height:min(58vh,560px);max-width:none;touch-action:none;
+      cursor:grab;background:var(--scene-bg)}
+  #gl.dragging{cursor:grabbing}
+  .hud{position:absolute;pointer-events:none;font-family:var(--font-mono);font-size:10.5px;color:var(--muted)}
+  .hud.tl{top:10px;left:12px;display:flex;flex-direction:column;gap:3px}
+  .hud.tr{top:10px;right:12px;text-align:right;letter-spacing:.13em;text-transform:uppercase;
+          font-weight:700;color:var(--white)}
+  .hud.br{bottom:10px;right:12px;text-align:right;line-height:1.5}
+  .hud .axk{display:inline-block;width:9px}
+  .axx{color:#E8736C}.axy{color:#9BD79B}.axz{color:#7FB6DE}
+  .nogl{padding:28px;font-family:var(--font-mono);font-size:12px;color:var(--red-l);text-align:center}
+
+  .stagebar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding:10px 12px;
+            border-top:1px solid var(--rule-2)}
+  .stagebar input[type=range]{flex:1;min-width:140px;accent-color:var(--red);height:22px}
+  .draftval{font-family:var(--font-mono);font-size:13px;font-variant-numeric:tabular-nums;
+            color:var(--red-l);font-weight:700;min-width:5.5em;text-align:right}
+  .warn{font-family:var(--font-mono);font-size:10.5px;color:var(--amber)}
+
+  .lower{display:grid;grid-template-columns:1fr minmax(300px,.72fr);gap:18px;align-items:start}
+  @media (max-width:900px){.lower{grid-template-columns:1fr}}
+
+  /* ---------- fichas ---------- */
+  .block{border:1px solid var(--rule);background:var(--box);box-shadow:var(--shadow)}
+  .block-head{padding:12px 16px;border-bottom:1px solid var(--rule);display:flex;flex-wrap:wrap;
+              gap:8px 14px;align-items:baseline;justify-content:space-between}
+  .block-title{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.18em;
+               text-transform:uppercase;font-weight:700;color:var(--white)}
+  .block-sub{font-family:var(--font-mono);font-size:10.5px;color:var(--muted)}
+  .block-body{padding:14px 16px}
+  .ro-grid{display:grid;grid-template-columns:1fr 1fr}
+  .ro{padding:10px 14px;border-bottom:1px solid var(--rule-2);border-right:1px solid var(--rule-2)}
+  .ro:nth-child(even){border-right:0}
+  .ro-k{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.12em;
+        text-transform:uppercase;color:var(--muted)}
+  .ro-v{font-family:var(--font-mono);font-size:17px;font-variant-numeric:tabular-nums;color:var(--white)}
+  .ro-v small{font-size:11px;color:var(--muted)}
+
+  .tablewrap{overflow-x:auto}
+  table{border-collapse:collapse;width:100%;font-family:var(--font-mono);font-size:12px;
+        font-variant-numeric:tabular-nums}
+  th,td{padding:6px 9px;text-align:right;white-space:nowrap}
+  th{font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--white);
+     font-weight:700;background:var(--red)}
+  tbody tr:nth-child(odd) td{background:var(--cell-a)}
+  tbody tr:nth-child(even) td{background:var(--cell-b)}
+  td{color:var(--light)}
+  th:first-child,td:first-child{text-align:left}
+
+  textarea.data{width:100%;min-height:150px;resize:vertical;background:var(--graf);color:var(--light);
+    border:1px solid var(--rule-2);padding:10px 12px;font-family:var(--font-mono);font-size:11.5px;
+    line-height:1.5;white-space:pre;border-radius:2px}
+  .msg{font-family:var(--font-mono);font-size:11px;padding:6px 0 0;min-height:20px}
+  .msg.err{color:var(--red-l)}
+  .msg.ok{color:var(--green)}
+
+  details.rec{border:1px solid var(--rule);background:var(--box);box-shadow:var(--shadow)}
+  details.rec>summary{padding:12px 16px;cursor:pointer;list-style:none;display:flex;
+    align-items:center;gap:10px;font-family:var(--font-mono);font-size:10.5px;letter-spacing:.18em;
+    text-transform:uppercase;font-weight:700;color:var(--white)}
+  details.rec>summary::-webkit-details-marker{display:none}
+  details.rec>summary::before{content:"\25B8";color:var(--red-l);font-size:12px;line-height:1}
+  details.rec[open]>summary::before{content:"\25BE"}
+  details.rec[open]>summary{border-bottom:1px solid var(--rule)}
+  .rec-body{padding:18px 20px 22px;display:flex;flex-direction:column;gap:18px}
+  .rec-body h3{font-family:var(--font-mono);font-size:10px;letter-spacing:.16em;
+               text-transform:uppercase;color:var(--red-l);margin:0 0 6px;font-weight:700}
+  .rec-body p{font-size:15px;line-height:1.6;color:var(--muted);margin:0 0 9px;max-width:68ch}
+  .rec-body p:last-child{margin-bottom:0}
+  .rec-body code{font-family:var(--font-mono);font-size:12.5px;background:var(--graf);
+                 padding:1px 4px;border-radius:2px;color:var(--red-xl)}
+  ul.tight{margin:0;padding-left:18px;font-size:15px;color:var(--muted);line-height:1.58}
+  ul.tight li{margin-bottom:5px;max-width:66ch}
+  .flag{display:inline-block;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.09em;
+        text-transform:uppercase;padding:1px 6px;border:1px solid var(--amber);color:var(--amber);
+        border-radius:2px;vertical-align:2px}
+
+  footer{border:1px solid var(--rule);background:var(--red);color:var(--white);padding:12px 18px;
+         display:flex;flex-wrap:wrap;gap:6px 18px;align-items:baseline;justify-content:space-between;
+         font-family:var(--font-mono);font-size:10.5px;letter-spacing:.04em}
+  footer .f-brand{font-weight:700;letter-spacing:.16em;text-transform:uppercase}
+  footer .f-note{color:var(--red-xl)}
+
+  @media (max-width:700px){
+    .wrap{padding:14px 10px 44px;gap:14px}
+    .toolbar{padding:10px;gap:11px 14px}
+    .chip,.btn{padding:9px 12px;font-size:11.5px}
+    .toggle input{width:17px;height:17px}
+    #gl{height:min(48vh,420px)}
+    h1{font-size:24px}
+    .logo-card{padding:9px 15px}
+    .logo-card img{height:32px}
+    .tb-text{padding:13px 15px 15px}
+    .ro-v{font-size:15px}
+    .rec-body p,ul.tight{font-size:14.5px}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+
+  <header class="titleblock">
+    <div class="tb-main">
+      <div class="logo-card"><img src="{{LOGO}}" alt="Brana"></div>
+      <div class="tb-text">
+        <div class="tb-eyebrow">{{EYEBROW}}</div>
+        <h1>{{H1}}</h1>
+        <div class="tb-sub">{{SUB_OPEN}} A tabela de cotas erguida em superfície para você girar na mão. Arraste para orbitar, dois dedos ou botão direito para deslocar, roda ou pinça para aproximar. Serve casco redondo e casco quinado: a hidrostática sai da mesma geometria que está na tela.</div>
+      </div>
+    </div>
+    <div class="tb-cell"><div class="tb-k">Balizas</div><div class="tb-v" id="tbStn">6</div></div>
+    <div class="tb-cell"><div class="tb-k">Comprimento</div><div class="tb-v" id="tbLoa">6,000 m</div></div>
+    <div class="tb-cell"><div class="tb-k">Baliza</div><div class="tb-v" id="tbForm">redonda</div></div>
+  </header>
+
+  <div class="toolbar">
+    <div class="grp">
+      <span class="grp-label">Vista</span>
+      <div class="chips" id="viewChips"></div>
+    </div>
+    <div class="grp">
+      <span class="grp-label">Mostrar</span>
+      <label class="toggle"><input type="checkbox" id="tSurf" checked> superfície</label>
+      <label class="toggle"><input type="checkbox" id="tDeck" checked> convés</label>
+      <label class="toggle"><input type="checkbox" id="tStn" checked> balizas</label>
+      <label class="toggle"><input type="checkbox" id="tWl"> linhas de água</label>
+      <label class="toggle"><input type="checkbox" id="tBut"> planos do alto</label>
+      <label class="toggle"><input type="checkbox" id="tSea" checked> mar</label>
+      <label class="toggle"><input type="checkbox" id="tMesh"> malha</label>
+    </div>
+    <div class="grp">
+      <button class="btn" id="fit" type="button">Enquadrar</button>
+    </div>
+  </div>
+
+  <section class="stage">
+    <canvas id="gl"></canvas>
+    <div class="hud tl">
+      <span><i class="axk axx">&#9632;</i> x vante</span>
+      <span><i class="axk axy">&#9632;</i> y estibordo</span>
+      <span><i class="axk axz">&#9632;</i> z acima</span>
+    </div>
+    <div class="hud tr" id="viewName">Bochecha de proa</div>
+    <div class="hud br" id="camInfo"></div>
+    <div class="stagebar">
+      <label class="grp-label" for="draft">Calado</label>
+      <input type="range" id="draft" min="0" max="1200" step="5" value="{{DRAFT0}}">
+      <output class="draftval" id="draftVal" for="draft">{{DRAFT0}} mm</output>
+      <span class="grp-label">Água</span>
+      <div class="chips" id="waterChips"></div>
+      <span class="warn" id="warnLine"></span>
+    </div>
+  </section>
+
+  <div class="lower">
+    <section class="block">
+      <div class="block-head">
+        <span class="block-title">Tabela de cotas</span>
+        <span class="block-sub" id="offNote">a entrada · milímetros</span>
+      </div>
+      <div class="block-body">
+        <div class="tablewrap"><table id="offTable"></table></div>
+      </div>
+    </section>
+
+    <div class="block">
+      <div class="block-head">
+        <span class="block-title">Hidrostática</span>
+        <span class="block-sub" id="hydroSub">a {{DRAFT0}} mm · água salgada</span>
+      </div>
+      <div class="ro-grid" id="hydro"></div>
+    </div>
+  </div>
+
+  <details class="rec">
+    <summary>Carregar outra tabela</summary>
+    <div class="rec-body">
+      <p>Cole uma tabela em qualquer um dos dois formatos. <strong>Redondo:</strong> <code>baliza, x, altura_quilha, altura_borda, meias-bocas intermediárias…, meia_boca_borda</code> — qualquer número de níveis intermediários, igualmente espaçados no pontal. <strong>Quinado:</strong> <code>stn, x, sheer_hb, chine_hb, sheer_ht, chine_ht, keel_ht</code>. Tudo em milímetros. Comentários com <code>#</code>, separador de milhar e linha de cabeçalho são ignorados, então a exportação do plano de linhas entra direto.</p>
+      <textarea class="data" id="tsv" spellcheck="false"></textarea>
+      <div class="grp" style="gap:6px">
+        <button class="btn" id="apply" type="button">Reconstruir casco</button>
+        <button class="btn" id="revert" type="button">{{LBL_REVERT}}</button>
+        <button class="btn" id="demoChine" type="button">{{LBL_ALT}}</button>
+      </div>
+      <div class="msg" id="msg"></div>
+    </div>
+  </details>
+
+  <details class="rec">
+    <summary>Como a superfície é construída</summary>
+    <div class="rec-body">
+      <div>
+        <h3>A baliza deixou de ser uma poligonal</h3>
+        <p>Na versão anterior a baliza era quilha → chine → borda, dois painéis retos. Isso descreve casco quinado e mais nada. Aqui a baliza é uma curva genérica <code>y(z)</code> definida por meias-bocas tabeladas em alturas relativas do pontal, o que cobre os dois casos com um só motor: no <strong>redondo</strong> os níveis intermediários viram curva sem canto; no <strong>quinado</strong> a meia-boca do chine entra como nó exato e a interpolação entre nós é reta, preservando o canto vivo.</p>
+        <p>O formato é reconhecido pelo cabeçalho e, na falta dele, pela heurística — as duas tabelas têm oito colunas, então a decisão olha se a terceira coluna é altura de quilha (menor que a de borda, com as meias-bocas crescendo) ou meia-boca de borda.</p>
+      </div>
+      <div>
+        <h3>Bojo redondo: super-elipse ajustada</h3>
+        <p>Bojo redondo segue de perto <code>(y/Y)^p + (1 − z/D)^p = 1</code>, que dá tangente horizontal na quilha e topo vertical na borda. O expoente é ajustado por mínimos quadrados aos níveis tabelados de cada baliza, e é isso que dá a fidelidade: com as três meias-bocas desta tabela o ajuste recupera <code>p</code> com três casas decimais e reconstrói a curva com <strong>0,01 %</strong> de erro.</p>
+        <p>Interpolar entre os níveis, em vez de ajustar, erraria <strong>7,5 %</strong> na volta do bojo, porque <code>y(u)</code> chega à quilha com derivada infinita e três níveis não dizem nada sobre o trecho entre a quilha e o primeiro deles. Quando o resíduo do ajuste passa de 1,5 % da meia-boca a baliza não é dessa família, e aí vale a cúbica monótona — aplicada a <code>u(y)</code>, não a <code>y(u)</code>, justamente porque nessa direção a derivada na quilha é zero e o problema fica bem condicionado.</p>
+      </div>
+      <div>
+        <h3>O que está na tela</h3>
+        <ul class="tight">
+          <li>O casco é uma grade única, da borda de bombordo em volta da quilha até a borda de estibordo, sem costura na linha de centro.</li>
+          <li>O espelho de popa fecha a ré como face plana; o convés é superfície regrada entre as duas bordas e pode ser desligada para ver por dentro.</li>
+          <li>Abaixo da linha de água o casco tem outra cor — o limite é avaliado por pixel contra o calado, então fica nítido em qualquer aproximação em vez de seguir as arestas da malha.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Hidrostática</h3>
+        <p>Como a altura cresce monotonicamente da quilha à borda nos dois formatos, a linha de água corta a baliza uma única vez e a área imersa é a integral de <code>y dz</code> — exata sobre a poligonal, sem varredura. Volume, momentos, área de flutuação e perímetro molhado são integrados em 400 balizas por trapézios, dobrados para os dois bordos, com a face imersa do espelho somada à superfície molhada.</p>
+        <p>Conferido contra três referências de valor conhecido: um caixote de 10 × 2 × 0,5 m volta como <strong>10,000 m³</strong> exatos, com Cb e Cm iguais a 1,000 e superfície molhada de 31 m²; um meio-cilindro de raio 1 m e 10 m de comprimento volta com <strong>0,01 %</strong> de erro e Cm igual a π/4; e o caso quinado bate com o motor anterior dentro de <strong>0,1 %</strong> em todas as grandezas. A malha renderizada, fechada com convés e espelho e integrada pelo teorema da divergência, confere com o volume analítico melhor que 0,01 %.</p>
+        <p>O calado é medido acima do ponto mais baixo da quilha, o mesmo datum da tabela. O deslocamento sai do volume multiplicado pela densidade escolhida no alternador — água salgada a 1025 kg/m³ ou água doce a 1000 kg/m³, uma diferença de 2,5 % no peso para a mesma forma.</p>
+      </div>
+      <div>
+        <h3>Onde isto é estimativa</h3>
+        <p><span class="flag">atenção</span> A tabela é a única informação disponível. Entre as balizas o casco é interpolado, e a finura do bojo depende de quantos níveis a tabela traz: três níveis definem bem uma baliza da família da super-elipse, mas uma forma fora dela — bojo com raio marcado, costado tombado, pé de quilha — pede mais níveis. O leitor aceita quantos você fornecer.</p>
+      </div>
+    </div>
+  </details>
+
+  <footer>
+    <span class="f-brand">Brana · Projetos Navais</span>
+    <span class="f-note" id="footNote">{{FOOT_NOTE}}</span>
+  </footer>
+</div>
+
+<script>
+/* == INLINE_CORE == */
+</script>
+
+<script>
+"use strict";
+(function(){
+
+var canvas = document.getElementById('gl');
+var gl = null;
+try {
+  gl = canvas.getContext('webgl', {antialias:true, alpha:false, depth:true})
+    || canvas.getContext('experimental-webgl', {antialias:true, alpha:false, depth:true});
+} catch(e){}
+if(!gl){
+  canvas.outerHTML = '<div class="nogl">Este visualizador precisa de WebGL, e este navegador não o entrega. ' +
+                     'A tabela de cotas e a hidrostática abaixo continuam funcionando.</div>';
+  canvas = null;
+}
+
+/* ---------------------------------------------------------------- matrizes */
+function m4mul(o,a,b){
+  for(var i=0;i<4;i++) for(var j=0;j<4;j++){
+    var s=0; for(var k=0;k<4;k++) s += a[k*4+j]*b[i*4+k];
+    o[i*4+j]=s;
+  }
+  return o;
+}
+function m4persp(o,fovy,asp,n,f){
+  var t = 1/Math.tan(fovy/2);
+  o[0]=t/asp;o[1]=0;o[2]=0;o[3]=0;
+  o[4]=0;o[5]=t;o[6]=0;o[7]=0;
+  o[8]=0;o[9]=0;o[10]=(f+n)/(n-f);o[11]=-1;
+  o[12]=0;o[13]=0;o[14]=2*f*n/(n-f);o[15]=0;
+  return o;
+}
+function m4ortho(o,l,r,b,t,n,f){
+  o[0]=2/(r-l);o[1]=0;o[2]=0;o[3]=0;
+  o[4]=0;o[5]=2/(t-b);o[6]=0;o[7]=0;
+  o[8]=0;o[9]=0;o[10]=-2/(f-n);o[11]=0;
+  o[12]=-(r+l)/(r-l);o[13]=-(t+b)/(t-b);o[14]=-(f+n)/(f-n);o[15]=1;
+  return o;
+}
+function m4look(o,e,c,u){
+  var zx=e[0]-c[0], zy=e[1]-c[1], zz=e[2]-c[2];
+  var L=Math.sqrt(zx*zx+zy*zy+zz*zz)||1; zx/=L; zy/=L; zz/=L;
+  var xx=u[1]*zz-u[2]*zy, xy=u[2]*zx-u[0]*zz, xz=u[0]*zy-u[1]*zx;
+  L=Math.sqrt(xx*xx+xy*xy+xz*xz)||1; xx/=L; xy/=L; xz/=L;
+  var yx=zy*xz-zz*xy, yy=zz*xx-zx*xz, yz=zx*xy-zy*xx;
+  o[0]=xx;o[1]=yx;o[2]=zx;o[3]=0;
+  o[4]=xy;o[5]=yy;o[6]=zy;o[7]=0;
+  o[8]=xz;o[9]=yz;o[10]=zz;o[11]=0;
+  o[12]=-(xx*e[0]+xy*e[1]+xz*e[2]);
+  o[13]=-(yx*e[0]+yy*e[1]+yz*e[2]);
+  o[14]=-(zx*e[0]+zy*e[1]+zz*e[2]);
+  o[15]=1;
+  return o;
+}
+
+/* ----------------------------------------------------------------- shaders */
+var VS_SURF =
+ 'attribute vec3 aPos; attribute vec3 aNrm;' +
+ 'uniform mat4 uMVP;' +
+ 'varying vec3 vN; varying vec3 vP;' +
+ 'void main(){ vN = aNrm; vP = aPos; gl_Position = uMVP * vec4(aPos,1.0); }';
+var FS_SURF =
+ 'precision mediump float;' +
+ 'varying vec3 vN; varying vec3 vP;' +
+ 'uniform vec3 uL1, uL2, uEye, uTop, uBot, uFlat;' +
+ 'uniform float uDraft, uAmb, uUseFlat;' +
+ 'void main(){' +
+ '  vec3 n = normalize(vN);' +
+ '  if(!gl_FrontFacing) n = -n;' +
+ '  vec3 v = normalize(uEye - vP);' +
+ '  float d1 = max(dot(n, uL1), 0.0);' +
+ '  float d2 = max(dot(n, uL2), 0.0);' +
+ '  vec3 h = normalize(uL1 + v);' +
+ '  float spec = pow(max(dot(n,h),0.0), 42.0) * 0.22;' +
+ '  float rim  = pow(1.0 - max(dot(n,v),0.0), 3.0) * 0.16;' +
+ '  vec3 base = (uUseFlat > 0.5) ? uFlat : (vP.z < uDraft ? uBot : uTop);' +
+ '  float lam = uAmb + 0.74*d1 + 0.28*d2;' +
+ '  gl_FragColor = vec4(base*lam + vec3(spec + rim), 1.0);' +
+ '}';
+var VS_LINE = 'attribute vec3 aPos; uniform mat4 uMVP; void main(){ gl_Position = uMVP * vec4(aPos,1.0); }';
+var FS_LINE = 'precision mediump float; uniform vec4 uColor; void main(){ gl_FragColor = uColor; }';
+
+function compile(src, type){
+  var s = gl.createShader(type);
+  gl.shaderSource(s, src); gl.compileShader(s);
+  if(!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+  return s;
+}
+function program(vs, fs){
+  var p = gl.createProgram();
+  gl.attachShader(p, compile(vs, gl.VERTEX_SHADER));
+  gl.attachShader(p, compile(fs, gl.FRAGMENT_SHADER));
+  gl.linkProgram(p);
+  if(!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
+  return p;
+}
+var progS = null, progL = null, locS = {}, locL = {};
+if(gl){
+  progS = program(VS_SURF, FS_SURF);
+  progL = program(VS_LINE, FS_LINE);
+  ['aPos','aNrm'].forEach(function(a){ locS[a] = gl.getAttribLocation(progS, a); });
+  ['uMVP','uL1','uL2','uEye','uTop','uBot','uFlat','uDraft','uAmb','uUseFlat'].forEach(function(u){
+    locS[u] = gl.getUniformLocation(progS, u);
+  });
+  locL.aPos = gl.getAttribLocation(progL, 'aPos');
+  locL.uMVP = gl.getUniformLocation(progL, 'uMVP');
+  locL.uColor = gl.getUniformLocation(progL, 'uColor');
+}
+function buf(data, target){
+  var b = gl.createBuffer(), t = target || gl.ARRAY_BUFFER;
+  gl.bindBuffer(t, b);
+  gl.bufferData(t, data, gl.STATIC_DRAW);
+  return b;
+}
+
+/* -------------------------------------------------------------------- cena */
+var NP = 26, NL = 170;            /* pontos por meia-baliza, balizas na malha */
+var hull = null, hydro = null, parsed = null;
+var G = { surf:null, deck:null, transom:null, lines:{}, seaAt:null, wire:null, axes:null };
+var WATER = { salgada:{ rho:1025, nome:'Água salgada' }, doce:{ rho:1000, nome:'Água doce' } };
+var ui = { draft:{{DRAFT0}}, surf:true, deck:true, stn:true, wl:false, but:false, sea:true, mesh:false,
+           view:'proa', water:'salgada' };
+var cam = { az:0.62, el:0.34, dist:12, tx:3, ty:0, tz:0.6 };
+var LOA_M = 6, BEAM_M = 2, DEPTH_M = 1.2, MID = [3, 0, 0.6];
+
+function css(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+function hex2rgb(h){
+  h = h.replace('#','');
+  if(h.length === 3) h = h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+  return [parseInt(h.slice(0,2),16)/255, parseInt(h.slice(2,4),16)/255, parseInt(h.slice(4,6),16)/255];
+}
+var COL = {};
+function readColors(){
+  COL.bg   = hex2rgb(css('--scene-bg'));
+  COL.top  = hex2rgb(css('--hull-top'));
+  COL.bot  = hex2rgb(css('--hull-bot'));
+  COL.deck = hex2rgb(css('--hull-deck'));
+  COL.line = hex2rgb(css('--line-ink'));
+  COL.acc  = hex2rgb(css('--red-l'));
+  COL.blue = hex2rgb(css('--blue'));
+  COL.amb  = hex2rgb(css('--amber'));
+}
+
+/* --------------------------------------------------- planos do alto (buttocks) */
+function pushSeg(a,p,q){ a.push(p[0],p[1],p[2], q[0],q[1],q[2]); }
+function strip(a,pts){ for(var i=0;i<pts.length-1;i++) pushSeg(a, pts[i], pts[i+1]); }
+function mirrorStrip(out,pts){ strip(out, pts.map(function(p){ return [p[0], -p[1], p[2]]; })); }
+
+function buildLines(){
+  var L = {}, i, N = 180, x, s, K = 0.001;
+
+  var st = [];
+  hull.stations.forEach(function(sx){
+    strip(st, ringAt(hull, sx, NP).map(function(p){ return [sx*K, p[0]*K, p[1]*K]; }));
+  });
+  L.stations = st;
+
+  /* quilha e borda: as duas arestas que todo casco tem, redondo ou quinado */
+  var edges = [], pk = [], psp = [], pss = [];
+  for(i=0;i<=N;i++){
+    x = hull.X0 + hull.LOA*i/N; s = hull.section(x);
+    pk.push([x*K, 0, s.zk*K]);
+    psp.push([x*K, -s.ys*K, s.zs*K]); pss.push([x*K, s.ys*K, s.zs*K]);
+  }
+  strip(edges, pk); strip(edges, psp); strip(edges, pss);
+  L.edges = edges;
+
+  var b = hull.bounds(), step = Math.max(50, Math.round((b.maxZ - b.minZ)/10/25)*25);
+  var wl = [];
+  for(var z = Math.ceil(b.minZ/step)*step; z <= b.maxZ; z += step){
+    var run = [];
+    for(i=0;i<=N;i++){
+      x = hull.X0 + hull.LOA*i/N;
+      var y = yAtZ(halfPoly(hull.section(x), NP), z);
+      if(y === null){ if(run.length > 1){ strip(wl, run); mirrorStrip(wl, run); } run = []; }
+      else run.push([x*K, y*K, z*K]);
+    }
+    if(run.length > 1){ strip(wl, run); mirrorStrip(wl, run); }
+  }
+  L.waterlines = wl;
+
+  var bt = [], ystep = Math.max(50, Math.round(b.maxY/4/25)*25);
+  for(var yy = ystep; yy < b.maxY; yy += ystep){
+    var run2 = [];
+    for(i=0;i<=N;i++){
+      x = hull.X0 + hull.LOA*i/N;
+      var z2 = zAtY(halfPoly(hull.section(x), NP), yy);
+      if(z2 === null){ if(run2.length > 1){ strip(bt, run2); mirrorStrip(bt, run2); } run2 = []; }
+      else run2.push([x*K, yy*K, z2*K]);
+    }
+    if(run2.length > 1){ strip(bt, run2); mirrorStrip(bt, run2); }
+  }
+  L.buttocks = bt;
+  return L;
+}
+
+function seaQuad(){
+  var w = Math.max(LOA_M, BEAM_M*4);
+  var x0 = -LOA_M*0.35, x1 = LOA_M*1.35, y0 = -w*0.6, y1 = w*0.6;
+  return new Float32Array([ x0,y0,0, x1,y0,0, x1,y1,0,  x0,y0,0, x1,y1,0, x0,y1,0 ]);
+}
+function wireFromMesh(m){
+  var out = [], i, j, step = 5;
+  for(i=0;i<=m.NL;i+=step) for(j=0;j<m.R-1;j++){
+    var a=(i*m.R+j)*3, b=(i*m.R+j+1)*3;
+    out.push(m.pos[a],m.pos[a+1],m.pos[a+2], m.pos[b],m.pos[b+1],m.pos[b+2]);
+  }
+  for(j=0;j<m.R;j+=3) for(i=0;i<m.NL;i++){
+    var c=(i*m.R+j)*3, d=((i+1)*m.R+j)*3;
+    out.push(m.pos[c],m.pos[c+1],m.pos[c+2], m.pos[d],m.pos[d+1],m.pos[d+2]);
+  }
+  return new Float32Array(out);
+}
+
+function rebuildGL(){
+  if(!gl) return;
+  var mesh = buildMesh(hull, NL, NP);
+  function pack(m){
+    return { pos:buf(m.pos), nrm:buf(m.nrm),
+             idx:buf(new Uint16Array(m.idx), gl.ELEMENT_ARRAY_BUFFER), n:m.idx.length };
+  }
+  G.surf = pack(mesh);
+  G.transom = pack(buildTransom(hull, NP));
+  G.deck = pack(buildDeck(hull, NL));
+  var lw = wireFromMesh(mesh);
+  G.wire = { b:buf(lw), n:lw.length/3 };
+  var L = buildLines();
+  G.lines = {};
+  ['stations','edges','waterlines','buttocks'].forEach(function(k){
+    var a = new Float32Array(L[k]);
+    G.lines[k] = { b:buf(a), n:a.length/3 };
+  });
+  G.seaAt = (function(){
+    var key = null, b2 = null;
+    return function(z){
+      if(key !== z){
+        var q = seaQuad(), i;
+        for(i=2;i<q.length;i+=3) q[i] = z;
+        if(b2) gl.deleteBuffer(b2);
+        b2 = buf(q); key = z;
+      }
+      return b2;
+    };
+  })();
+}
+
+/* ------------------------------------------------------------------- câmera */
+var FOV = 0.86;
+function eyePos(){
+  var ce = Math.cos(cam.el), se = Math.sin(cam.el);
+  return [ cam.tx + cam.dist*ce*Math.cos(cam.az),
+           cam.ty + cam.dist*ce*Math.sin(cam.az),
+           cam.tz + cam.dist*se ];
+}
+/* Enquadra a caixa envolvente como a câmera realmente a vê. Uma esfera envolvente
+   é simples mas conservadora demais para algo com 6 m de comprimento e 1,2 m de
+   pontal: de perfil deixaria o casco como uma fita no meio da tela. */
+function fitView(){
+  cam.tx = MID[0]; cam.ty = MID[1]; cam.tz = MID[2];
+  var ce = Math.cos(cam.el), se = Math.sin(cam.el);
+  var fx = -ce*Math.cos(cam.az), fy = -ce*Math.sin(cam.az), fz = -se;
+  var rx = fy, ry = -fx, rz = 0;
+  var rl = Math.sqrt(rx*rx + ry*ry) || 1; rx /= rl; ry /= rl;
+  var ux = ry*fz - rz*fy, uy = rz*fx - rx*fz, uz = rx*fy - ry*fx;
+  var hx = LOA_M/2, hy = BEAM_M/2, hz = DEPTH_M/2;
+  var aspect = (canvas && canvas.clientWidth && canvas.clientHeight)
+             ? canvas.clientWidth/canvas.clientHeight : 16/9;
+  var tanV = Math.tan(FOV/2), tanH = tanV*aspect;
+  /* Condicao exata, vertice por vertice. Somar a pior largura com a pior profundidade
+     supoe que as duas acontecem no mesmo canto da caixa, o que nao e verdade: numa
+     vista de bochecha isso afastava a camera 24% mais do que o necessario. Para um
+     vertice com deslocamento o em relacao ao centro, a profundidade na camera vale
+     dist + o.f, e ele cabe no quadro quando |o.r| <= (dist + o.f)*tanH e
+     |o.u| <= (dist + o.f)*tanV. Basta o maior dist exigido entre os oito. */
+  var need = 0, sx, sy, sz;
+  for(sx=-1;sx<=1;sx+=2) for(sy=-1;sy<=1;sy+=2) for(sz=-1;sz<=1;sz+=2){
+    var ox = sx*hx, oy = sy*hy, oz = sz*hz;
+    var pr = Math.abs(ox*rx + oy*ry + oz*rz);
+    var pu = Math.abs(ox*ux + oy*uy + oz*uz);
+    var pf = ox*fx + oy*fy + oz*fz;
+    var d = Math.max(pr/tanH, pu/tanV) - pf;
+    if(d > need) need = d;
+  }
+  cam.dist = Math.max(0.8, Math.min(120, need*1.12));
+}
+var VIEWS = {
+  proa:    { az: 0.62, el: 0.34, name:'Bochecha de proa' },
+  popa:    { az: 2.62, el: 0.30, name:'Alheta de popa' },
+  perfil:  { az: Math.PI/2, el: 0.0, name:'Perfil' },
+  planta:  { az:-Math.PI/2 + 0.0001, el: 1.5533, name:'Planta' },
+  frente:  { az: 0.0, el: 0.03, name:'De proa' },
+  fundo:   { az: 1.05, el:-0.55, name:'Fundo' }
+};
+function setView(k){
+  var v = VIEWS[k]; if(!v) return;
+  ui.view = k; cam.az = v.az; cam.el = v.el;
+  fitView();
+  document.getElementById('viewName').textContent = v.name;
+  syncViewChips(); draw();
+}
+
+/* ---------------------------------------------------------------- desenho */
+var P = new Float32Array(16), V = new Float32Array(16), MVP = new Float32Array(16);
+var dirty = true;
+function draw(){ dirty = true; }
+
+function bindSurf(o){
+  gl.bindBuffer(gl.ARRAY_BUFFER, o.pos);
+  gl.enableVertexAttribArray(locS.aPos);
+  gl.vertexAttribPointer(locS.aPos, 3, gl.FLOAT, false, 0, 0);
+  gl.bindBuffer(gl.ARRAY_BUFFER, o.nrm);
+  gl.enableVertexAttribArray(locS.aNrm);
+  gl.vertexAttribPointer(locS.aNrm, 3, gl.FLOAT, false, 0, 0);
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, o.idx);
+}
+function drawLines(o, color, width){
+  if(!o || !o.n) return;
+  gl.useProgram(progL);
+  gl.uniformMatrix4fv(locL.uMVP, false, MVP);
+  gl.uniform4f(locL.uColor, color[0], color[1], color[2], color[3] === undefined ? 1 : color[3]);
+  gl.bindBuffer(gl.ARRAY_BUFFER, o.b);
+  gl.enableVertexAttribArray(locL.aPos);
+  gl.vertexAttribPointer(locL.aPos, 3, gl.FLOAT, false, 0, 0);
+  gl.lineWidth(width || 1);
+  gl.drawArrays(gl.LINES, 0, o.n);
+}
+
+function render(){
+  if(!gl || !G.surf) return;
+  var dpr = Math.min(window.devicePixelRatio || 1, 2);
+  var w = Math.max(1, Math.round(canvas.clientWidth * dpr));
+  var h = Math.max(1, Math.round(canvas.clientHeight * dpr));
+  if(canvas.width !== w || canvas.height !== h){ canvas.width = w; canvas.height = h; }
+
+  gl.viewport(0, 0, w, h);
+  gl.clearColor(COL.bg[0], COL.bg[1], COL.bg[2], 1);
+  gl.enable(gl.DEPTH_TEST);
+  gl.depthMask(true);
+  gl.disable(gl.BLEND);
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+  var eye = eyePos();
+  m4persp(P, FOV, w/h, 0.02, 400);
+  m4look(V, eye, [cam.tx, cam.ty, cam.tz], [0,0,1]);
+  m4mul(MVP, P, V);
+  var draftM = ui.draft/1000;
+
+  if(ui.surf){
+    gl.useProgram(progS);
+    gl.uniformMatrix4fv(locS.uMVP, false, MVP);
+    gl.uniform3f(locS.uL1, 0.42, -0.55, 0.72);
+    gl.uniform3f(locS.uL2, -0.60, 0.42, 0.24);
+    gl.uniform3fv(locS.uEye, eye);
+    gl.uniform3fv(locS.uTop, COL.top);
+    gl.uniform3fv(locS.uBot, COL.bot);
+    gl.uniform1f(locS.uDraft, draftM);
+    gl.uniform1f(locS.uAmb, 0.32);
+    gl.enable(gl.POLYGON_OFFSET_FILL);
+    gl.polygonOffset(1.2, 1.2);
+
+    gl.uniform1f(locS.uUseFlat, 0);
+    bindSurf(G.surf);
+    gl.drawElements(gl.TRIANGLES, G.surf.n, gl.UNSIGNED_SHORT, 0);
+
+    gl.uniform3fv(locS.uFlat, COL.deck);
+    gl.uniform1f(locS.uUseFlat, 1);
+    bindSurf(G.transom);
+    gl.drawElements(gl.TRIANGLES, G.transom.n, gl.UNSIGNED_SHORT, 0);
+    if(ui.deck){
+      bindSurf(G.deck);
+      gl.drawElements(gl.TRIANGLES, G.deck.n, gl.UNSIGNED_SHORT, 0);
+    }
+    gl.disable(gl.POLYGON_OFFSET_FILL);
+  }
+
+  if(ui.mesh) drawLines(G.wire, [COL.line[0],COL.line[1],COL.line[2],0.26], 1);
+  if(ui.wl)   drawLines(G.lines.waterlines, [COL.blue[0],COL.blue[1],COL.blue[2],0.9], 1);
+  if(ui.but)  drawLines(G.lines.buttocks, [COL.amb[0],COL.amb[1],COL.amb[2],0.85], 1);
+  if(ui.stn)  drawLines(G.lines.stations, [COL.line[0],COL.line[1],COL.line[2],0.9], 1);
+  drawLines(G.lines.edges, [COL.acc[0],COL.acc[1],COL.acc[2],1], 2);
+
+  if(ui.sea && G.seaAt){
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.depthMask(false);
+    gl.useProgram(progL);
+    gl.uniformMatrix4fv(locL.uMVP, false, MVP);
+    gl.uniform4f(locL.uColor, COL.blue[0], COL.blue[1], COL.blue[2], 0.20);
+    gl.bindBuffer(gl.ARRAY_BUFFER, G.seaAt(draftM));
+    gl.enableVertexAttribArray(locL.aPos);
+    gl.vertexAttribPointer(locL.aPos, 3, gl.FLOAT, false, 0, 0);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+    gl.depthMask(true);
+    gl.disable(gl.BLEND);
+  }
+  drawGnomon(w, h);
+}
+
+function drawGnomon(w, h){
+  var dpr = Math.min(window.devicePixelRatio || 1, 2);
+  var size = Math.round(74*dpr), pad = Math.round(10*dpr);
+  gl.enable(gl.SCISSOR_TEST);
+  gl.scissor(pad, pad, size, size);
+  gl.clear(gl.DEPTH_BUFFER_BIT);
+  gl.viewport(pad, pad, size, size);
+  var Pg = new Float32Array(16), Vg = new Float32Array(16), Mg = new Float32Array(16);
+  m4ortho(Pg, -1.6, 1.6, -1.6, 1.6, -8, 8);
+  var ce = Math.cos(cam.el), se = Math.sin(cam.el);
+  m4look(Vg, [3*ce*Math.cos(cam.az), 3*ce*Math.sin(cam.az), 3*se], [0,0,0], [0,0,1]);
+  m4mul(Mg, Pg, Vg);
+  gl.useProgram(progL);
+  gl.uniformMatrix4fv(locL.uMVP, false, Mg);
+  if(!G.axes) G.axes = {
+    x: buf(new Float32Array([0,0,0, 1,0,0])),
+    y: buf(new Float32Array([0,0,0, 0,1,0])),
+    z: buf(new Float32Array([0,0,0, 0,0,1]))
+  };
+  [['x',[0.91,0.45,0.42]],['y',[0.61,0.84,0.61]],['z',[0.50,0.71,0.87]]].forEach(function(p){
+    gl.uniform4f(locL.uColor, p[1][0], p[1][1], p[1][2], 1);
+    gl.bindBuffer(gl.ARRAY_BUFFER, G.axes[p[0]]);
+    gl.enableVertexAttribArray(locL.aPos);
+    gl.vertexAttribPointer(locL.aPos, 3, gl.FLOAT, false, 0, 0);
+    gl.lineWidth(2);
+    gl.drawArrays(gl.LINES, 0, 2);
+  });
+  gl.disable(gl.SCISSOR_TEST);
+  gl.viewport(0, 0, w, h);
+}
+
+function loop(){
+  if(dirty && gl && G.surf){ dirty = false; render(); updateCamInfo(); }
+  requestAnimationFrame(loop);
+}
+function updateCamInfo(){
+  var el = document.getElementById('camInfo');
+  var deg = function(r){ return Math.round(r*180/Math.PI); };
+  el.textContent = 'az ' + ((deg(cam.az)%360+360)%360) + '°  el ' + deg(cam.el) + '°  ' +
+                   fmt(cam.dist,1) + ' m';
+}
+
+/* -------------------------------------------------------------- interação */
+var ptrs = {}, mode = null, last = null, pinch0 = 0, dist0 = 0;
+function ptrList(){ var a = []; for(var k in ptrs) a.push(ptrs[k]); return a; }
+
+if(canvas){
+canvas.addEventListener('pointerdown', function(e){
+  canvas.setPointerCapture(e.pointerId);
+  ptrs[e.pointerId] = {x:e.clientX, y:e.clientY};
+  var n = ptrList().length;
+  if(n === 1){
+    mode = (e.button === 2 || e.button === 1 || e.shiftKey) ? 'pan' : 'orbit';
+    last = {x:e.clientX, y:e.clientY};
+    canvas.classList.add('dragging');
+  } else if(n === 2){
+    mode = 'pinch';
+    var p = ptrList();
+    pinch0 = Math.sqrt(Math.pow(p[0].x-p[1].x,2) + Math.pow(p[0].y-p[1].y,2));
+    dist0 = cam.dist;
+    last = {x:(p[0].x+p[1].x)/2, y:(p[0].y+p[1].y)/2};
+  }
+  e.preventDefault();
+});
+canvas.addEventListener('pointermove', function(e){
+  if(!ptrs[e.pointerId]) return;
+  ptrs[e.pointerId] = {x:e.clientX, y:e.clientY};
+  var p = ptrList();
+  if(mode === 'orbit' && p.length === 1){
+    cam.az -= (e.clientX - last.x)*0.0075;
+    cam.el = Math.max(-1.5533, Math.min(1.5533, cam.el + (e.clientY - last.y)*0.0075));
+    last = {x:e.clientX, y:e.clientY};
+    ui.view = ''; document.getElementById('viewName').textContent = 'Livre'; syncViewChips();
+    draw();
+  } else if(mode === 'pan' && p.length === 1){
+    panBy(e.clientX - last.x, e.clientY - last.y);
+    last = {x:e.clientX, y:e.clientY};
+    draw();
+  } else if(mode === 'pinch' && p.length === 2){
+    var d = Math.sqrt(Math.pow(p[0].x-p[1].x,2) + Math.pow(p[0].y-p[1].y,2));
+    if(pinch0 > 4) cam.dist = Math.max(0.6, Math.min(120, dist0 * pinch0/Math.max(d,4)));
+    var mx = (p[0].x+p[1].x)/2, my = (p[0].y+p[1].y)/2;
+    panBy(mx - last.x, my - last.y);
+    last = {x:mx, y:my};
+    draw();
+  }
+  e.preventDefault();
+});
+function endPtr(e){
+  delete ptrs[e.pointerId];
+  try{ canvas.releasePointerCapture(e.pointerId); }catch(err){}
+  var n = ptrList().length;
+  if(n === 0){ mode = null; canvas.classList.remove('dragging'); }
+  else if(n === 1){ mode = 'orbit'; var p = ptrList()[0]; last = {x:p.x, y:p.y}; }
+}
+canvas.addEventListener('pointerup', endPtr);
+canvas.addEventListener('pointercancel', endPtr);
+canvas.addEventListener('contextmenu', function(e){ e.preventDefault(); });
+canvas.addEventListener('wheel', function(e){
+  e.preventDefault();
+  cam.dist = Math.max(0.6, Math.min(120, cam.dist * Math.exp((e.deltaY > 0 ? 1 : -1)*0.12)));
+  draw();
+}, {passive:false});
+}
+
+/* Desloca no plano da tela, na escala em que o modelo acompanha o cursor. */
+function panBy(dx, dy){
+  var eye = eyePos();
+  var fx = cam.tx - eye[0], fy = cam.ty - eye[1], fz = cam.tz - eye[2];
+  var fl = Math.sqrt(fx*fx+fy*fy+fz*fz) || 1; fx/=fl; fy/=fl; fz/=fl;
+  var rx = fy, ry = -fx, rz = 0;
+  var rl = Math.sqrt(rx*rx+ry*ry) || 1; rx/=rl; ry/=rl;
+  var ux = ry*fz - rz*fy, uy = rz*fx - rx*fz, uz = rx*fy - ry*fx;
+  var scale = 2*cam.dist*Math.tan(FOV/2) / Math.max(canvas ? canvas.clientHeight : 400, 1);
+  cam.tx -= (rx*dx - ux*dy)*scale;
+  cam.ty -= (ry*dx - uy*dy)*scale;
+  cam.tz -= (rz*dx - uz*dy)*scale;
+}
+
+/* ---------------------------------------------------------------- leituras */
+function fmt(v, d){
+  return v.toLocaleString('pt-BR', {minimumFractionDigits:d, maximumFractionDigits:d});
+}
+
+function renderTable(){
+  var head, body, i;
+  if(parsed.mode === 'quinado'){
+    head = ['Baliza','x','½-boca borda','½-boca chine','Alt. borda','Alt. chine','Alt. quilha'];
+    body = parsed.rows.map(function(r){
+      return [r.stn, fmt(r.x,0), fmt(r.ys,1), fmt(r.yc,1), fmt(r.zs,1), fmt(r.zc,1), fmt(r.zk,1)];
+    });
+  } else {
+    var nMid = parsed.nMid;
+    head = ['Baliza','x','Alt. quilha','Alt. borda'];
+    for(i=0;i<nMid;i++) head.push('½-boca ' + Math.round((i+1)/(nMid+1)*100) + '%');
+    head.push('½-boca borda');
+    body = parsed.rows.map(function(r){
+      var row = [r.stn, fmt(r.x,0), fmt(r.zk,1), fmt(r.zs,1)];
+      r.mids.forEach(function(m){ row.push(fmt(m,1)); });
+      row.push(fmt(r.ys,1));
+      return row;
+    });
+  }
+  var h = '<thead><tr>' + head.map(function(t){ return '<th>' + t + '</th>'; }).join('') + '</tr></thead><tbody>';
+  h += body.map(function(r){
+    return '<tr>' + r.map(function(c){ return '<td>' + c + '</td>'; }).join('') + '</tr>';
+  }).join('');
+  document.getElementById('offTable').innerHTML = h + '</tbody>';
+
+  var note = 'mm da linha de centro, alturas acima do ponto mais baixo da quilha';
+  if(parsed.mode === 'redondo'){
+    var sMid = hull.section(hull.X0 + hull.LOA*0.4);
+    note += ' · baliza redonda, super-elipse p = ' + fmt(sMid.p, 2) +
+            (sMid.superFits ? '' : ' (ajuste fraco: usando cúbica monótona)');
+  } else {
+    note += ' · baliza quinada, chine como nó exato';
+  }
+  document.getElementById('offNote').textContent = note;
+}
+
+function renderHydro(){
+  hydro = hydrostatics(hull, ui.draft, WATER[ui.water].rho, NP);
+  var h = hydro;
+  var rows = [
+    ['Deslocamento', fmt(h.disp,0), 'kg'],
+    ['Volume', fmt(h.V,3), 'm³'],
+    ['Compr. na LA', fmt(h.Lwl,2), 'm'],
+    ['Boca na LA', fmt(h.Bwl,2), 'm'],
+    ['Calado', fmt(h.T,3), 'm'],
+    ['Área do plano da linha d’água', fmt(h.Aw,2), 'm²'],
+    ['Área da superfície molhada', fmt(h.wsa,2), 'm²'],
+    ['Área da mestra', fmt(h.Am,3), 'm²'],
+    ['LCB da popa', fmt(h.LCB,2), 'm'],
+    ['LCF da popa', fmt(h.LCF,2), 'm'],
+    ['Cb (bloco)', fmt(h.Cb,3), ''],
+    ['Cp (prismático)', fmt(h.Cp,3), ''],
+    ['Cw (flutuação)', fmt(h.Cw,3), ''],
+    ['Cm (mestra)', fmt(h.Cm,3), '']
+  ];
+  document.getElementById('hydro').innerHTML = rows.map(function(r){
+    return '<div class="ro"><div class="ro-k">' + r[0] + '</div><div class="ro-v">' + r[1] +
+           (r[2] ? ' <small>' + r[2] + '</small>' : '') + '</div></div>';
+  }).join('');
+  document.getElementById('hydroSub').textContent =
+    'a ' + fmt(ui.draft,0) + ' mm · ' + WATER[ui.water].nome.toLowerCase() +
+    ' ' + WATER[ui.water].rho + ' kg/m³';   /* densidade sem separador de milhar: 1025, nao 1.025 */
+}
+
+/* ------------------------------------------------------------- construção */
+function loadParsed(p){
+  parsed = p;
+  hull = makeHull(p);
+  var b = hull.bounds();
+  LOA_M = hull.LOA/1000;
+  BEAM_M = 2*b.maxY/1000;
+  DEPTH_M = (b.maxZ - b.minZ)/1000;
+  MID = [ (hull.X0 + hull.LOA/2)/1000, 0, (b.minZ + b.maxZ)/2000 ];
+  var slider = document.getElementById('draft');
+  slider.max = Math.floor(b.maxZ);
+  if(ui.draft > b.maxZ) ui.draft = Math.round(b.maxZ*0.45);
+  slider.value = ui.draft;
+  document.getElementById('draftVal').textContent = fmt(ui.draft,0) + ' mm';
+  document.getElementById('tbStn').textContent = p.rows.length;
+  document.getElementById('tbLoa').textContent = fmt(LOA_M,3) + ' m';
+  document.getElementById('tbForm').textContent = p.mode === 'redondo' ? 'redonda' : 'quinada';
+  document.getElementById('warnLine').textContent =
+    (p.warn && p.warn.length) ? (p.warn.length + ' aviso' + (p.warn.length>1?'s':'') + ': ' + p.warn[0]) : '';
+  rebuildGL();
+  renderTable(); renderHydro(); fitView(); draw();
+}
+
+/* ---------------------------------------------------------------- comandos */
+function syncViewChips(){
+  var box = document.getElementById('viewChips');
+  var keys = ['proa','popa','perfil','planta','frente','fundo'];
+  box.innerHTML = keys.map(function(k){
+    return '<button type="button" class="chip" data-v="' + k + '" aria-pressed="' + (ui.view===k) + '">' +
+           VIEWS[k].name + '</button>';
+  }).join('');
+  Array.prototype.forEach.call(box.querySelectorAll('.chip'), function(btn){
+    btn.addEventListener('click', function(){ setView(btn.getAttribute('data-v')); });
+  });
+}
+syncViewChips();
+
+function bindToggle(id, key){
+  document.getElementById(id).addEventListener('change', function(e){ ui[key] = e.target.checked; draw(); });
+}
+bindToggle('tSurf','surf'); bindToggle('tDeck','deck'); bindToggle('tStn','stn');
+bindToggle('tWl','wl'); bindToggle('tBut','but'); bindToggle('tSea','sea'); bindToggle('tMesh','mesh');
+
+document.getElementById('draft').addEventListener('input', function(e){
+  ui.draft = +e.target.value;
+  document.getElementById('draftVal').textContent = fmt(ui.draft,0) + ' mm';
+  renderHydro(); draw();
+});
+document.getElementById('fit').addEventListener('click', function(){ fitView(); draw(); });
+
+/* A densidade não mexe na geometria, só no peso do volume deslocado: repinta a
+   hidrostática sem reconstruir a malha nem mover a câmera. */
+function syncWater(){
+  var box = document.getElementById('waterChips');
+  box.innerHTML = ['salgada','doce'].map(function(k){
+    return '<button type="button" class="chip" data-w="' + k + '" aria-pressed="' +
+           (ui.water === k) + '">' + WATER[k].nome + '</button>';
+  }).join('');
+  Array.prototype.forEach.call(box.querySelectorAll('.chip'), function(btn){
+    btn.addEventListener('click', function(){
+      ui.water = btn.getAttribute('data-w');
+      syncWater(); renderHydro();
+    });
+  });
+}
+syncWater();
+
+function applyText(txt, okMsg){
+  var msg = document.getElementById('msg');
+  try {
+    var p = parseOffsets(txt);
+    loadParsed(p);
+    msg.className = 'msg ok';
+    msg.textContent = (okMsg || 'Casco reconstruído') + ': ' + p.rows.length + ' balizas, baliza ' +
+      (p.mode === 'redondo' ? 'redonda' : 'quinada') +
+      (p.warn.length ? ' — ' + p.warn.length + ' aviso(s): ' + p.warn.join('; ') : '.');
+  } catch(err){
+    msg.className = 'msg err';
+    msg.textContent = 'Não consegui ler essa tabela — ' + err.message;
+  }
+}
+document.getElementById('apply').addEventListener('click', function(){
+  applyText(document.getElementById('tsv').value);
+});
+document.getElementById('revert').addEventListener('click', function(){
+  document.getElementById('tsv').value = {{TSV_PRIMARY}};
+  applyText({{TSV_PRIMARY}}, '{{MSG_REVERT}}');
+});
+document.getElementById('demoChine').addEventListener('click', function(){
+  document.getElementById('tsv').value = {{TSV_ALT}};
+  applyText({{TSV_ALT}}, '{{MSG_ALT}}');
+});
+
+var lastW = 0;
+function onResize(){
+  if(!canvas) return;
+  var w = canvas.getBoundingClientRect().width;
+  if(Math.abs(w - lastW) < 0.5) return;
+  lastW = w; fitView(); draw();
+}
+window.addEventListener('resize', onResize);
+window.addEventListener('orientationchange', function(){ setTimeout(onResize, 260); });
+if(window.ResizeObserver && canvas){ try{ new ResizeObserver(onResize).observe(canvas); }catch(e){} }
+
+/* ------------------------------------------------------------------ início */
+readColors();
+document.getElementById('tsv').value = {{TSV_PRIMARY}};
+loadParsed(parseOffsets({{TSV_PRIMARY}}));
+setView('proa');
+if(canvas){
+  lastW = canvas.getBoundingClientRect().width;
+  loop();
+  requestAnimationFrame(function(){ fitView(); draw(); });
+}
+
+window.__CASCO3D__ = { get hull(){ return hull; }, get hydro(){ return hydro; },
+                       get parsed(){ return parsed; }, cam: cam, ui: ui, setView: setView,
+                       draw: draw, render: render, fitView: fitView, gl: gl, G: G,
+                       applyText: applyText };
+})();
+</script>

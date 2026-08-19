@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "iarquiteto-naval-brana",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Ferramenta de apoio ao projeto de embarcacoes com IA. Skills de arquitetura naval: levantamento de requisitos (Caso de Uso), estudo de similares e apoio ao dimensionamento preliminar.",
   "author": {
     "name": "cassions"

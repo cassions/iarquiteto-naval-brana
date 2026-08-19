@@ -495,37 +495,10 @@
    Nó: [x, valor, declividade]
    ============================================================ */
 
-var LOA_SQ = 14;
-NST = 8;                          /* numero de balizas do croqui */
-
-var SPEC = {
-  planSheer:{
-    view:'plan', label:'Planta · borda', layer:'PLANTA_BORDA',
-    pts:[[0.00,1.690, 0.400],[1.90,2.210, 0.130],[4.40,2.350, 0.000],[9.50,1.720,-0.240],[14.00,0.000,-0.520]],
-    fixLast:'both'
-  },
-  planChine:{
-    view:'plan', label:'Planta · chine', layer:'PLANTA_CHINE',
-    pts:[[0.00,1.352, 0.340],[1.90,1.724, 0.055],[4.40,1.791, 0.000],[9.50,1.273,-0.200],[14.00,0.000,-0.370]],
-    fixLast:'both'
-  },
-  profSheer:{
-    view:'prof', label:'Perfil · borda', layer:'PERFIL_BORDA',
-    pts:[[0.00,1.831,0.036],[6.00,1.992,0.018],[14.00,2.100,0.009]],
-    fixLast:'x', link:'stem'
-  },
-  profChine:{
-    view:'prof', label:'Perfil · chine', layer:'PERFIL_CHINE',
-    pts:[[0.00,0.910,0.002],[6.00,0.983,0.022],[10.50,1.180,0.066],[12.70,1.570,0.290],[14.00,2.100,0.525]],
-    fixLast:'x', link:'stem'
-  },
-  profKeel:{
-    view:'prof', label:'Perfil · quilha', layer:'PERFIL_QUILHA',
-    pts:[[0.00,0.081,-0.078],[2.20,0.000,0.000],[7.00,0.075,0.032],[11.00,0.560,0.210],[12.80,1.140,0.435],[14.00,2.100,1.165]],
-    fixLast:'x', link:'stem'
-  }
-};
-var ORDER = ['planSheer','planChine','profSheer','profChine','profKeel'];
+var LOA_SQ, NST, SPEC, ORDER, RAW, MID_X, PHOTO_SECT, PHOTO_PTS, LOA_INICIAL, PMID_INICIAL;
+/* O bloco abaixo e injetado por scripts/montar.py a partir do projeto.json.
+   E a unica coisa que muda de croqui para croqui. Nao edite este arquivo. */
+/*{{PROJETO}}*/
 
 /* ---- geometria de vista, derivada do modelo -------------------------------------
    As constantes de escala e de caixa saiam erradas duas vezes quando eram acertadas na
@@ -553,17 +526,6 @@ function layout(){
   VIEW = { y: yMax*1.21, zTop: zMax*1.21, zBot: zB + 0.05 };
 }
 layout();                              /* uma vez, antes de qualquer uso */
-
-/* Pontos lidos na fotografia e devolvidos pela inversa de H. */
-var RAW = {
-  planSheer:[[0.00,1.690],[1.80,2.226],[3.78,2.356],[5.80,2.271],[7.82,2.031],[9.89,1.597],[11.94,0.963],[13.98,0.000]],
-  profSheer:[[0.06,1.831],[5.91,1.990],[9.97,2.093],[14.00,2.064]],
-  profChine:[[0.04,0.910],[6.06,0.985],[10.41,1.174],[12.64,1.564]],
-  profKeel :[[0.00,0.081],[1.87,0.000],[6.11,0.041],[10.44,0.430],[12.66,1.095]]
-};
-/* Seção mestra reprojetada da foto, assentada na altura inicial da quilha na baliza 4. */
-var PHOTO_SECT = { keel:[0,0.047], chine:[1.765,0.806], deck:[2.340,2.104] };
-
 function buildCurve(key){
   var s = SPEC[key], n = s.pts.length, i;
   var nodes = s.pts.map(function(p){ return {x:p[0], y:p[1], a:Math.atan(p[2]), li:0, lo:0, fx:false, fy:false, tanLock:false}; });
@@ -1108,8 +1070,7 @@ function rawMarks(key, tx, ty, mirror){
    desenhar e de medir — o modelo em quadrados nao muda, e como toda transformacao afim
    preserva convexidade, o estiramento nao interfere no alisamento. */
 var ui = { active:'planSheer', station:4, grid:true, comb:false, pts:true, photo:true,
-           loa:6.0, ky:1, kz:1, zoom:1, zoomAuto:true, autoFair:true };
-var MID_X = 6;                 /* baliza 4 — a meia-nau do croqui, onde o pontal e medido */
+           loa:LOA_INICIAL, ky:1, kz:1, zoom:1, zoomAuto:true, autoFair:true };
 var selected = null;
 var VS = { plan:1.2, prof:1.2, body:1.2 };
 function fsz(k, px){ return ' font-size="'+n2(px*k)+'"'; }
@@ -1631,7 +1592,7 @@ function syncStretch(){
 
 document.getElementById('reset').addEventListener('click', function(){
   model = cloneModel(INITIAL); selected = null; GRAND = {}; beamBase = null;
-  ui.loa = 6.0; ui.ky = 1; ui.kz = 1; syncStretch();
+  ui.loa = LOA_INICIAL; ui.ky = 1; ui.kz = 1; syncStretch();
   paint();
   say('Restaurado ao croqui digitalizado.');
 });
