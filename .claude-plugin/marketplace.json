@@ -11,7 +11,10 @@
   "plugins": [
     {
       "name": "iarquiteto-naval-brana",
-      "source": "./",
+      "source": {
+        "source": "github",
+        "repo": "cassions/iarquiteto-naval-brana"
+      },  
       "description": "Skills de arquitetura naval: entrevista guiada de Caso de Uso, estudo de similares e dimensionamento preliminar de embarcacoes.",
       "version": "1.0.1",
       "author": {
