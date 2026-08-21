@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#333333">
+<meta name="description" content="Painel interativo de pesos e centros: __CASCO_DESC_PLANO__. Leve pesos a bordo e veja o casco encontrar o novo plano de linha d'agua, com trim e banda calculados do equilibrio. Projetista: __PROJETISTA__">
+<meta name="author" content="__PROJETISTA__">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Pesos · v2">
+<title>Pesos, Trim e Banda · v2 · __CASCO_TITULO__</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0}
+  button,input,select,textarea{font:inherit;color:inherit}
+  img{max-width:100%}
+</style>
+<style>
+  /* ---------------------------------------------------------------
+     Identidade Brana: fundo grafite, ficha clara para o logotipo,
+     vermelho #9A3231 nos realces e nos cabeçalhos de tabela, Calibri
+     no texto e Consolas nos números. Tema único, como a folha impressa.
+     --------------------------------------------------------------- */
+  :root{
+    --ground:#333333;      /* fundo da página */
+    --graf:#404040;        /* grafite da folha */
+    --box:#2E2E2E;         /* caixa escura */
+    --card:#F7F7F7;        /* ficha clara (logotipo) */
+    --red:#9A3231;         /* vermelho Brana */
+    --red-l:#EE9A98;
+    --red-xl:#F5DADA;
+    --white:#FFFFFF;
+    --light:#E8E8E8;
+    --muted:#BFBFBF;
+    --cell-a:#4D4D4D;
+    --cell-b:#585858;
+    --amber:#FBB12F;
+    --green:#9BD79B;
+    --blue:#7FB6DE;        /* água translúcida no 3D */
+    --blue-ink:#5FAEE6;    /* mesma família, croma suficiente para traço de gráfico */
+    --rule:#555555;
+    --rule-2:#484848;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -18px rgba(0,0,0,.85);
+    /* lidos pelo renderizador e entregues aos shaders */
+    --scene-bg:#3A3A3A;
+    --hull-top:#C9CDD1;
+    --hull-bot:#9A3231;
+    --hull-deck:#8B9196;
+    --line-ink:#E8E8E8;
+    --font-title:"Calibri Light",Calibri,"Segoe UI Light","Segoe UI",system-ui,sans-serif;
+    --font-body:Calibri,"Segoe UI",system-ui,-apple-system,sans-serif;
+    --font-mono:Consolas,"Cascadia Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ground);color:var(--light);font-family:var(--font-body);
+       font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1260px;margin:0 auto;padding:26px 20px 64px;display:flex;flex-direction:column;gap:18px}
+
+  /* ---------- cabeçalho / selo ---------- */
+  .titleblock{border:1px solid var(--rule);background:var(--graf);box-shadow:var(--shadow);
+              display:grid;grid-template-columns:minmax(300px,1.7fr) repeat(3,minmax(96px,.6fr))}
+  .tb-main{padding:0;border-right:1px solid var(--rule);display:flex;flex-direction:column}
+  .logo-card{background:var(--card);padding:11px 20px;display:flex;align-items:center;
+             border-bottom:1px solid var(--rule)}
+  .logo-card img{height:38px;width:auto;display:block}
+  .tb-text{padding:15px 20px 17px;display:flex;flex-direction:column;gap:5px}
+  .tb-eyebrow{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.16em;
+              text-transform:uppercase;color:var(--red-l);font-weight:700}
+  h1{font-family:var(--font-title);font-size:clamp(23px,3.2vw,32px);line-height:1.05;margin:0;
+     font-weight:300;letter-spacing:-.01em;color:var(--white);text-wrap:balance}
+  .tb-sub{color:var(--muted);font-size:14px;max-width:58ch}
+  .tb-cell{padding:14px;border-right:1px solid var(--rule);display:flex;flex-direction:column;
+           gap:3px;justify-content:center}
+  .tb-cell:last-child{border-right:0}
+  .tb-k{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .tb-v{font-family:var(--font-mono);font-size:14px;font-variant-numeric:tabular-nums;color:var(--white)}
+  @media (max-width:860px){
+    .titleblock{grid-template-columns:repeat(3,1fr)}
+    .tb-main{grid-column:1/-1;border-right:0;border-bottom:1px solid var(--rule)}
+    .tb-cell:last-child{border-right:0}
+  }
+
+  /* ---------- barra de comandos ---------- */
+  .toolbar{border:1px solid var(--rule);background:var(--box);box-shadow:var(--shadow);
+           padding:12px 14px;display:flex;flex-wrap:wrap;gap:13px 20px;align-items:center}
+  .grp{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .grp-label{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.14em;
+             text-transform:uppercase;color:var(--muted)}
+  .chips{display:flex;flex-wrap:wrap;gap:5px}
+  .chip{font-family:var(--font-mono);font-size:11px;letter-spacing:.03em;padding:6px 10px;
+        border:1px solid var(--rule);background:var(--graf);color:var(--light);cursor:pointer;
+        border-radius:2px;transition:background .12s,color .12s,border-color .12s}
+  .chip:hover{border-color:var(--red-l);color:var(--white)}
+  .chip[aria-pressed="true"]{background:var(--red);border-color:var(--red);color:var(--white);font-weight:700}
+  .chip:focus-visible,.btn:focus-visible,input:focus-visible,textarea:focus-visible{
+        outline:2px solid var(--red-l);outline-offset:2px}
+  .btn{font-family:var(--font-mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;
+       padding:7px 12px;border:1px solid var(--rule);background:var(--graf);color:var(--light);
+       cursor:pointer;border-radius:2px}
+  .btn:hover{border-color:var(--red-l);color:var(--white)}
+  .btn.pri{border-color:var(--red);background:var(--red);color:var(--white);font-weight:700}
+  .btn.pri:hover{border-color:var(--red-l)}
+  .toggle{display:inline-flex;align-items:center;gap:6px;font-family:var(--font-mono);
+          font-size:11px;color:var(--light);cursor:pointer;user-select:none}
+  .toggle input{accent-color:var(--red);width:14px;height:14px;margin:0}
+
+  /* ---------- palco ---------- */
+  .stage{border:1px solid var(--rule);background:var(--graf);box-shadow:var(--shadow);
+         position:relative;overflow:hidden}
+  #gl{display:block;width:100%;height:min(58vh,560px);max-width:none;touch-action:none;
+      cursor:grab;background:var(--scene-bg)}
+  #gl.dragging{cursor:grabbing}
+  .hud{position:absolute;pointer-events:none;font-family:var(--font-mono);font-size:10.5px;color:var(--muted)}
+  .hud.tl{top:10px;left:12px;display:flex;flex-direction:column;gap:3px}
+  .hud.tr{top:10px;right:12px;display:flex;gap:18px}
+  .hud.br{bottom:10px;right:12px;text-align:right;line-height:1.5}
+  .hud .axk{display:inline-block;width:9px}
+  .axx{color:#E8736C}.axy{color:#9BD79B}.axz{color:#7FB6DE}
+  .nogl{padding:28px;font-family:var(--font-mono);font-size:12px;color:var(--red-l);text-align:center}
+
+  /* leitura de atitude, grande, no canto do palco */
+  .att{display:flex;flex-direction:column;align-items:flex-end;gap:1px}
+  .att-k{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.18em;
+         text-transform:uppercase;color:var(--muted)}
+  .att-v{font-family:var(--font-mono);font-size:clamp(19px,3.4vw,27px);line-height:1.05;
+         font-variant-numeric:tabular-nums;color:var(--white);font-weight:700}
+  .att-n{font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;color:var(--red-l)}
+
+  /* etiquetas dos centros, ancoradas por projeção do ponto 3D */
+  .mark{position:absolute;pointer-events:none;font-family:var(--font-mono);font-size:11.5px;
+        font-weight:700;line-height:1;transform:translate(-50%,-50%);
+        padding:2px 4px;border-radius:2px;background:rgba(46,46,46,.72);
+        text-shadow:0 1px 2px rgba(0,0,0,.9);white-space:nowrap;opacity:0;transition:opacity .15s}
+  .mark.on{opacity:1}
+  .mark.g{color:var(--amber);border:1px solid rgba(251,177,47,.55)}
+  .mark.b{color:var(--blue-ink);border:1px solid rgba(95,174,230,.55)}
+  .mark.p{color:var(--green);border:1px solid rgba(155,215,155,.55)}
+  .mark.p.sel{color:var(--white);border-color:rgba(255,255,255,.55)}
+  .marks{position:absolute;inset:0;pointer-events:none}
+
+  /* ---------- tabela de pesos ---------- */
+  .addbar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:12px 0 12px}
+  table.wtab{width:100%;min-width:540px}
+  table.wtab td{padding:4px 6px;vertical-align:middle}
+  table.wtab tbody tr{cursor:pointer}
+  table.wtab tbody tr.sel td{background:#5C4142}
+  table.wtab tbody tr.sel td:first-child{box-shadow:inset 3px 0 0 var(--red-l)}
+  table.wtab input.num{width:74px;padding:3px 5px;font-size:12px}
+  table.wtab input.nm{width:120px;text-align:left}
+  table.wtab tfoot td{background:var(--graf);color:var(--white);font-weight:700;
+    border-top:2px solid var(--red)}
+  table.wtab .un{color:var(--muted);font-size:9.5px;letter-spacing:.1em}
+  .xbtn{font-family:var(--font-mono);font-size:12px;line-height:1;padding:3px 7px;
+    border:1px solid var(--rule);background:var(--graf);color:var(--muted);
+    cursor:pointer;border-radius:2px}
+  .xbtn:hover{border-color:var(--red-l);color:var(--red-xl)}
+  .xbtn.off{border:0;background:none;cursor:default;color:var(--rule)}
+  .selbar{font-family:var(--font-mono);font-size:10px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--muted);padding:14px 0 2px}
+  .selbar b{color:var(--amber);font-weight:700;text-transform:none;letter-spacing:0;font-size:12px}
+
+  .stagebar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding:10px 12px;
+            border-top:1px solid var(--rule-2)}
+  .warn{font-family:var(--font-mono);font-size:10.5px;color:var(--amber)}
+
+  /* ---------- avisos ---------- */
+  .alerts{display:flex;flex-direction:column;gap:6px}
+  .alerts:empty{display:none}
+  .alert{font-family:var(--font-mono);font-size:11.5px;line-height:1.45;padding:9px 12px;
+         border:1px solid var(--amber);border-left-width:4px;color:var(--amber);background:rgba(251,177,47,.07)}
+  .alert.bad{border-color:var(--red-l);color:var(--red-l);background:rgba(238,154,152,.07)}
+  .alert.ok{border-color:var(--green);color:var(--green);background:rgba(155,215,155,.07)}
+  .alert b{color:var(--white);font-weight:700}
+
+  /* ---------- fichas ---------- */
+  .block{border:1px solid var(--rule);background:var(--box);box-shadow:var(--shadow)}
+  .block-head{padding:12px 16px;border-bottom:1px solid var(--rule);display:flex;flex-wrap:wrap;
+              gap:8px 14px;align-items:baseline;justify-content:space-between}
+  .block-title{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.18em;
+               text-transform:uppercase;font-weight:700;color:var(--white)}
+  .block-sub{font-family:var(--font-mono);font-size:10.5px;color:var(--muted)}
+  .block-body{padding:14px 16px}
+  .ro-grid{display:grid;grid-template-columns:1fr 1fr}
+  .ro{padding:10px 14px;border-bottom:1px solid var(--rule-2);border-right:1px solid var(--rule-2)}
+  .ro:nth-child(even){border-right:0}
+  .ro-k{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.12em;
+        text-transform:uppercase;color:var(--muted)}
+  .ro-v{font-family:var(--font-mono);font-size:17px;font-variant-numeric:tabular-nums;color:var(--white)}
+  .ro-v small{font-size:11px;color:var(--muted)}
+  .ro-v.hi{color:var(--amber)}
+  .ro-v.bad{color:var(--red-l)}
+
+  /* ---------- controles do centro de gravidade ---------- */
+  .cg-body{padding:6px 16px 14px}
+  .cgrow{display:grid;grid-template-columns:minmax(128px,auto) minmax(120px,1fr) 92px minmax(150px,auto);
+         gap:4px 14px;align-items:center;padding:9px 0;border-bottom:1px solid var(--rule-2)}
+  .cgrow:last-child{border-bottom:0}
+  .cgrow .cgk{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.09em;
+              text-transform:uppercase;color:var(--light)}
+  .cgrow .cgk i{font-style:normal;color:var(--muted);letter-spacing:0;text-transform:none}
+  .cgrow input[type=range]{width:100%;accent-color:var(--red);height:24px;margin:0}
+  .cgrow .cgnote{font-family:var(--font-mono);font-size:10px;color:var(--muted);text-align:right}
+  .cgrow .cgnote b{color:var(--blue-ink);font-weight:400}
+  input.num{width:100%;background:var(--graf);border:1px solid var(--rule-2);color:var(--white);
+            font-family:var(--font-mono);font-size:12.5px;padding:5px 7px;text-align:right;
+            border-radius:2px;font-variant-numeric:tabular-nums;-moz-appearance:textfield}
+  input.num::-webkit-outer-spin-button,input.num::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  .cgfoot{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:12px 0 2px}
+  @media (max-width:760px){
+    .cgrow{grid-template-columns:1fr 92px;gap:4px 10px}
+    .cgrow .cgk{grid-column:1/-1}
+    .cgrow input[type=range]{grid-column:1/2}
+    .cgrow .cgnote{grid-column:1/-1;text-align:left}
+  }
+
+  /* ---------- diagramas ---------- */
+  .diagrid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+  @media (max-width:900px){.diagrid{grid-template-columns:1fr}}
+  .cvwrap{padding:12px 16px 10px;position:relative}
+  #secCanvas,#proCanvas{width:100%;height:250px;display:block}
+  #gzCanvas{width:100%;height:236px;display:block;touch-action:none}
+  .lgd{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.06em;
+       color:var(--muted);margin-top:8px;display:flex;gap:14px;flex-wrap:wrap}
+  .lgd b{color:var(--light);font-weight:400}
+  .sw{display:inline-block;width:16px;height:2px;vertical-align:middle;margin-right:5px}
+  .swd{display:inline-block;width:9px;height:9px;border-radius:50%;vertical-align:-1px;margin-right:5px}
+  .gztip{position:absolute;pointer-events:none;opacity:0;transition:opacity .1s;
+         background:var(--graf);border:1px solid var(--rule);padding:5px 8px;border-radius:2px;
+         font-family:var(--font-mono);font-size:10.5px;color:var(--white);white-space:nowrap;
+         transform:translate(-50%,-125%);z-index:3;box-shadow:var(--shadow)}
+  .gztip.on{opacity:1}
+  .gztip i{font-style:normal;color:var(--muted)}
+  .secbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:0 16px 12px}
+  .secbar input[type=range]{flex:1;min-width:120px;accent-color:var(--red);height:22px}
+  .secval{font-family:var(--font-mono);font-size:12px;font-variant-numeric:tabular-nums;
+          color:var(--red-l);font-weight:700;min-width:6.5em;text-align:right}
+
+  table{border-collapse:collapse;width:100%;font-family:var(--font-mono);font-size:12px;
+        font-variant-numeric:tabular-nums}
+  th,td{padding:6px 9px;text-align:right;white-space:nowrap}
+  th{font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--white);
+     font-weight:700;background:var(--red)}
+  tbody tr:nth-child(odd) td{background:var(--cell-a)}
+  tbody tr:nth-child(even) td{background:var(--cell-b)}
+  td{color:var(--light)}
+  th:first-child,td:first-child{text-align:left}
+  .tablewrap{overflow-x:auto}
+
+  textarea.data{width:100%;min-height:150px;resize:vertical;background:var(--graf);color:var(--light);
+    border:1px solid var(--rule-2);padding:10px 12px;font-family:var(--font-mono);font-size:11.5px;
+    line-height:1.5;white-space:pre;border-radius:2px}
+  .msg{font-family:var(--font-mono);font-size:11px;padding:6px 0 0;min-height:20px}
+  .msg.err{color:var(--red-l)}
+  .msg.ok{color:var(--green)}
+
+  details.rec{border:1px solid var(--rule);background:var(--box);box-shadow:var(--shadow)}
+  details.rec>summary{padding:12px 16px;cursor:pointer;list-style:none;display:flex;
+    align-items:center;gap:10px;font-family:var(--font-mono);font-size:10.5px;letter-spacing:.18em;
+    text-transform:uppercase;font-weight:700;color:var(--white)}
+  details.rec>summary::-webkit-details-marker{display:none}
+  details.rec>summary::before{content:"\25B8";color:var(--red-l);font-size:12px;line-height:1}
+  details.rec[open]>summary::before{content:"\25BE"}
+  details.rec[open]>summary{border-bottom:1px solid var(--rule)}
+  .rec-body{padding:18px 20px 22px;display:flex;flex-direction:column;gap:18px}
+  .rec-body h3{font-family:var(--font-mono);font-size:10px;letter-spacing:.16em;
+               text-transform:uppercase;color:var(--red-l);margin:0 0 6px;font-weight:700}
+  .rec-body p{font-size:15px;line-height:1.6;color:var(--muted);margin:0 0 9px;max-width:68ch}
+  .rec-body p:last-child{margin-bottom:0}
+  .rec-body code{font-family:var(--font-mono);font-size:12.5px;background:var(--graf);
+                 padding:1px 4px;border-radius:2px;color:var(--red-xl)}
+  .rec-body strong{color:var(--light)}
+  ul.tight{margin:0;padding-left:18px;font-size:15px;color:var(--muted);line-height:1.58}
+  ul.tight li{margin-bottom:5px;max-width:66ch}
+  .flag{display:inline-block;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.09em;
+        text-transform:uppercase;padding:1px 6px;border:1px solid var(--amber);color:var(--amber);
+        border-radius:2px;vertical-align:2px}
+
+  footer{border:1px solid var(--rule);background:var(--red);color:var(--white);padding:12px 18px;
+         display:flex;flex-wrap:wrap;gap:6px 18px;align-items:baseline;justify-content:space-between;
+         font-family:var(--font-mono);font-size:10.5px;letter-spacing:.04em}
+  footer .f-brand{font-weight:700;letter-spacing:.16em;text-transform:uppercase}
+  footer .f-note{color:var(--red-xl)}
+
+  @media (max-width:700px){
+    .wrap{padding:14px 10px 44px;gap:14px}
+    .toolbar{padding:10px;gap:11px 14px}
+    .chip,.btn{padding:9px 12px;font-size:11.5px}
+    .toggle input{width:17px;height:17px}
+    #gl{height:min(52vh,440px)}
+    h1{font-size:24px}
+    .logo-card{padding:9px 15px}
+    .logo-card img{height:32px}
+    .tb-text{padding:13px 15px 15px}
+    .ro-v{font-size:15px}
+    .rec-body p,ul.tight{font-size:14.5px}
+    .hud.tr{gap:12px}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="titleblock">
+    <div class="tb-main">
+      <div class="logo-card"><img src="data:image/png;base64,__LOGO__" alt="Brana"></div>
+      <div class="tb-text">
+        <div class="tb-eyebrow">Versão 2 · tabela de pesos · __CASCO_DESC__ · Projetista: __PROJETISTA__</div>
+        <h1>Centro de Gravidade, Trim e Banda</h1>
+        <div class="tb-sub">Arraste um peso a bordo — 75 kg, uma pessoa — e o casco procura sozinho a posição em que flutua: o plano d’água inclina, o trim e a banda aparecem no visualizador e nas leituras. O peso <b style="color:var(--green)">P</b> se soma ao do barco e dá o centro de gravidade <b style="color:var(--amber)">G</b>; o ponto <b style="color:var(--blue-ink)">B</b> é o centro de carena que o casco entrega em resposta. No equilíbrio os dois ficam na mesma vertical.</div>
+      </div>
+    </div>
+    <div class="tb-cell"><div class="tb-k">Deslocamento</div><div class="tb-v" id="tbDisp">—</div></div>
+    <div class="tb-cell"><div class="tb-k">Trim</div><div class="tb-v" id="tbTrim">—</div></div>
+    <div class="tb-cell"><div class="tb-k">Banda</div><div class="tb-v" id="tbHeel">—</div></div>
+  </header>
+
+  <div class="toolbar">
+    <div class="grp">
+      <span class="grp-label">Vista</span>
+      <div class="chips" id="viewChips"></div>
+    </div>
+    <div class="grp">
+      <span class="grp-label">Mostrar</span>
+      <label class="toggle"><input type="checkbox" id="tSurf" checked> superfície</label>
+      <label class="toggle"><input type="checkbox" id="tDeck" checked> convés</label>
+      <label class="toggle"><input type="checkbox" id="tStn"> balizas</label>
+      <label class="toggle"><input type="checkbox" id="tSea" checked> plano d’água</label>
+      <label class="toggle"><input type="checkbox" id="tGrid" checked> grade da água</label>
+      <label class="toggle"><input type="checkbox" id="tWl" checked> linha d’água no casco</label>
+      <label class="toggle"><input type="checkbox" id="tMark" checked> G, B e pesos</label>
+      <label class="toggle"><input type="checkbox" id="tMesh"> malha</label>
+    </div>
+    <div class="grp">
+      <button class="btn" id="fit" type="button">Enquadrar</button>
+    </div>
+  </div>
+
+  <section class="stage">
+    <canvas id="gl"></canvas>
+    <div class="hud tl">
+      <span><i class="axk axx">&#9632;</i> x vante</span>
+      <span><i class="axk axy">&#9632;</i> y estibordo</span>
+      <span><i class="axk axz">&#9632;</i> z acima</span>
+      <span id="viewName" style="margin-top:4px;letter-spacing:.13em;text-transform:uppercase;color:var(--white);font-weight:700">Bochecha de proa</span>
+    </div>
+    <div class="hud tr">
+      <div class="att">
+        <span class="att-k">trim</span>
+        <span class="att-v" id="hudTrim">0,00°</span>
+        <span class="att-n" id="hudTrimN">a prumo</span>
+      </div>
+      <div class="att">
+        <span class="att-k">banda</span>
+        <span class="att-v" id="hudHeel">0,00°</span>
+        <span class="att-n" id="hudHeelN">a prumo</span>
+      </div>
+    </div>
+    <div class="hud br" id="camInfo"></div>
+    <div class="mark g" id="lblG">G</div>
+    <div class="mark b" id="lblB">B</div>
+    <div class="marks" id="marks"></div>
+    <div class="stagebar">
+      <span class="grp-label">Água</span>
+      <div class="chips" id="waterChips"></div>
+      <span class="grp-label" style="margin-left:6px">Atalhos</span>
+      <button class="btn" id="btnLevel" type="button">Resetar</button>
+      <button class="btn" id="btnCopy" type="button">Copiar condição</button>
+      <span class="warn" id="warnLine"></span>
+    </div>
+  </section>
+
+  <div class="alerts" id="alerts"></div>
+
+    <div class="block">
+    <div class="block-head">
+      <span class="block-title">Tabela de pesos · o CG sai da soma</span>
+      <span class="block-sub" id="cgSub">—</span>
+    </div>
+    <div class="cg-body">
+      <div class="addbar">
+        <span class="grp-label">Adicionar peso</span>
+        <div class="chips" id="addChips"></div>
+        <span class="warn" id="addNote"></span>
+      </div>
+      <div class="tablewrap">
+        <table class="wtab">
+          <thead><tr>
+            <th>Item</th><th>Peso <span class="un">kg</span></th>
+            <th>x <span class="un">m</span></th><th>y <span class="un">m</span></th>
+            <th>z <span class="un">m</span></th><th></th>
+          </tr></thead>
+          <tbody id="wtBody"></tbody>
+          <tfoot id="wtFoot"></tfoot>
+        </table>
+      </div>
+      <div class="selbar">movendo <b id="selName">—</b></div>
+      <div class="cgrow">
+        <span class="cgk">x · longitudinal <i>(popa → proa)</i></span>
+        <input type="range" id="cgX" min="0" max="1000" step="5" value="500" aria-label="posição longitudinal do item selecionado">
+        <input type="number" class="num" id="cgXn" step="0.001">
+        <span class="cgnote" id="cgXNote">—</span>
+      </div>
+      <div class="cgrow">
+        <span class="cgk">y · transversal <i>(para bordo)</i></span>
+        <input type="range" id="cgY" min="-500" max="500" step="5" value="0" aria-label="posição transversal do item selecionado">
+        <input type="number" class="num" id="cgYn" step="0.001">
+        <span class="cgnote" id="cgYNote">—</span>
+      </div>
+      <div class="cgrow">
+        <span class="cgk">z · vertical <i>(altura)</i></span>
+        <input type="range" id="cgZ" min="0" max="1000" step="5" value="300" aria-label="altura do item selecionado">
+        <input type="number" class="num" id="cgZn" step="0.001">
+        <span class="cgnote" id="cgZNote">—</span>
+      </div>
+      <div class="cgrow">
+        <span class="cgk">massa do item</span>
+        <input type="range" id="pw" min="0" max="600" step="1" value="75" aria-label="massa do item selecionado">
+        <input type="number" class="num" id="pwn" step="1">
+        <span class="cgnote" id="pwNote">—</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="block">
+    <div class="block-head">
+      <span class="block-title">Equilíbrio</span>
+      <span class="block-sub" id="eqSub">—</span>
+    </div>
+    <div class="ro-grid" id="eqGrid"></div>
+  </div>
+
+  <div class="diagrid">
+    <div class="block">
+      <div class="block-head">
+        <span class="block-title">Seção transversal · banda</span>
+        <span class="block-sub" id="secSub">—</span>
+      </div>
+      <div class="cvwrap"><canvas id="secCanvas"></canvas></div>
+      <div class="secbar">
+        <label class="grp-label" for="secX">Baliza em x</label>
+        <input type="range" id="secX" min="0" max="100" step="0.25" value="50" aria-label="posição da seção">
+        <output class="secval" id="secXVal" for="secX">—</output>
+      </div>
+    </div>
+    <div class="block">
+      <div class="block-head">
+        <span class="block-title">Perfil · trim</span>
+        <span class="block-sub" id="proSub">—</span>
+      </div>
+      <div class="cvwrap"><canvas id="proCanvas"></canvas></div>
+      <div class="lgd">
+        <span><i class="sw" style="background:var(--blue-ink)"></i>plano d’água</span>
+        <span><i class="swd" style="background:var(--green)"></i>pesos a bordo</span>
+        <span><i class="swd" style="background:var(--amber)"></i>G centro de gravidade</span>
+        <span><i class="swd" style="background:var(--blue-ink)"></i>B centro de carena</span>
+        <span><i class="swd" style="background:var(--muted)"></i>M metacentro</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="block">
+    <div class="block-head">
+      <span class="block-title">Curva de braços de endireitamento</span>
+      <span class="block-sub" id="gzSub">—</span>
+    </div>
+    <div class="cvwrap">
+      <canvas id="gzCanvas"></canvas>
+      <div class="gztip" id="gzTip"></div>
+    </div>
+    <div class="lgd">
+      <span><i class="sw" style="background:var(--red-l)"></i>GZ, braço de endireitamento</span>
+      <span><i class="sw" style="background:var(--muted)"></i>tangente GM<sub>t</sub> na origem</span>
+      <span><i class="swd" style="background:var(--amber)"></i>banda de equilíbrio</span>
+      <span id="gzFacts"></span>
+    </div>
+  </div>
+
+  <div class="block">
+    <div class="block-head">
+      <span class="block-title">Estabilidade e flutuação</span>
+      <span class="block-sub" id="stabSub">—</span>
+    </div>
+    <div class="ro-grid" id="stabGrid"></div>
+  </div>
+
+  <details class="rec">
+    <summary>Como o equilíbrio é encontrado</summary>
+    <div class="rec-body">
+      <div>
+        <h3>O CG não é um botão: é a soma da tabela</h3>
+        <p>Não há controle de centro de gravidade neste painel. Há uma <strong>tabela de pesos</strong> — o barco na primeira linha, cada carga a bordo nas seguintes — e o CG do conjunto é a média ponderada de todos eles, <code>G = Σ(w<sub>i</sub>·g<sub>i</sub>) / Σw<sub>i</sub></code>, em cada um dos três eixos. É essa média que entra no equilíbrio, e é por isso que 75 kg atravessando um barco de 635 kg movem o CG só um oitavo do caminho: a alavanca de cada peso é a fração que ele representa do total.</p>
+        <p>Clique numa linha para escolher qual peso os sliders movem; digite direto nas células quando souber a cota. Somar ou remover uma linha muda o deslocamento total, e o casco afunda ou alivia junto — uma pessoa que embarca é peso novo, não redistribuição. Um peso novo nasce <em>em cima do CG atual</em>, o único lugar onde ele não mexe na média: o casco afunda um pouco e o trim muda apenas o que a mudança de calado muda por si — daí você o arrasta para onde ele realmente vai.</p>
+        <p>O CG do barco vazio começa assumido no centro de carena da flutuação inicial, e a massa dele é o que sobra do deslocamento de partida — então, com o peso móvel pousado sobre esse ponto, o casco parte a prumo. A linha do barco é editável como qualquer outra: se você conhece o LCG e o KG reais do casco vazio, digite-os ali e o resto do painel se ajusta.</p>
+      </div>
+      <div>
+        <h3>Três incógnitas, três condições</h3>
+        <p>O casco flutuando livre tem três graus de liberdade que interessam: quanto ele afunda, quanto inclina em torno do eixo longitudinal (banda) e quanto inclina em torno do transversal (trim). O plano d’água fica descrito por um vetor normal <code>n̂(trim, banda)</code> e uma distância <code>d</code> — e as três condições que o fecham são de livro: o volume deslocado vezes a densidade iguala o peso, e as duas componentes horizontais de <code>G − B</code> se anulam, isto é, <strong>B fica exatamente sob G</strong>. Nada de arbitrar o calado: ele sai do peso.</p>
+        <p>A cada iteração o calado é resolvido primeiro por Newton, usando a área do plano d’água como derivada exata (<code>dV/dd = A<sub>wp</sub></code>) e um intervalo de segurança que garante a convergência. Com o volume certo em mãos, os dois braços residuais <code>r<sub>L</sub></code> e <code>r<sub>T</sub></code> viram correção angular dividindo pelo raio metacêntrico correspondente — <code>Δθ = r<sub>L</sub>/GM<sub>L</sub></code>, <code>Δφ = r<sub>T</sub>/GM<sub>T</sub></code>. É o passo de Newton do problema inteiro, com os momentos de inércia do plano d’água como jacobiano, e converge em 4 a 8 iterações para braço residual abaixo de <strong>0,00002 m</strong>.</p>
+      </div>
+      <div>
+        <h3>A seção cortada por um plano inclinado</h3>
+        <p>Com banda a linha d’água não é mais horizontal dentro da baliza: ela é uma reta de declividade <code>tan(banda)</code>. Então a área imersa deixa de ser a integral de <code>y dz</code> de meia baliza e passa a ser o recorte do <strong>polígono inteiro</strong> da seção — de bombordo, em volta da quilha, até estibordo, fechado pela linha do convés — por um semiplano. O recorte é feito por Sutherland–Hodgman e a área e o centroide saem da fórmula do polígono, exatos sobre a poligonal, sem varredura vertical.</p>
+        <p>As 241 seções são recortadas e integradas por trapézios ao longo do comprimento. As propriedades do plano d’água — área, centro de flutuação e os dois momentos de inércia — vêm da mesma passada: no plano inclinado as coordenadas se relacionam com as do casco por uma transformação afim de jacobiano <code>1/(cos θ · cos φ)</code>, então os momentos são acumulados analiticamente corda por corda, sem malhar o plano.</p>
+      </div>
+      <div>
+        <h3>Por que a altura do CG muda a banda</h3>
+        <p>Parece contra-intuitivo que subir o peso, sem deslocá-lo para o lado, aumente a banda — mas é exatamente o que acontece, e o painel mostra. Com o casco adernado, o eixo z do casco não é mais a vertical verdadeira: o braço transversal vale <code>r<sub>T</sub> = (y<sub>G</sub> − y<sub>B</sub>)·cos φ + (z<sub>G</sub> − z<sub>B</sub>)·sen φ</code>, e o segundo termo cresce com a altura de G. É o mesmo termo que aparece em <code>GM = BM − BG</code>: subir G reduz o GM, e um GM menor precisa de mais banda para gerar o mesmo momento de endireitamento.</p>
+        <p>Continue subindo o CG e o GM chega a zero. Aí o casco a prumo passa a ser equilíbrio <strong>instável</strong>, e o painel avisa: procura, e mostra, a posição adernada estável para onde o barco realmente cai.</p>
+      </div>
+      <div>
+        <h3>Onde isto é estimativa</h3>
+        <p><span class="flag">atenção</span> O casco é tratado como um sólido fechado por casco, convés e espelho, <strong>estanque em toda a superfície</strong>. Quando a borda mergulha o cálculo continua somando a flutuação de reserva do convés como se ele fosse uma tampa — o aviso aparece, mas o número passa a ser otimista em relação ao barco real, que embarcaria água.</p>
+        <p><span class="flag">atenção</span> A curva de braços é traçada com <strong>trim congelado</strong> no valor do equilíbrio e volume constante. Deixar o trim livre em cada ângulo de banda mudaria a curva nos ângulos grandes, sobretudo em casco de popa larga. Os efeitos de superfície livre de tanques, o peso da água em pesos suspensos e qualquer apêndice fora da tabela de cotas não entram.</p>
+        <p>A geometria é a mesma tabela de cotas do plano de linhas: entre as balizas o casco é interpolado, e a fidelidade do bojo depende de quantos níveis a tabela traz.</p>
+      </div>
+    </div>
+  </details>
+
+  <details class="rec">
+    <summary>Carregar outra tabela de cotas</summary>
+    <div class="rec-body">
+      <p>Cole uma tabela em qualquer um dos dois formatos. <strong>Redondo:</strong> <code>baliza, x, altura_quilha, altura_borda, meias-bocas intermediárias…, meia_boca_borda</code> — qualquer número de níveis intermediários, igualmente espaçados no pontal. <strong>Quinado:</strong> <code>stn, x, sheer_hb, chine_hb, sheer_ht, chine_ht, keel_ht</code>. A tabela de cotas é lida <strong>em milímetros</strong> — é o formato do plano de linhas; as leituras e os campos do painel são todos em metros. Comentários com <code>#</code>, separador de milhar e linha de cabeçalho são ignorados, então a exportação do plano de linhas entra direto. Ao carregar, o deslocamento volta a ser o do calado inicial e o peso móvel é pousado sobre o CG do barco, de modo que o casco parte a prumo.</p>
+      <textarea class="data" id="tsv" spellcheck="false"></textarea>
+      <div class="grp" style="gap:6px">
+        <button class="btn" id="apply" type="button">Reconstruir casco</button>
+        <button class="btn" id="revert" type="button">Voltar ao meu casco</button>
+        <button class="btn" id="__DEMO_ID__" type="button">__DEMO_ROTULO__</button>
+      </div>
+      <div class="msg" id="msg"></div>
+    </div>
+  </details>
+
+  <footer>
+    <span class="f-brand">Brana · Projetos Navais</span>
+    <span class="f-note" id="footNote">Projetista: __PROJETISTA__ · equilíbrio livre resolvido da tabela de cotas</span>
+  </footer>
+</div>

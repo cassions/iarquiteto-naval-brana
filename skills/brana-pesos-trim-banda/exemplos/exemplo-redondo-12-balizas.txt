@@ -1,0 +1,48 @@
+# Traquino - tabela de cotas extraida da layer Traquino_20260819_1904
+# Modelo de origem: Modelo_Traquino_CN.3dm  (Rhino 8, unidades em milimetros)
+# Casco de bojo redondo, 12 balizas: o espelho de popa + as 11 balizas do corpo.
+#
+# LOA = 3779,1 mm (baliza 1 = espelho, baliza 12 = cabeca do talha-mar).
+#
+# Alturas medidas ACIMA DA LINHA DE BASE = ponto mais baixo da quilha (Z = -242,8 no modelo).
+#   altura_tabela = Z_rhino + 242.8
+# Meias-bocas a partir da linha de centro, em milimetros.
+# x medido a partir do espelho:  x_tabela = X_rhino + 422.0
+#
+# Os 7 niveis intermediarios sao igualmente espacados no pontal de cada baliza
+# (12,5% / 25% / 37,5% / 50% / 62,5% / 75% / 87,5%), cortados no modelo 3D.
+#
+# BALIZA 1 = ESPELHO DE POPA. Nao e uma seccao transversal: e o contorno do painel
+# do espelho (a aresta onde ele encontra o casco, curva PolyCurve da layer Edges,
+# X de -203,7 a -422,0 / Z de 17,0 a 273,2) projetado no plano vertical X = -422,0.
+# O espelho real e inclinado; este formato de tabela o representa como face plana
+# vertical no x da primeira baliza, entao a inclinacao nao aparece - mas a forma
+# (bocas e alturas) e o LOA ficam corretos.
+#
+# baliza  x        ST/Rhino
+#   1     0.0      espelho de popa (X_rhino = -422,0)
+#   2     343.5    ST1  / FR_-78
+#   3     687.1    ST2  / FR_+265
+#   4     1030.6   ST3  / FR_+609
+#   5     1374.2   ST4  / FR_+952
+#   6     1717.7   ST5  / FR_+1296
+#   7     2061.3   ST6  / FR_+1639
+#   8     2404.8   ST7  / FR_+1983
+#   9     2748.4   ST8  / FR_+2326
+#  10     3091.9   ST9  / FR_+2670
+#  11     3435.5   ST10 / FR_+3013
+#  12     3779.1   ST11 / FR_+3357  (cabeca do talha-mar: meias-bocas fechadas em zero)
+#
+baliza	x	altura_quilha	altura_borda	mb_12pc	mb_25pc	mb_37pc	mb_50pc	mb_62pc	mb_75pc	mb_87pc	meia_boca_borda
+1	0.0	259.8	516.0	250.8	313.8	355.2	386.5	412.4	433.5	449.9	462.4
+2	343.5	200.3	494.1	194.6	313.1	381.2	428.3	468.3	504.5	536.5	559.8
+3	687.1	35.7	482.9	71.0	206.7	350.2	431.5	495.0	546.0	586.7	620.5
+4	1030.6	10.4	475.7	217.0	371.9	453.1	512.3	560.6	601.6	636.4	666.5
+5	1374.2	16.5	470.2	385.1	473.2	530.5	573.5	608.6	639.6	669.3	699.3
+6	1717.7	11.7	468.4	429.5	506.9	558.6	597.1	628.0	655.7	684.1	718.2
+7	2061.3	13.4	473.2	421.5	492.9	545.0	587.0	621.6	651.2	679.4	716.6
+8	2404.8	9.1	496.8	335.5	429.5	485.7	532.4	574.2	611.9	644.9	674.5
+9	2748.4	32.6	537.8	229.5	333.8	393.1	439.2	480.5	520.2	556.0	583.1
+10	3091.9	89.1	596.2	142.9	215.0	266.8	308.1	341.8	372.7	403.2	434.1
+11	3435.5	202.1	666.3	54.6	97.5	130.2	157.1	181.7	204.9	227.0	247.4
+12	3779.1	615.4	740.4	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0
