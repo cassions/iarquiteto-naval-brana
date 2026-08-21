@@ -129,7 +129,7 @@ fs.mkdirSync(saida, { recursive: true });
 fs.writeFileSync(destino, doc, 'utf8');
 
 /* ------------------------------------------------------------- conferencia -- */
-const N_CHECAGENS = 16;
+const N_CHECAGENS = 23;
 const t = fs.readFileSync(destino, 'utf8');
 const ruim = [];
 const sobrou = t.match(/\{\{[A-Z0-9_]+\}\}/g);
@@ -151,13 +151,28 @@ if(!/^<!DOCTYPE html>/.test(t)) ruim.push('sem doctype');
 if((t.match(/<title>/g) || []).length !== 1) ruim.push('contagem de <title>');
 if(!/lang="pt-BR"/.test(t)) ruim.push('idioma nao marcado');
 
+/* Espelho de popa por plano de corte e curva de areas. */
+if(!/var CUT = /.test(t) || !/function cutSync/.test(t)) ruim.push('plano do espelho ausente no nucleo');
+if(!/id="cutPos"/.test(t) || !/id="cutRake"/.test(t)) ruim.push('controles do espelho ausentes');
+if(!/function transomWetted/.test(t)) ruim.push('area molhada do espelho ausente');
+if(!/function areaCurve/.test(t)) ruim.push('curva de areas ausente no nucleo');
+if(!/id="areaCurve"/.test(t) || !/function renderAreaCurve/.test(t)) ruim.push('curva de areas ausente na pagina');
+if(!/function cutApply/.test(t) || !/requestAnimationFrame/.test(t)) ruim.push('coalescencia por frame ausente');
+
 const hy = C.hydrostatics(hull, calado0, 1025, 26);
+const ac = C.areaCurve(hull, calado0, 26, 220);
+const dif = hy.V > 1e-9 ? Math.abs(ac.integral - hy.V)/hy.V : 0;
+if(!(dif < 0.01)) ruim.push('curva de areas nao fecha com o volume: ' +
+  ac.integral.toFixed(4) + ' m3 contra ' + hy.V.toFixed(4) + ' m3');
 console.log(destino);
 console.log('  baliza ' + (redondo ? 'redonda' : 'quinada') + ' · ' + parsed.rows.length +
             ' balizas · comprimento ' + (hull.LOA/1000).toFixed(3) + ' m · pontal ' +
             (pontal/1000).toFixed(3) + ' m');
 console.log('  calado inicial ' + calado0 + ' mm → ' + hy.disp.toFixed(0) + ' kg, Lwl ' +
             hy.Lwl.toFixed(2) + ' m, Cb ' + hy.Cb.toFixed(3) + ', Cm ' + hy.Cm.toFixed(3));
+console.log('  espelho a prumo na baliza de re; posicao e inclinacao ajustaveis na pagina');
+console.log('  curva de areas: Amax ' + (ac.amax*1e-6).toFixed(3) + ' m2, integral ' +
+            ac.integral.toFixed(4) + ' m3 (volume ' + hy.V.toFixed(4) + ' m3)');
 console.log('  ' + (t.length/1024).toFixed(0) + ' KB, autossuficiente, 0 requisicoes externas');
 if(parsed.warn.length){
   console.log('  AVISOS DA TABELA (' + parsed.warn.length + '):');
@@ -168,7 +183,8 @@ if(hull.clampCount() > 0)
               '(a tabela pede uma forma que se autointersecta entre balizas)');
 if(ruim.length){ console.log('  PROBLEMAS: ' + ruim.join('; ')); process.exit(1); }
 /* A ultima linha existe para fechar a porta: sem ela o agente tende a abrir o HTML
-   de 82 KB para "conferir", o que custa ~25 mil tokens e nao acrescenta informacao
-   nenhuma — as 18 checagens acima ja falhariam antes de chegar aqui. */
+   de ~85 KB para "conferir", o que custa ~25 mil tokens e nao acrescenta informacao
+   nenhuma — as checagens acima ja falhariam antes de chegar aqui, inclusive a
+   numerica, que confere a curva de areas contra o volume. */
 console.log('  todas as ' + N_CHECAGENS + ' verificacoes passaram — arquivo pronto,' +
             ' nao precisa abrir para conferir');

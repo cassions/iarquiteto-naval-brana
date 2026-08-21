@@ -126,6 +126,13 @@
         text-transform:uppercase;color:var(--muted)}
   .ro-v{font-family:var(--font-mono);font-size:17px;font-variant-numeric:tabular-nums;color:var(--white)}
   .ro-v small{font-size:11px;color:var(--muted)}
+  .block.wide{grid-column:1/-1}
+  .acwrap{padding:12px 16px 10px}
+  #areaCurve{width:100%;height:200px;display:block}
+  .acnote{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.06em;
+    color:var(--muted);margin-top:8px;display:flex;gap:18px;flex-wrap:wrap}
+  .acnote b{color:var(--light);font-weight:400}
+  .acsw{display:inline-block;width:16px;height:2px;vertical-align:middle;margin-right:5px}
 
   .tablewrap{overflow-x:auto}
   table{border-collapse:collapse;width:100%;font-family:var(--font-mono);font-size:12px;
@@ -235,8 +242,16 @@
     <div class="hud br" id="camInfo"></div>
     <div class="stagebar">
       <label class="grp-label" for="draft">Calado</label>
-      <input type="range" id="draft" min="0" max="1200" step="5" value="{{DRAFT0}}">
+      <input type="range" id="draft" min="0" max="1200" step="1" value="{{DRAFT0}}">
       <output class="draftval" id="draftVal" for="draft">{{DRAFT0}} mm</output>
+      <span class="grp-label">Espelho</span>
+      <button type="button" class="chip" id="cutOn" aria-pressed="true">a prumo</button>
+      <label class="grp-label" for="cutPos">posição</label>
+      <input type="range" id="cutPos" min="0" max="100" step="0.25" value="0">
+      <output class="draftval" id="cutPosVal" for="cutPos">—</output>
+      <label class="grp-label" for="cutRake">inclinação</label>
+      <input type="range" id="cutRake" min="0" max="55" step="0.25" value="0">
+      <output class="draftval" id="cutRakeVal" for="cutRake">0,00°</output>
       <span class="grp-label">Água</span>
       <div class="chips" id="waterChips"></div>
       <span class="warn" id="warnLine"></span>
@@ -244,22 +259,27 @@
   </section>
 
   <div class="lower">
-    <section class="block">
-      <div class="block-head">
-        <span class="block-title">Tabela de cotas</span>
-        <span class="block-sub" id="offNote">a entrada · milímetros</span>
-      </div>
-      <div class="block-body">
-        <div class="tablewrap"><table id="offTable"></table></div>
-      </div>
-    </section>
-
-    <div class="block">
+    <div class="block wide">
       <div class="block-head">
         <span class="block-title">Hidrostática</span>
         <span class="block-sub" id="hydroSub">a {{DRAFT0}} mm · água salgada</span>
       </div>
       <div class="ro-grid" id="hydro"></div>
+    </div>
+
+    <div class="block wide">
+      <div class="block-head">
+        <span class="block-title">Curva de áreas das balizas</span>
+        <span class="block-sub" id="acSub">—</span>
+      </div>
+      <div class="acwrap">
+        <canvas id="areaCurve"></canvas>
+        <div class="acnote">
+          <span id="acAmax">—</span>
+          <span><i class="acsw" style="background:var(--amber)"></i>mestra</span>
+          <span><i class="acsw" style="background:var(--blue)"></i><span id="acLcb">LCB</span></span>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -333,7 +353,7 @@ try {
 } catch(e){}
 if(!gl){
   canvas.outerHTML = '<div class="nogl">Este visualizador precisa de WebGL, e este navegador não o entrega. ' +
-                     'A tabela de cotas e a hidrostática abaixo continuam funcionando.</div>';
+                     'A hidrostática e a curva de áreas abaixo continuam funcionando.</div>';
   canvas = null;
 }
 
@@ -470,20 +490,32 @@ function strip(a,pts){ for(var i=0;i<pts.length-1;i++) pushSeg(a, pts[i], pts[i+
 function mirrorStrip(out,pts){ strip(out, pts.map(function(p){ return [p[0], -p[1], p[2]]; })); }
 
 function buildLines(){
-  var L = {}, i, N = 180, x, s, K = 0.001;
+  var L = {}, i, N = 180, K = 0.001;
 
   var st = [];
   hull.stations.forEach(function(sx){
-    strip(st, ringAt(hull, sx, NP).map(function(p){ return [sx*K, p[0]*K, p[1]*K]; }));
+    if(sx < xAft(hull) - 1e-9) return;               /* baliza cortada fora */
+    var rg = ringAt(hull, sx, NP);
+    if(rg === null) return;
+    strip(st, rg.map(function(p){ return [sx*K, p[0]*K, p[1]*K]; }));
   });
   L.stations = st;
 
-  /* quilha e borda: as duas arestas que todo casco tem, redondo ou quinado */
+  /* Uma passada so. As balizas e as meias-poligonais nas mesmas 181 abscissas
+     servem as arestas, a cada linha de agua e a cada vertical; refaze-las em
+     cada laco custava 46 ms por reconstrucao contra 3 ms assim, e o gargalo
+     era a busca da super-elipse dentro de section(). */
+  var XS = [], SS = [], HP = [];
+  for(i=0;i<=N;i++){
+    var xi = xAft(hull) + xLen(hull)*i/N;
+    XS.push(xi); SS.push(hull.section(xi)); HP.push(halfPolyCut(SS[i], NP, xi));
+  }
+
   var edges = [], pk = [], psp = [], pss = [];
   for(i=0;i<=N;i++){
-    x = hull.X0 + hull.LOA*i/N; s = hull.section(x);
-    pk.push([x*K, 0, s.zk*K]);
-    psp.push([x*K, -s.ys*K, s.zs*K]); pss.push([x*K, s.ys*K, s.zs*K]);
+    var s = SS[i], hp = HP[i];
+    pk.push([XS[i]*K, hp ? hp[0][0]*K : 0, (hp ? hp[0][1] : s.zk)*K]);
+    psp.push([XS[i]*K, -s.ys*K, s.zs*K]); pss.push([XS[i]*K, s.ys*K, s.zs*K]);
   }
   strip(edges, pk); strip(edges, psp); strip(edges, pss);
   L.edges = edges;
@@ -493,10 +525,9 @@ function buildLines(){
   for(var z = Math.ceil(b.minZ/step)*step; z <= b.maxZ; z += step){
     var run = [];
     for(i=0;i<=N;i++){
-      x = hull.X0 + hull.LOA*i/N;
-      var y = yAtZ(halfPoly(hull.section(x), NP), z);
+      var y = HP[i] === null ? null : yAtZ(HP[i], z);
       if(y === null){ if(run.length > 1){ strip(wl, run); mirrorStrip(wl, run); } run = []; }
-      else run.push([x*K, y*K, z*K]);
+      else run.push([XS[i]*K, y*K, z*K]);
     }
     if(run.length > 1){ strip(wl, run); mirrorStrip(wl, run); }
   }
@@ -506,10 +537,9 @@ function buildLines(){
   for(var yy = ystep; yy < b.maxY; yy += ystep){
     var run2 = [];
     for(i=0;i<=N;i++){
-      x = hull.X0 + hull.LOA*i/N;
-      var z2 = zAtY(halfPoly(hull.section(x), NP), yy);
+      var z2 = HP[i] === null ? null : zAtY(HP[i], yy);
       if(z2 === null){ if(run2.length > 1){ strip(bt, run2); mirrorStrip(bt, run2); } run2 = []; }
-      else run2.push([x*K, yy*K, z2*K]);
+      else run2.push([XS[i]*K, yy*K, z2*K]);
     }
     if(run2.length > 1){ strip(bt, run2); mirrorStrip(bt, run2); }
   }
@@ -845,6 +875,9 @@ function fmt(v, d){
 
 function renderTable(){
   var head, body, i;
+  /* O painel da tabela de cotas nao esta mais na pagina; a funcao fica no lugar
+     para o painel poder voltar sem mais mexidas. */
+  if(!document.getElementById('offTable')) return;
   if(parsed.mode === 'quinado'){
     head = ['Baliza','x','½-boca borda','½-boca chine','Alt. borda','Alt. chine','Alt. quilha'];
     body = parsed.rows.map(function(r){
@@ -879,6 +912,118 @@ function renderTable(){
   document.getElementById('offNote').textContent = note;
 }
 
+/* ------------------------------------------------- curva de areas ----------
+   Desenhada do resultado de areaCurve(), que usa o mesmo integrador da
+   hidrostatica: a integral da curva fecha com o volume por construcao. */
+function renderAreaCurve(){
+  var c = document.getElementById('areaCurve');
+  if(!c) return;
+  var w = c.clientWidth, hh = c.clientHeight;
+  if(w < 8 || hh < 8) return;
+  var dpr = Math.min(window.devicePixelRatio || 1, 2);
+  c.width = Math.round(w*dpr); c.height = Math.round(hh*dpr);
+  var g = c.getContext('2d');
+  g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,w,hh);
+
+  var d = areaCurve(hull, ui.draft, NP, 220);
+  var padL = 44, padR = 12, padT = 10, padB = 22;
+  var iw = w - padL - padR, ih = hh - padT - padB;
+  if(iw < 20 || ih < 20) return;
+  var amax = d.amax > 1e-9 ? d.amax : 1;
+  function PX(x){ return padL + (x - d.x0)/(d.x1 - d.x0)*iw; }
+  function PY(a){ return padT + ih - a/amax*ih; }
+  var mono = '9px ' + (css('--font-mono') || 'monospace');
+
+  g.strokeStyle = css('--rule-2'); g.lineWidth = 1; g.beginPath();
+  for(var k=0;k<=4;k++){ var yy = Math.round(padT + ih*k/4) + .5; g.moveTo(padL, yy); g.lineTo(w-padR, yy); }
+  g.stroke();
+
+  g.strokeStyle = 'rgba(191,191,191,.22)'; g.beginPath();
+  hull.stations.forEach(function(sx){
+    if(sx < d.x0 - 1e-9 || sx > d.x1 + 1e-9) return;
+    var xx = Math.round(PX(sx)) + .5; g.moveTo(xx, padT); g.lineTo(xx, padT + ih);
+  });
+  g.stroke();
+
+  g.beginPath(); g.moveTo(PX(d.xs[0]), PY(0));
+  for(var i=0;i<d.xs.length;i++) g.lineTo(PX(d.xs[i]), PY(d.as[i]));
+  g.lineTo(PX(d.xs[d.xs.length-1]), PY(0)); g.closePath();
+  g.fillStyle = 'rgba(154,50,49,.45)'; g.fill();
+  g.strokeStyle = css('--red-l'); g.lineWidth = 1.8; g.beginPath();
+  for(var j=0;j<d.xs.length;j++){
+    var X = PX(d.xs[j]), Y = PY(d.as[j]);
+    if(j === 0) g.moveTo(X, Y); else g.lineTo(X, Y);
+  }
+  g.stroke();
+
+  /* Snap em meio-pixel e traco de 2 px: em 1 px sem snap o anti-aliasing dilui
+     a cor no vermelho por baixo e a linha desaparece. */
+  function vline(x, color, dash){
+    var xx = Math.round(PX(x)) + .5;
+    g.setLineDash(dash || []); g.lineWidth = 2; g.strokeStyle = color;
+    g.beginPath(); g.moveTo(xx, padT); g.lineTo(xx, padT + ih); g.stroke();
+    g.setLineDash([]);
+  }
+  vline(d.amaxX, css('--amber'), [4,3]);
+  if(hydro && isFinite(hydro.LCB) && hydro.LCB > 0) vline(hydro.LCB*1000, css('--blue'));
+
+  g.fillStyle = css('--muted'); g.font = mono;
+  g.textAlign = 'right'; g.textBaseline = 'middle';
+  g.fillText(fmt(amax*1e-6, 3), padL - 6, PY(amax));
+  g.fillText('0', padL - 6, PY(0));
+  g.save(); g.translate(11, padT + ih/2); g.rotate(-Math.PI/2);
+  g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('A (m²)', 0, 0); g.restore();
+  g.textAlign = 'left'; g.textBaseline = 'top';
+  g.fillText('popa  ' + fmt(d.x0/1000, 2) + ' m', padL, padT + ih + 6);
+  g.textAlign = 'right';
+  g.fillText(fmt(d.x1/1000, 2) + ' m  proa', w - padR, padT + ih + 6);
+
+  document.getElementById('acSub').textContent =
+    'a ' + fmt(ui.draft, 0) + ' mm · ' + fmt((d.x1-d.x0)/1000, 3) + ' m de comprimento';
+  document.getElementById('acAmax').innerHTML =
+    'Amax <b>' + fmt(amax*1e-6, 3) + ' m²</b> em x = <b>' + fmt(d.amaxX/1000, 2) + ' m</b>';
+  document.getElementById('acLcb').textContent =
+    'LCB ' + fmt(hydro ? (hydro.LCB - d.x0/1000) : 0, 2) + ' m da popa';
+}
+
+/* LOA e centro seguem o corte: mover o espelho encurta o barco. */
+function refreshDims(){
+  LOA_M = xLen(hull)/1000;
+  MID = [ (xAft(hull) + xLen(hull)/2)/1000, MID[1], MID[2] ];
+  var el = document.getElementById('tbLoa');
+  if(el) el.textContent = fmt(LOA_M, 3) + ' m';
+}
+
+/* ---------------------------------------------------- espelho: controles ----
+   A posicao caminha entre as duas balizas mais a re, o intervalo em que faz
+   sentido nascer um espelho sem inventar forma nova. */
+function cutSpan(){
+  return [ hull.stations[0], hull.stations[Math.min(1, hull.stations.length-1)] ];
+}
+function cutSyncUI(){
+  var sp = cutSpan(), f = (sp[1] > sp[0]) ? (CUT.pos - sp[0])/(sp[1] - sp[0])*100 : 0;
+  document.getElementById('cutPos').value = f;
+  document.getElementById('cutRake').value = CUT.rake;
+  document.getElementById('cutPosVal').textContent  = fmt(CUT.pos, 0) + ' mm';
+  document.getElementById('cutRakeVal').textContent = fmt(CUT.rake, 2) + '°';
+  var btn = document.getElementById('cutOn');
+  btn.textContent = !CUT.on ? 'desligado' : (CUT.rake < 0.05 ? 'a prumo' : 'inclinado');
+  btn.setAttribute('aria-pressed', CUT.on ? 'true' : 'false');
+}
+/* Uma atualizacao por frame. Sem isso um arrastar de slider enfileira uma
+   reconstrucao inteira por evento de input, e a mao anda mais rapido que a
+   malha. */
+var cutPend = false;
+function cutApply(){
+  if(cutPend) return;
+  cutPend = true;
+  requestAnimationFrame(function(){
+    cutPend = false;
+    cutSync(hull); cutSyncUI(); refreshDims();
+    rebuildGL(); renderHydro(); draw();
+  });
+}
+
 function renderHydro(){
   hydro = hydrostatics(hull, ui.draft, WATER[ui.water].rho, NP);
   var h = hydro;
@@ -891,8 +1036,8 @@ function renderHydro(){
     ['Área do plano da linha d’água', fmt(h.Aw,2), 'm²'],
     ['Área da superfície molhada', fmt(h.wsa,2), 'm²'],
     ['Área da mestra', fmt(h.Am,3), 'm²'],
-    ['LCB da popa', fmt(h.LCB,2), 'm'],
-    ['LCF da popa', fmt(h.LCF,2), 'm'],
+    ['LCB da popa', fmt(h.LCB - xAft(hull)/1000, 2), 'm'],
+    ['LCF da popa', fmt(h.LCF - xAft(hull)/1000, 2), 'm'],
     ['Cb (bloco)', fmt(h.Cb,3), ''],
     ['Cp (prismático)', fmt(h.Cp,3), ''],
     ['Cw (flutuação)', fmt(h.Cw,3), ''],
@@ -904,7 +1049,8 @@ function renderHydro(){
   }).join('');
   document.getElementById('hydroSub').textContent =
     'a ' + fmt(ui.draft,0) + ' mm · ' + WATER[ui.water].nome.toLowerCase() +
-    ' ' + WATER[ui.water].rho + ' kg/m³';   /* densidade sem separador de milhar: 1025, nao 1.025 */
+    ' ' + WATER[ui.water].rho + ' kg/m³';
+  renderAreaCurve();   /* densidade sem separador de milhar: 1025, nao 1.025 */
 }
 
 /* ------------------------------------------------------------- construção */
@@ -926,6 +1072,8 @@ function loadParsed(p){
   document.getElementById('tbForm').textContent = p.mode === 'redondo' ? 'redonda' : 'quinada';
   document.getElementById('warnLine').textContent =
     (p.warn && p.warn.length) ? (p.warn.length + ' aviso' + (p.warn.length>1?'s':'') + ': ' + p.warn[0]) : '';
+  CUT.pos = hull.stations[0];
+  cutSync(hull); cutSyncUI(); refreshDims();
   rebuildGL();
   renderTable(); renderHydro(); fitView(); draw();
 }
@@ -944,16 +1092,32 @@ function syncViewChips(){
 }
 syncViewChips();
 
+document.getElementById('cutOn').addEventListener('click', function(){
+  CUT.on = !CUT.on; cutApply();
+});
+document.getElementById('cutPos').addEventListener('input', function(e){
+  var sp = cutSpan();
+  CUT.pos = sp[0] + (sp[1] - sp[0])*(+e.target.value)/100;
+  CUT.on = true; cutApply();
+});
+document.getElementById('cutRake').addEventListener('input', function(e){
+  CUT.rake = +e.target.value;
+  CUT.on = true; cutApply();
+});
+
 function bindToggle(id, key){
   document.getElementById(id).addEventListener('change', function(e){ ui[key] = e.target.checked; draw(); });
 }
 bindToggle('tSurf','surf'); bindToggle('tDeck','deck'); bindToggle('tStn','stn');
 bindToggle('tWl','wl'); bindToggle('tBut','but'); bindToggle('tSea','sea'); bindToggle('tMesh','mesh');
 
+var draftPend = false;
 document.getElementById('draft').addEventListener('input', function(e){
   ui.draft = +e.target.value;
   document.getElementById('draftVal').textContent = fmt(ui.draft,0) + ' mm';
-  renderHydro(); draw();
+  if(draftPend) return;
+  draftPend = true;
+  requestAnimationFrame(function(){ draftPend = false; renderHydro(); draw(); });
 });
 document.getElementById('fit').addEventListener('click', function(){ fitView(); draw(); });
 
@@ -1005,7 +1169,7 @@ function onResize(){
   if(!canvas) return;
   var w = canvas.getBoundingClientRect().width;
   if(Math.abs(w - lastW) < 0.5) return;
-  lastW = w; fitView(); draw();
+  lastW = w; fitView(); draw(); renderAreaCurve();
 }
 window.addEventListener('resize', onResize);
 window.addEventListener('orientationchange', function(){ setTimeout(onResize, 260); });

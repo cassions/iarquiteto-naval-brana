@@ -1,0 +1,15 @@
+# Plano de linhas alisado — tabela de cotas (casco quinado)
+# Comprimento total 6,000 m   1 quadrado da malha = 428,57 mm
+# meias-bocas a partir da linha de centro, alturas acima da linha de base (ponto mais baixo da quilha), em milimetros
+# espelho: 12 graus da vertical
+#   O topo do espelho fica ancorado em x = 0 (o ponto mais a re do casco) e o pe avanca para
+#   vante, preservando o comprimento total de 6.000 mm que a tabela declara.
+stn	x	sheer_hb	chine_hb	sheer_ht	chine_ht	keel_ht	deadrise_deg
+1	0	724.3	579.4	784.7	390.0	34.7	31.52
+2	857	952.6	741.2	812.9	394.7	0.3	28.02
+3	1714	1006.0	766.9	835.8	405.2	4.4	27.59
+4	2571	979.5	745.3	853.7	421.3	19.9	28.30
+5	3429	870.4	656.0	868.2	448.3	55.5	30.92
+6	4286	682.2	500.8	880.7	492.1	159.5	33.59
+7	5143	394.2	283.1	891.3	596.7	356.7	40.30
+8	6000	0.0	0.0	900.0	900.0	900.0	0.00

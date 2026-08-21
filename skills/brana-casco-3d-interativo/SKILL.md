@@ -1,11 +1,11 @@
 ---
 name: brana-casco-3d-interativo
-description: Gera um visualizador 3D interativo de casco (HTML único, offline, identidade Brana) a partir de uma tabela de cotas, com hidrostática ao vivo — deslocamento, Cb, Cp, Cm, LCB, superfície molhada — em água salgada ou doce. Atende casco quinado (com chine) e de bojo redondo, detectando o formato da própria tabela. Use quando pedirem para ver, girar ou visualizar um casco em 3D, transformar tabela de cotas ou offsets em modelo tridimensional, conferir a hidrostática de uma tabela, ou mencionarem plano de linhas, balizas, meia-boca, chine, bojo redondo, deadrise ou pontal e quiserem ver a forma como superfície. A tabela de cotas é obrigatória.
+description: Gera um visualizador 3D interativo de casco (HTML único, offline, identidade Brana) a partir de uma tabela de cotas, com hidrostática ao vivo — deslocamento, Cb, Cp, Cm, LCB, superfície molhada — em água salgada ou doce. Atende casco quinado (com chine) e de bojo redondo, detectando o formato da própria tabela. Use quando pedirem para ver, girar ou visualizar um casco em 3D, transformar tabela de cotas ou offsets em modelo tridimensional, conferir a hidrostática de uma tabela, ou mencionarem plano de linhas, balizas, meia-boca, chine, bojo redondo, deadrise ou pontal e quiserem ver a forma como superfície. O espelho de popa nasce de um plano de corte ajustável em posição longitudinal e inclinação, e a página traz a curva de áreas das balizas — então também atende quem pedir para criar, mover, aprumar ou inclinar o espelho, cortar a popa por um plano, ver o transom, ou olhar a curva de áreas. A tabela de cotas é obrigatória.
 license: Proprietário. Brana · Projetos Navais
 compatibility: Requer Node.js 18+ para rodar scripts/gerar-casco-3d.js. O HTML gerado abre em qualquer navegador com WebGL, inclusive celular.
 metadata:
   brana-categoria: brana
-  brana-versao: "1.1"
+  brana-versao: "1.2"
 ---
 
 # Casco 3D interativo a partir da tabela de cotas
@@ -36,13 +36,38 @@ node scripts/gerar-casco-3d.js --tabela=<arquivo> --nome="<projetista>" --saida=
 ```
 
 O script descobre sozinho se a baliza é redonda ou quinada, calcula o calado inicial
-a partir do pontal, monta o HTML, valida 18 propriedades do arquivo e imprime o
+a partir do pontal, monta o HTML, valida 23 propriedades do arquivo e imprime o
 resumo. O nome sai como `Casco-Quinado-3D-<Nome>.html` ou
 `Casco-Redondo-3D-<Nome>.html`.
 
+## O espelho de popa e a curva de áreas
+
+O espelho **não** é mais a baliza mais a ré e ponto: é um **plano de corte**, e a
+página tem dois controles para ele — posição longitudinal (que caminha entre as duas
+balizas mais a ré) e inclinação, 0 a 55° do vertical. O plano é ancorado na borda: em
+`pos` ele encontra o tosado e dali desce para vante, então a inclinação sempre remove
+material e nunca pede casco a ré da primeira baliza.
+
+Isso importa para você em três pontos:
+
+- **Abre a prumo na baliza de ré**, que é exatamente a geometria de antes. Se a pessoa
+  não falar de espelho, o resultado é o mesmo de sempre — não precisa avisar nada.
+- **A posição muda o LOA**, o centro e as abscissas; a inclinação não muda o LOA,
+  porque o plano pivota na borda e o ponto mais a ré fica onde estava. Se alguém
+  estranhar que inclinar não encurta o barco, é isso.
+- **Na condição de projeto o espelho costuma estar seco.** Se o pé do espelho fica
+  acima da linha de água, inclinar não altera o deslocamento — só a Lwl. Não é defeito
+  do modelo, é o barco. Para ver a hidrostática responder, o calado tem de passar do
+  pé do espelho.
+
+A curva de áreas sai do mesmo integrador da hidrostática, sobre a poligonal já
+recortada pelo plano. Por isso o script confere a integral da curva contra o volume e
+**falha** se as duas divergirem mais de 1 % — é a única checagem numérica das 23, e a
+que pegaria um erro de geometria que as outras deixariam passar.
+
 ## Trabalhe só com o que o script imprime
 
-Esta skill embute um modelo de página de 47 KB, um motor geométrico de 23 KB e um
+Esta skill embute um modelo de página de 54 KB, um motor geométrico de 28 KB e um
 logotipo de 11 KB. **São entrada para o script, não leitura para você.** Abrir os
 três custa cerca de 25 mil tokens e não muda nada no que você vai fazer: você não
 edita o modelo, você o preenche pelo script.
@@ -61,8 +86,8 @@ arquivo grande.
 ## O que dizer depois
 
 Repasse em uma ou duas frases o que o script imprimiu: o formato detectado e o
-número de balizas, comprimento e pontal, o calado inicial com a hidrostática nele, e
-**os avisos, se houver**. Aviso não é erro — a tabela foi aceita mas tem algo
+número de balizas, comprimento e pontal, o calado inicial com a hidrostática nele, o
+Amax da curva de áreas com a integral fechando no volume, e **os avisos, se houver**. Aviso não é erro — a tabela foi aceita mas tem algo
 geometricamente estranho (chine fora da borda, quilha acima do chine, meia-boca
 negativa). Diga qual baliza e deixe a pessoa decidir se corrige.
 

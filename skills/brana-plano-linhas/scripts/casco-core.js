@@ -116,7 +116,17 @@ function parseOffsets(text){
   for(i=0;i<bruto.length;i++){
     var v = bruto[i].map(function(s){ return paraNumero(s, dec); });
     var numeric = isFinite(v[1]) && isFinite(v[2]) && isFinite(v[3]);
-    if(!numeric){ if(!header) header = bruto[i]; continue; }        /* linha de cabecalho */
+    if(!numeric){
+      /* Antes da primeira baliza, linha nao numerica e preambulo (descricao, nomes das
+         colunas). DEPOIS da primeira, e uma baliza estragada - e descarta-la em silencio
+         entregava um casco com uma baliza de menos, sem nenhum aviso. */
+      if(num.length)
+        throw new Error('linha nao numerica DEPOIS das balizas: "' +
+          bruto[i].slice(0,5).join(' ') + '". Celula vazia, texto no lugar de numero, ou ' +
+          'baliza estragada. Ja havia lido ' + num.length + ' baliza(s).');
+      if(!header) header = bruto[i];
+      continue;
+    }
     num.push(v);
   }
   if(num.length < 3) throw new Error('sao necessarias ao menos 3 balizas; encontrei ' + num.length);
@@ -125,7 +135,12 @@ function parseOffsets(text){
   var rows = [], warn = [];
 
   if(mode === 'quinado'){
+    var ncQ = num[0].length;
     num.forEach(function(v){
+      /* uma coluna faltando numa tabela de 8 nao era pega por "menos de 7", e as colunas
+         deslocavam em silencio: o casco saia outro */
+      if(v.length !== ncQ)
+        throw new Error('a baliza ' + v[0] + ' tem ' + v.length + ' colunas, as outras tem ' + ncQ);
       if(v.length < 7) throw new Error('formato quinado pede 7 colunas; a baliza ' + v[0] + ' tem ' + v.length);
       rows.push({ stn:v[0], x:v[1], zk:v[6], zs:v[4], ys:v[2],
                   zc:v[5], yc:v[3], levels:null });
@@ -415,15 +430,13 @@ function zAtY(poly, y){
 /* -------------------------------------------------------- hidrostatica --
    Cotas entram em milimetros; tudo volta em unidades metricas de base. */
 function hydrostatics(hull, T_mm, rho, nPoly){
-  var N = 400, i, dx = xLen(hull)/N, np = nPoly || 40;
+  var N = 400, i, dx = hull.LOA/N, np = nPoly || 40;
   var vol = 0, momX = 0, wp = 0, wpMom = 0, wsa = 0, amaxHalf = 0, amaxX = 0;
   var bwl = 0, xFirst = null, xLast = null, minKeel = Infinity;
   for(i=0;i<=N;i++){
-    var x = xAft(hull) + xLen(hull)*i/N;
+    var x = hull.X0 + hull.LOA*i/N;
     var s = hull.section(x);
-    var hp = halfPolyCut(s, np, x);
-    if(hp === null) continue;
-    var im = immersed(hp, T_mm);
+    var im = immersed(halfPoly(s, np), T_mm);
     var w = (i === 0 || i === N) ? 0.5 : 1;               /* trapezios */
     vol   += im.area  * w * dx;
     momX  += im.area  * x * w * dx;
@@ -435,11 +448,11 @@ function hydrostatics(hull, T_mm, rho, nPoly){
     if(im.wet){
       if(xFirst === null) xFirst = x;
       xLast = x;
-      if(hp[0][1] < minKeel) minKeel = hp[0][1];   /* fundo REAL da baliza cortada */
+      if(s.zk < minKeel) minKeel = s.zk;
     }
   }
   vol *= 2; momX *= 2; wp *= 2; wpMom *= 2; wsa *= 2;     /* os dois bordos */
-  var transomArea = transomWetted(hull, T_mm, np);
+  var transomArea = 2*immersed(halfPoly(hull.section(hull.X0), np), T_mm).area;
   var MM3 = 1e-9, MM2 = 1e-6;
   var Lwl = (xFirst === null) ? 0 : (xLast - xFirst);
   var draft = isFinite(minKeel) ? (T_mm - minKeel) : 0;
@@ -462,136 +475,21 @@ function hydrostatics(hull, T_mm, rho, nPoly){
 /* ---------------------------------------------------------------- malhagem --
    Um anel por baliza, da borda de bombordo em volta da quilha ate a borda de
    estibordo, para a superficie ser uma grade unica sem costura na linha de centro. */
-/* ---------------------------------------------------------- espelho de popa --
-   Cria o espelho cortando o casco por um plano — sempre plano. O plano e
-   ancorado na BORDA: em x = CUT.pos ele encontra o tosado, e dali desce para
-   vante com a inclinacao pedida. Ancorar no ponto mais a re e o que faz o corte
-   nunca precisar de casco a re da primeira baliza: a inclinacao sempre remove
-   material para vante e para baixo, como num espelho real.
-
-     f(x,z) = cos(t)*(x - pos) + sin(t)*(z - zref) >= 0   fica no casco
-
-   Em x constante o plano e uma reta horizontal na altura cutZAtX(x), entao
-   recortar uma baliza e so cortar a poligonal por baixo nessa altura — e a
-   hidrostatica segue usando o mesmo integrador, sem saber que existe um plano.
-   Com rake = 0 na primeira baliza o casco e exatamente o de antes. */
-var CUT = { on:true, pos:0, rake:0, zref:0, xKeel:0 };
-
-function cutZAtX(x){
-  var t = CUT.rake*Math.PI/180, sn = Math.sin(t);
-  if(sn < 1e-6) return (x >= CUT.pos) ? -Infinity : Infinity;
-  return CUT.zref - (x - CUT.pos)*Math.cos(t)/sn;
-}
-
-/* Reancora o plano e acha onde ele encontra a quilha (o pe do espelho). */
-function cutSync(hull){
-  var xa = hull.X0, xb = hull.X0 + hull.LOA;
-  CUT.pos = Math.max(xa, Math.min(CUT.pos, xa + hull.LOA*0.9));
-  CUT.zref = hull.section(CUT.pos).zs;
-  CUT.xKeel = CUT.pos;
-  if(Math.sin(CUT.rake*Math.PI/180) >= 1e-6){
-    var lo = CUT.pos, hi = xb, i, mid;
-    if(cutZAtX(hi) - hull.section(hi).zk < 0){
-      for(i=0;i<60;i++){                       /* g(x) = plano - quilha, decrescente */
-        mid = (lo+hi)/2;
-        if(cutZAtX(mid) - hull.section(mid).zk > 0) lo = mid; else hi = mid;
-      }
-      CUT.xKeel = (lo+hi)/2;
-    } else CUT.xKeel = xb;
-  }
-}
-
-function xAft(hull){ return CUT.on ? CUT.pos : hull.X0; }
-function xLen(hull){ return hull.X0 + hull.LOA - xAft(hull); }
-
-/* Meia-baliza recortada por baixo no plano. Devolve sempre n+1 pontos, senao a
-   grade da malha perde a topologia; null quando a baliza ficou toda a re. */
-function halfPolyCut(s, n, x){
-  var full = halfPoly(s, n);
-  if(!CUT.on) return full;
-  var zc = cutZAtX(x);
-  if(zc > s.zs + 1e-9) return null;
-  if(zc <= s.zk + 1e-9) return full;
-  var out = [], i, span = s.zs - zc;
-  for(i=0;i<=n;i++){
-    var z = zc + span*i/n, y = yAtZ(full, z);
-    out.push([ y === null ? 0 : y, z ]);
-  }
-  /* No casco quinado a reamostragem em alturas iguais arredondaria o canto do
-     chine dentro do trecho cortado. Encostar a amostra mais proxima na altura
-     exata do chine devolve o canto vivo sem mexer na contagem de pontos, que a
-     grade da malha exige constante. */
-  if(s.mode === 'quinado' && s.U.length > 2){
-    var zc2 = s.zk + (s.zs - s.zk)*s.U[1];
-    if(zc2 > zc + 1e-9 && zc2 < s.zs - 1e-9){
-      var best = 0, bd = Infinity;
-      for(i=0;i<=n;i++){ var d = Math.abs(out[i][1] - zc2); if(d < bd){ bd = d; best = i; } }
-      if(best > 0 && best < n){
-        var yv = yAtZ(full, zc2);
-        out[best] = [ yv === null ? 0 : yv, zc2 ];
-      }
-    }
-  }
-  return out;
-}
-
-/* Area molhada do espelho. A prumo e a propria baliza mais a re; inclinado, a
-   face e um plano, e integrar em z evita a singularidade do caso vertical:
-   ds = dz/cos(t), e em cada altura o plano esta em x = pos + tan(t)*(zref - z). */
-function transomWetted(hull, T_mm, np){
-  var t = CUT.rake*Math.PI/180, sn = Math.sin(t), cs = Math.cos(t);
-  if(!CUT.on || sn < 1e-6)
-    return 2*immersed(halfPolyCut(hull.section(xAft(hull)), np, xAft(hull)), T_mm).area;
-  var zTop = CUT.zref, zBot = cutZAtX(CUT.xKeel);
-  var zHi = Math.min(T_mm, zTop), M = 200, a = 0, k;
-  if(!(zHi > zBot)) return 0;
-  for(k=0;k<M;k++){
-    var z1 = zBot + (zHi-zBot)*k/M, z2 = zBot + (zHi-zBot)*(k+1)/M, zm = (z1+z2)/2;
-    var xm = CUT.pos + (zTop - zm)*sn/cs;
-    var y  = yAtZ(halfPoly(hull.section(xm), np), zm);
-    a += 2*(y === null ? 0 : y)*(z2 - z1)/cs;
-  }
-  return a;
-}
-
-/* Curva de areas das balizas, no calado dado. Sai do MESMO integrador da
-   hidrostatica sobre a poligonal ja recortada, entao a integral fecha com o
-   volume. */
-function areaCurve(hull, T_mm, np, N){
-  var i, xs = [], as = [], amax = 0, amaxX = 0;
-  var xa = xAft(hull), L = xLen(hull);
-  for(i=0;i<=N;i++){
-    var x = xa + L*i/N;
-    var hp = halfPolyCut(hull.section(x), np, x);
-    var a = (hp === null) ? 0 : 2*immersed(hp, T_mm).area;
-    xs.push(x); as.push(a);
-    if(a > amax){ amax = a; amaxX = x; }
-  }
-  var integral = 0, h = L/N;
-  for(i=0;i<N;i++) integral += (as[i] + as[i+1])/2*h;
-  return { xs:xs, as:as, amax:amax, amaxX:amaxX, x0:xa, x1:xa+L, integral:integral*1e-9 };
-}
-
 function ringAt(hull, x, np){
-  var half = halfPolyCut(hull.section(x), np, x), i, ring = [];
-  if(half === null) return null;
-  /* Emite 2*(np+1) pontos SEMPRE, inclusive os dois da quilha. Sem corte eles
-     coincidem (triangulo degenerado, inofensivo); com corte se separam, e a
-     abertura do fundo e exatamente onde entra a face do espelho. */
+  var half = halfPoly(hull.section(x), np), i, ring = [];
   for(i=half.length-1;i>=0;i--) ring.push([-half[i][0], half[i][1]]);
-  for(i=0;i<half.length;i++)    ring.push([ half[i][0], half[i][1]]);
+  for(i=1;i<half.length;i++)    ring.push([ half[i][0], half[i][1]]);
   return ring;
 }
 
 function buildMesh(hull, NL, np){
-  var R = 2*(np+1), i, j;
+  var R = 2*(np+1) - 1, i, j;
   var pos = new Float32Array((NL+1)*R*3);
   var nrm = new Float32Array((NL+1)*R*3);
   var idx = [];
   for(i=0;i<=NL;i++){
-    var x = xAft(hull) + xLen(hull)*i/NL;
+    var x = hull.X0 + hull.LOA*i/NL;
     var ring = ringAt(hull, x, np);
-    if(ring === null) ring = ringAt(hull, xAft(hull), np);
     for(j=0;j<R;j++){
       var o = (i*R + j)*3;
       pos[o]   = x/1000;
@@ -622,40 +520,15 @@ function buildMesh(hull, NL, np){
 
 /* Espelho de popa: a face plana que fecha a re, em leque a partir do centroide. */
 function buildTransom(hull, np){
-  var pos = [], nrm = [], idx = [], i;
-  var t = CUT.rake*Math.PI/180;
-
-  /* A prumo (ou corte desligado): face vertical na baliza mais a re. */
-  if(!CUT.on || Math.sin(t) < 1e-6){
-    var xa = xAft(hull), ring = ringAt(hull, xa, np), n = ring.length;
-    var cy = 0, cz = 0;
-    for(i=0;i<n;i++){ cy += ring[i][0]; cz += ring[i][1]; }
-    cy /= n; cz /= n;
-    pos.push(xa/1000, cy/1000, cz/1000); nrm.push(-1,0,0);
-    for(i=0;i<n;i++){ pos.push(xa/1000, ring[i][0]/1000, ring[i][1]/1000); nrm.push(-1,0,0); }
-    for(i=1;i<n;i++) idx.push(0, i+1, i);
-    idx.push(0, 1, n);
-    return { pos: new Float32Array(pos), nrm: new Float32Array(nrm), idx: idx };
-  }
-
-  /* Inclinado: faixa plana da aresta superior (na borda, em CUT.pos) ate o pe na
-     quilha. Todos os pontos satisfazem f = 0, logo a face sai plana. */
-  var nx = -Math.cos(t), nz = -Math.sin(t), M = 64, seg = [];
-  for(i=0;i<=M;i++){
-    var x = CUT.pos + (CUT.xKeel - CUT.pos)*i/M;
-    var sc = hull.section(x), z = cutZAtX(x);
-    z = Math.max(Math.min(z, sc.zs), sc.zk);
-    var y = yAtZ(halfPoly(sc, np), z);
-    seg.push([x, (y === null ? 0 : y), z]);
-  }
-  for(i=0;i<seg.length;i++){
-    pos.push(seg[i][0]/1000, -seg[i][1]/1000, seg[i][2]/1000); nrm.push(nx,0,nz);
-    pos.push(seg[i][0]/1000,  seg[i][1]/1000, seg[i][2]/1000); nrm.push(nx,0,nz);
-  }
-  for(i=0;i<seg.length-1;i++){
-    var a = i*2, b = i*2+1, c = i*2+2, d = i*2+3;
-    idx.push(a,c,b, b,c,d);
-  }
+  var ring = ringAt(hull, hull.X0, np), n = ring.length, i;
+  var cy = 0, cz = 0;
+  for(i=0;i<n;i++){ cy += ring[i][0]; cz += ring[i][1]; }
+  cy /= n; cz /= n;
+  var pos = [], nrm = [], idx = [];
+  pos.push(hull.X0/1000, cy/1000, cz/1000); nrm.push(-1,0,0);
+  for(i=0;i<n;i++){ pos.push(hull.X0/1000, ring[i][0]/1000, ring[i][1]/1000); nrm.push(-1,0,0); }
+  for(i=1;i<n;i++) idx.push(0, i+1, i);
+  idx.push(0, 1, n);
   return { pos: new Float32Array(pos), nrm: new Float32Array(nrm), idx: idx };
 }
 
@@ -663,7 +536,7 @@ function buildTransom(hull, np){
 function buildDeck(hull, NL){
   var pos = [], nrm = [], idx = [], i;
   for(i=0;i<=NL;i++){
-    var x = xAft(hull) + xLen(hull)*i/NL, s = hull.section(x);
+    var x = hull.X0 + hull.LOA*i/NL, s = hull.section(x);
     pos.push(x/1000, -s.ys/1000, s.zs/1000);  nrm.push(0,0,1);
     pos.push(x/1000,  s.ys/1000, s.zs/1000);  nrm.push(0,0,1);
   }
@@ -675,9 +548,7 @@ function buildDeck(hull, NL){
 }
 
 if(typeof module !== 'undefined' && module.exports)
-  module.exports = {
-  CUT: CUT, cutSync: cutSync, cutZAtX: cutZAtX, xAft: xAft, xLen: xLen,
-  halfPolyCut: halfPolyCut, transomWetted: transomWetted, areaCurve: areaCurve, DEFAULT_TSV:DEFAULT_TSV, detectDecimalSep:detectDecimalSep, paraNumero:paraNumero, superY:superY, fitSuper:fitSuper, CHINE_TSV:CHINE_TSV, parseOffsets:parseOffsets,
+  module.exports = { DEFAULT_TSV:DEFAULT_TSV, detectDecimalSep:detectDecimalSep, paraNumero:paraNumero, superY:superY, fitSuper:fitSuper, CHINE_TSV:CHINE_TSV, parseOffsets:parseOffsets,
                      detectFormat:detectFormat, pchip:pchip, makeHull:makeHull, halfPoly:halfPoly,
                      immersed:immersed, yAtZ:yAtZ, zAtY:zAtY, hydrostatics:hydrostatics,
                      ringAt:ringAt, buildMesh:buildMesh, buildTransom:buildTransom, buildDeck:buildDeck };

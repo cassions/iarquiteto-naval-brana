@@ -142,5 +142,12 @@ meias-bocas fecham na proa e devolve boca negativa.
 
 O que a tabela **não** diz, e que o visualizador portanto não mostra: tosamento
 transversal do convés (é tratado como superfície regrada entre as bordas), pé de
-quilha, skeg, bolina, apêndices, espelho inclinado (é tratado como face plana
-vertical no `x` da primeira baliza).
+quilha, skeg, bolina e apêndices.
+
+**O espelho de popa é a exceção, e não vem da tabela.** A tabela dá a forma do
+casco; o espelho é um plano de corte com posição e inclinação ajustáveis na própria
+página, ancorado na borda da baliza de ré. Ele abre a prumo, o que reproduz a
+geometria de uma tabela lida ao pé da letra, e a inclinação vai removendo material
+para vante e para baixo. Duas consequências: a **última baliza a ré da tabela deve
+ser a seção do espelho** (ou algo próximo dela), porque é dali que o corte parte; e
+não há casco a ré dela para o plano recuar, então a posição só caminha para vante.
