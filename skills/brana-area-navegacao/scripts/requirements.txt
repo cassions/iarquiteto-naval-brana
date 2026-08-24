@@ -1,0 +1,5 @@
+# Dependencias do gerar_relatorio.py
+# pip install -r requirements.txt
+reportlab>=4.0
+pypdf>=4.0
+Pillow>=9.0
