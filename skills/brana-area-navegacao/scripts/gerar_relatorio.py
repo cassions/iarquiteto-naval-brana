@@ -156,16 +156,20 @@ def tabela(dados, larguras, centro=()):
 
 
 def caixa(titulo, itens, fonte=9.2):
+    """Bloco destacado. Uma linha de tabela por paragrafo, para que o reportlab
+    possa quebrar a caixa entre paginas - com uma linha so, um texto comprido
+    derruba o build."""
     est = ParagraphStyle("bx", parent=S["li"], fontSize=fonte, leading=fonte * 1.33)
-    corpo = [Paragraph(titulo, S["h2"])]
-    corpo += [Paragraph(x, est, bulletText="\u2022") for x in itens]
-    t = Table([[corpo]], colWidths=[LARG])
+    corpo = [Paragraph(esc(titulo), S["h2"])]
+    corpo += [Paragraph(esc(x), est, bulletText="•") for x in itens]
+    t = Table([[c] for c in corpo], colWidths=[LARG], repeatRows=0)
     t.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, -1), FUNDO_CAIXA),
                            ("BOX", (0, 0), (-1, -1), 0.7, GRADE),
                            ("LEFTPADDING", (0, 0), (-1, -1), 10),
                            ("RIGHTPADDING", (0, 0), (-1, -1), 10),
                            ("TOPPADDING", (0, 0), (-1, -1), 0),
-                           ("BOTTOMPADDING", (0, 0), (-1, -1), 8)]))
+                           ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                           ("BOTTOMPADDING", (0, -1), (-1, -1), 8)]))
     return t
 
 
@@ -250,7 +254,8 @@ def construir(d, destino, timbrado=None):
          if d["declinacao"] else "")],
         ["Maior afastamento da costa", "%s" % (("cerca de %s MN (%s km)"
          % (f(d["afastamento"]), f(d["afastamento"] * N.MN_KM, 0)))
-         if d["afastamento"] else "N/A \u2014 medir na carta do percurso")],
+         if d["afastamento"] is not None
+         else "N/A \u2014 não determinado na carta")],
     ], [4.7, 12.3]))
     h.append(Spacer(1, 6))
     h.append(tabela(
@@ -322,13 +327,19 @@ def construir(d, destino, timbrado=None):
             "%03.0f\u00b0" % perna["rumo_v"] if perna else "\u2014",
             ("%03.0f\u00b0" % perna["rumo_m"]) if perna and perna["rumo_m"] is not None else "\u2014",
             f(perna["mn"]) if perna else "\u2014",
-            f(perna["acumulado"]) if perna else "<b>%s</b>" % f(d["total_mn"]),
+            ("<b>%s</b>" % f(d["total_mn"])) if ultimo
+            else (f(0.0) if primeiro else f(d["pernas"][i - 1]["acumulado"])),
         ])
     h.append(tabela(linhas, [0.8, 4.2, 2.1, 2.3, 1.6, 1.8, 1.1, 1.6],
                     centro=(0, 2, 3, 4, 5, 6, 7)))
-    h.append(P("Datum WGS-84. O rumo de cada linha é o rumo <i>para o ponto seguinte</i>. "
-               "No sentido contrário, percorra os pontos de baixo para cima e subtraia "
-               "180 graus de cada rumo.", "nota"))
+    h.append(P("Datum WGS-84. O rumo e as milhas de cada linha referem-se ao trecho "
+               "<i>até o ponto seguinte</i>; a coluna Acum. é a distância já percorrida "
+               "desde a partida até aquele ponto. No sentido contrário, percorra os "
+               "pontos de baixo para cima e subtraia 180 graus de cada rumo.", "nota"))
+
+    if d.get("conferencia_itens"):
+        h.append(P("<b>Conferência da derrota.</b> " +
+                   " ".join(d["conferencia_itens"]), "nota"))
 
     # ---------------------------------------------------------------- 3 saida
     h.append(PageBreak())
@@ -346,7 +357,7 @@ def construir(d, destino, timbrado=None):
         h.append(lado_a_lado(img(im, alt_cm=20.6, larg_cm=9.5), "Pontos de atenção no percurso",
                              d["atencao_percurso"], proc(d["carta_percurso"]), 9.5))
     else:
-        h.append(img(im, larg_cm=15.0, alt_cm=13.9))
+        h.append(img(im, larg_cm=LARG / cm, alt_cm=13.9))
         h.append(P(proc(d["carta_percurso"]), "cap"))
         h.append(caixa("Pontos de atenção no percurso", d["atencao_percurso"], fonte=9.0))
 
@@ -569,6 +580,10 @@ def apurar(args):
 
     cs = ponta(partida, "saida", "Partida: " + curto(partida[2]), None)
     cc = ponta(chegada, "chegada", None, "Chegada: " + curto(chegada[2]))
+
+    conferencia = N.conferir_derrota(carta_perc["numero"], wps, indice=indice)
+    if args.afastamento_mn is None and conferencia.get("afastamento_mn") is not None:
+        args.afastamento_mn = round(conferencia["afastamento_mn"], 1)
 
     setores_todos = N.carregar_setores()
     setores = N.setores_da_rota(wps, setores_todos)
@@ -805,6 +820,31 @@ def apurar(args):
         "classificação NORMAM é de <b>registro e habilitação</b>. "
         "São sistemas diferentes e os dois precisam ser atendidos.")
 
+    itens_conferencia = []
+    if conferencia.get("afastamento_mn") is not None:
+        la, lo = conferencia["afastamento_em"]
+        itens_conferencia.append(
+            "Afastamento máximo da costa: <b>%s MN</b>, medido pixel a pixel no raster "
+            "das cartas, em %s / %s — é esse número que define a área de navegação da "
+            "NORMAM (item 8)." % (f(conferencia["afastamento_mn"]),
+                                  N.gms(la, "lat"), N.gms(lo, "lon")))
+    if conferencia.get("km_raso", 0) > 0.5:
+        itens_conferencia.append(
+            "%s km correm pela faixa de água rasa da carta (a tinta azul): confira a "
+            "sondagem contra o calado." % f(conferencia["km_raso"], 1))
+    if conferencia.get("problemas"):
+        for p in conferencia["problemas"]:
+            itens_conferencia.append(
+                "<b>ATENÇÃO: a perna %d passa por TERRA</b> por %s km, a partir de "
+                "%s / %s. Acrescente um ponto intermediário para desviar."
+                % (p["perna"], f(p["extensao_km"], 1), N.gms(p["lat"], "lat"),
+                   N.gms(p["lon"], "lon")))
+    elif itens_conferencia:
+        itens_conferencia.append(
+            "Nenhuma perna passa por terra, conferido nas cartas %s."
+            % ", ".join(N.carta_oficial(n, "")[0]
+                        for n in sorted(conferencia.get("cartas", {}))))
+
     from datetime import date
     resumo_cartas = []
     for c in (cs, cp, cc):
@@ -826,6 +866,7 @@ def apurar(args):
         "vento_min": min(ventos), "vento_max": max(ventos),
         "onda_min": min(ondas), "onda_max": max(ondas),
         "iso": iso, "normam": normam,
+        "conferencia_itens": itens_conferencia, "conferencia": conferencia,
         "regiao": regiao, "aviso_rota": aviso_rota,
         "clima_texto": clima_texto, "clima_itens": clima_itens,
         "atencao_saida": at_saida, "atencao_percurso": at_percurso,
@@ -889,6 +930,8 @@ def main(argv=None):
           % (d["carta_saida"]["numero"], d["carta_saida"]["escala"],
              d["carta_percurso"]["numero"], d["carta_percurso"]["escala"],
              d["carta_chegada"]["numero"], d["carta_chegada"]["escala"]))
+    for linha in N.texto_da_conferencia(d["conferencia"]):
+        print(linha)
     print("Setores de clima: %s" % ", ".join(s["codigo"] for s in d["setores"]))
     if d.get("aviso_rota"):
         import re as _re

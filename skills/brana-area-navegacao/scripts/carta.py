@@ -206,7 +206,13 @@ class Carta(object):
         self.datum = knp.get("GD", "?")
 
         self.profundidade = int(h.get("IFM", ["1"])[0].split(",")[0])
-        self.edicao = _campos(",".join(h.get("CED", [""]))).get("ED", "")
+        _ed = _campos(",".join(h.get("CED", [""]))).get("ED", "").strip()
+        # o BSB grava a data em MM/DD/AAAA; aqui e pt-BR
+        try:
+            m, d_, a = _ed.split("/")
+            self.edicao = "%02d/%02d/%s" % (int(d_), int(m), a)
+        except Exception:
+            self.edicao = _ed
         self.aviso = _campos(",".join(h.get("NTM", [""]))).get("NE", "")
 
         self.paletas = {}

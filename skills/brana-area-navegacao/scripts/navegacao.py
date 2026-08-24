@@ -658,9 +658,9 @@ def carta_oficial(numero_painel, titulo_kap=""):
     oficial = painel[:-2] if len(painel) > 2 else painel
     titulo = _CATALOGO.get(oficial)
     if titulo:
-        return oficial, titulo
+        return oficial, titulo.strip(" _-.")
     if painel in _CATALOGO:
-        return painel, _CATALOGO[painel]
+        return painel, _CATALOGO[painel].strip(" _-.")
     return oficial or painel, titulo_kap or "?"
 
 
@@ -673,3 +673,224 @@ def escala_br(valor):
 def sem_acento(s):
     s = unicodedata.normalize("NFKD", s or "").encode("ascii", "ignore").decode()
     return re.sub(r"[^A-Za-z0-9]+", "_", s).strip("_")
+
+
+# ---------------------------------------------------------------------------
+# conferencia automatica da derrota sobre o raster da carta
+# ---------------------------------------------------------------------------
+# Isto existe para o agente NAO precisar abrir a imagem da carta para conferir
+# a derrota: o script le os pixels e devolve texto. Olhar figura custa milhares
+# de tokens; ler oito linhas custa dezenas.
+
+TERRA, RASO, FUNDO, OUTRO = "terra", "raso", "fundo", "outro"
+
+
+def classificar_cor(rgb):
+    """Classifica uma cor da paleta BSB do CHM. As cartas da DHN usam sempre a
+    mesma familia: areia/verde = terra, ciano = agua rasa, branco = agua funda,
+    o resto e texto, linha e simbolo."""
+    r, g, b = rgb
+    if r > 235 and g > 235 and b > 235:
+        return FUNDO
+    if b >= 200 and b > r and b >= g - 20 and r < 235:
+        return RASO
+    if r >= 200 and g >= 160 and b <= 215 and (r - b) >= 25:
+        return TERRA
+    if g > r and g > b and g >= 140:
+        return TERRA
+    return OUTRO
+
+
+def _mapa_classes(crt, wps, folga_px):
+    """Decodifica uma vez a caixa da derrota e converte a paleta em classes.
+    Devolve (mapa 2D de classes, canto do recorte, pixels dos waypoints)."""
+    import numpy as np
+    pix = [crt.para_pixel(w[0], w[1]) for w in wps]
+    xs = [p[0] for p in pix]
+    ys = [p[1] for p in pix]
+    caixa = (int(min(xs) - folga_px), int(min(ys) - folga_px),
+             int(max(xs) + folga_px), int(max(ys) + folga_px))
+    indices, real = crt.decodificar(caixa)
+    paleta = crt.paletas.get("padrao") or {}
+    codigo = {OUTRO: 0, TERRA: 1, RASO: 2, FUNDO: 3}
+    tabela = np.zeros(256, dtype=np.uint8)
+    for i in range(256):
+        tabela[i] = codigo[classificar_cor(paleta.get(i, (255, 255, 255)))]
+    return tabela[indices], real, pix
+
+
+def melhor_carta_para(a, b, indice=None):
+    """Carta mais detalhada que contem os dois pontos de uma perna."""
+    indice = indice or C.carregar_indice()
+    for cand in C.cartas_que_cobrem(indice, a[0], a[1]):
+        crt = _painel(cand)
+        if crt and crt.contem(b[0], b[1]):
+            return cand
+    return None
+
+
+def _varrer(crt, wps, passo_km, so_pernas=None, ignorar_pontas_km=0.6):
+    """Varre as pernas indicadas sobre o raster de uma carta.
+    Devolve (trechos por terra, km em agua rasa)."""
+    import numpy as np
+    lat_meio = sum(w[0] for w in wps) / len(wps)
+    px_por_km = _km_em_pixels(crt, lat_meio, 1.0)
+    mapa, real, pix = _mapa_classes(crt, wps, 8)
+    alt, larg = mapa.shape
+
+    nomes = {1: TERRA, 2: RASO, 3: FUNDO}
+
+    def classe(x, y):
+        """O que esta EXATAMENTE sob a derrota. So quando o pixel central cai
+        em cima de texto, linha ou simbolo e que olha a vizinhanca - senao o
+        cais ao lado contaminaria o resultado."""
+        cx, cy = int(x) - real[0], int(y) - real[1]
+        if not (0 <= cx < larg and 0 <= cy < alt):
+            return OUTRO
+        v = int(mapa[cy, cx])
+        if v:
+            return nomes[v]
+        janela = mapa[max(0, cy - 1):cy + 2, max(0, cx - 1):cx + 2]
+        if janela.size == 0:
+            return OUTRO
+        contagem = np.bincount(janela.ravel(), minlength=4)
+        contagem[0] = 0
+        if contagem.sum() == 0:
+            return OUTRO
+        return nomes[int(contagem.argmax())]
+
+    passo_px = max(2.0, passo_km * px_por_km)
+    corte_px = ignorar_pontas_km * px_por_km
+    trechos, km_raso = [], 0.0
+    total = len(pix) - 1
+    for i, ((ax, ay), (bx, by)) in enumerate(zip(pix, pix[1:]), 1):
+        if so_pernas and i not in so_pernas:
+            continue
+        comprimento = math.hypot(bx - ax, by - ay)
+        n = max(2, int(comprimento / passo_px))
+        corrente, inicio = None, None
+        for k in range(n + 1):
+            t = k / float(n)
+            x, y = ax + (bx - ax) * t, ay + (by - ay) * t
+            # junto ao cais de partida e de chegada, terra e esperado
+            if (i == 1 and t * comprimento < corte_px) or \
+               (i == total and (1 - t) * comprimento < corte_px):
+                continue
+            c = classe(x, y)
+            if c == RASO:
+                km_raso += (comprimento / n) / px_por_km
+            ruim = TERRA if c == TERRA else None
+            if ruim != corrente:
+                if corrente and inicio is not None:
+                    trechos.append(_trecho(crt, i, TERRA, inicio, (x, y), px_por_km))
+                corrente, inicio = ruim, ((x, y) if ruim else None)
+        if corrente and inicio is not None:
+            trechos.append(_trecho(crt, i, TERRA, inicio, (bx, by), px_por_km))
+    return trechos, km_raso
+
+
+def conferir_derrota(numero_percurso, wps, passo_km=0.2, alcance_mn=25.0,
+                     indice=None, minimo_km=0.4):
+    """Confere a derrota lendo o raster das cartas, sem abrir imagem nenhuma.
+
+    Cada perna e conferida na carta MAIS DETALHADA que a contem: em carta de
+    escala pequena um canal estreito nao aparece e daria alarme falso. O
+    afastamento da costa sai da carta do percurso, que tem a visao ampla.
+    """
+    indice = indice or C.carregar_indice()
+
+    grupos, cartas = {}, {}
+    for i, (a, b) in enumerate(zip(wps, wps[1:]), 1):
+        cand = melhor_carta_para(a, b, indice) or C.por_numero(indice, numero_percurso)[0]
+        grupos.setdefault(cand["numero"], set()).add(i)
+        cartas[cand["numero"]] = cand
+
+    problemas, km_raso, escalas = [], 0.0, {}
+    for numero, pernas_do_grupo in grupos.items():
+        crt = _painel(cartas[numero])
+        if crt is None:
+            continue
+        escalas[numero] = crt.escala
+        t, r = _varrer(crt, wps, passo_km, pernas_do_grupo)
+        problemas += [x for x in t if x["extensao_km"] >= minimo_km]
+        km_raso += r
+
+    pior_mn, pior_em = None, None
+    crt = _painel(C.por_numero(indice, numero_percurso)[0])
+    if crt is not None:
+        lat_meio = sum(w[0] for w in wps) / len(wps)
+        px_por_km = _km_em_pixels(crt, lat_meio, 1.0)
+        folga_px = int(alcance_mn * MN_KM * px_por_km) + 8
+        mapa, real, pix = _mapa_classes(crt, wps, folga_px)
+        alt, larg = mapa.shape
+        terra = (mapa == 1)
+        passo_busca = max(3, int(px_por_km * 0.4))
+        limite_px = alcance_mn * MN_KM * px_por_km
+        for (ax, ay), (bx, by) in zip(pix, pix[1:]):
+            for k in range(9):
+                t = k / 8.0
+                x, y = ax + (bx - ax) * t, ay + (by - ay) * t
+                d = _distancia_ate_terra(terra, real, x, y, passo_busca,
+                                         limite_px, larg, alt)
+                if d is None:
+                    continue
+                mn = d / px_por_km / MN_KM
+                if pior_mn is None or mn > pior_mn:
+                    pior_mn, pior_em = mn, crt.para_latlon(x, y)
+        if pior_mn is not None and pior_mn >= alcance_mn * 0.98:
+            pior_mn, pior_em = None, None
+
+    problemas.sort(key=lambda x: (x["perna"], -x["extensao_km"]))
+    return {"problemas": problemas, "km_raso": km_raso,
+            "afastamento_mn": pior_mn, "afastamento_em": pior_em,
+            "cartas": escalas}
+
+
+def _trecho(crt, perna, tipo, p0, p1, px_por_km):
+    la0, lo0 = crt.para_latlon(p0[0], p0[1])
+    return {"perna": perna, "tipo": tipo, "lat": la0, "lon": lo0,
+            "extensao_km": math.hypot(p1[0] - p0[0], p1[1] - p0[1]) / px_por_km}
+
+
+def _distancia_ate_terra(terra, real, x, y, passo, limite, larg, alt):
+    """Aneis crescentes ate encontrar pixel de terra. Devolve a distancia em
+    pixels, ou None se nao houver terra dentro do limite."""
+    raio = passo
+    while raio <= limite:
+        n = max(8, int(2 * math.pi * raio / passo))
+        for k in range(n):
+            ang = 2 * math.pi * k / n
+            xx = int(x + raio * math.cos(ang)) - real[0]
+            yy = int(y + raio * math.sin(ang)) - real[1]
+            if 0 <= xx < larg and 0 <= yy < alt and terra[yy, xx]:
+                return raio
+        raio += passo
+    return None
+
+
+def texto_da_conferencia(cf):
+    """Resumo curto para o console. Substitui a inspecao visual da carta."""
+    if cf.get("erro"):
+        return ["conferencia indisponivel: %s" % cf["erro"]]
+    linhas = ["Conferencia no raster das cartas %s:"
+              % ", ".join("%s (1:%s)" % (n, e)
+                          for n, e in sorted(cf["cartas"].items()))]
+    if cf["afastamento_mn"] is not None:
+        la, lo = cf["afastamento_em"]
+        linhas.append("  afastamento maximo da costa: %s MN (em %s / %s)"
+                      % (_fmt(cf["afastamento_mn"]), gms(la, "lat"), gms(lo, "lon")))
+    else:
+        linhas.append("  afastamento maximo da costa: nao determinado")
+    if cf["km_raso"] > 0.5:
+        linhas.append("  %s km correm pela faixa de agua rasa da carta (tinta azul); "
+                      "confira a sondagem contra o seu calado" % _fmt(cf["km_raso"], 1))
+    if not cf["problemas"]:
+        linhas.append("  nenhum trecho por terra: derrota limpa")
+    else:
+        linhas.append("  ATENCAO - %d trecho(s) passando por TERRA:"
+                      % len(cf["problemas"]))
+        for p in cf["problemas"]:
+            linhas.append("    perna %d: %s km a partir de %s / %s"
+                          % (p["perna"], _fmt(p["extensao_km"], 1),
+                             gms(p["lat"], "lat"), gms(p["lon"], "lon")))
+    return linhas

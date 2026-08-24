@@ -10,7 +10,7 @@ Leia só quando precisar de um detalhe. O `SKILL.md` já cobre o uso normal.
 | `--partida`, `--chegada` | sim | Nome do lugar, `"lat,lon"` ou `"lat,lon:Rótulo"` |
 | `--wp` | não | Ponto intermediário, na ordem. Repetível. Mesmo formato de `--partida` |
 | `--velocidades` | não | Padrão `5,10,20,30` (nós). O relatório converte para km/h |
-| `--afastamento-mn` | não | Maior afastamento da costa, em milhas. **Sem ele a NORMAM sai N/A** |
+| `--afastamento-mn` | não | Maior afastamento da costa, em milhas. **O script mede sozinho no raster**; só passe para sobrepor |
 | `--so-abrigado` | não | Força NORMAM "Interior" (derrota inteira em águas abrigadas) |
 | `--declinacao` | não | Declinação magnética em graus, W positivo. Lida na rosa da carta |
 | `--zoom-km` | não | Lado do recorte das cartas de saída e chegada. Padrão 12 km |
@@ -41,8 +41,36 @@ Leia só quando precisar de um detalhe. O `SKILL.md` já cobre o uso normal.
 - **Distância e rumo**: loxodrômica (rumo constante) sobre datum WGS-84, calculada ponto a ponto.
 - **Cartas**: acervo raster BSB/KAP do CHM. A da saída e a da chegada são as de maior escala em que cabe, inteiro e sem invadir a margem, um recorte de `--zoom-km` centrado no ponto. A do percurso é a de maior escala que contém todos os pontos.
 - **Clima, maré e corrente**: `data/clima_nautico_brasil.md`, que divide o Brasil em 59 setores (33 costeiros e 26 de hidrovia). A skill escolhe os setores mais próximos de cada ponto da derrota.
-- **Categoria ISO**: a **recomendada** usa os extremos já registrados nos setores (maior vento horário da série e maior onda). A **mínima** usa as condições da metade mais calma do ano (p99 de vento e mediana das médias mensais de onda) — só vale para quem navega na janela boa, com previsão confirmada. Limites da ISO 12217: A acima de 40 nós e 4 m; B até 40 nós (74 km/h) e 4 m; C até 27 nós (49 km/h) e 2 m; D até 16 nós (28 km/h) e 0,3 m.
+- **Categoria ISO**: a **recomendada** usa o p99 de vento e de onda dos setores, ou seja, a condição superada em 1% das horas — o pico absoluto de uma série de reanálise não deve, sozinho, empurrar um barco costeiro para a categoria oceânica. A **mínima** usa o p90 de vento e a onda típica da metade mais calma do ano, e só vale para quem navega na janela boa com previsão confirmada. Se o pico já registrado cair numa categoria acima da recomendada, o relatório diz isso como ressalva. Limites da ISO 12217: A acima de 40 nós e 4 m; B até 40 nós (74 km/h) e 4 m; C até 27 nós (49 km/h) e 2 m; D até 16 nós (28 km/h) e 0,3 m.
 - **Área NORMAM**: NORMAM-211/DPC (esporte e recreio). Interior = águas abrigadas ou parcialmente abrigadas, Arrais-Amador. Costeira = dentro da visibilidade da costa, até 20 milhas, Mestre-Amador. Oceânica = sem restrições, Capitão-Amador. Para uso comercial vale a NORMAM-201/DPC.
+
+## Conferência automática e sondagem
+
+O `gerar_relatorio.py` confere a derrota **pixel a pixel** sobre o raster, sem gerar
+imagem nenhuma. Cada perna é conferida na carta de **maior escala** que a contém — em
+carta de escala pequena um canal estreito some e daria alarme falso. Ele classifica
+cada pixel sob a linha em terra, água rasa (a tinta azul), água funda ou traço da
+carta, e reporta:
+
+- trechos passando por **terra** (a partir de 0,4 km, para não contar símbolo solto);
+- quantos km correm pela faixa de água rasa;
+- o **afastamento máximo da costa** em milhas, que alimenta a classificação NORMAM.
+
+Perto do cais de partida e de chegada os primeiros e últimos 600 m são ignorados —
+ali terra é esperada.
+
+O que a conferência **não** enxerga: pedra isolada, laje, balizamento, área restrita e
+profundidade em número. Isso continua sendo leitura de carta.
+
+Para achar por onde desviar sem abrir imagem, use o `sondar.py`:
+
+```
+python scripts/sondar.py -23.90 -45.45 --raio 12
+```
+
+Ele imprime um mapa de texto (`#` terra, `-` raso, `.` fundo) centrado no ponto, na
+carta de maior escala que o cobre. `--carta` força outra carta e `--colunas` muda a
+largura do mapa.
 
 ## Quando algo dá errado
 
@@ -74,3 +102,7 @@ pontos intermediários.
 **A carta da saída ou da chegada saiu grosseira** — é a escala da carta, não a
 imagem. Não existe carta de escala maior para aquele ponto: diga isso no lugar de
 ampliar mais.
+
+**"a perna N passa por TERRA"** — a linha reta entre dois pontos corta terra. Sonde a
+região com `sondar.py`, escolha um ponto em água funda e acrescente `--wp "lat,lon"`
+na ordem. Repita até a conferência dizer "derrota limpa".
