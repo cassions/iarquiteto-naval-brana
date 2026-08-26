@@ -114,13 +114,17 @@ exatamente, e é por isso que a garganta desaparece sem degrau, sozinha, na esta
 
 ## Como se obtém `alefriz.z0`
 
-Do ajuste da seção mestra, nunca de palpite. Ajuste `p` e `k` aos pontos medidos
-(`homografia.py --secao`, que também compara com a super-elipse), tire a garganta pela
-forma fechada e leve-a à cota:
+Do ajuste da seção mestra, nunca de palpite. `homografia.py --secao` ajusta `p` e `k` aos
+pontos medidos (comparando com a super-elipse), tira a garganta pela forma fechada e leva-a
+à cota:
 
 ```
 z0 = z_quilha(MID_X) + u_garganta(p, k) · [ z_borda(MID_X) − z_quilha(MID_X) ]
 ```
+
+Passe `--meia-nau z_quilha,z_borda` — as duas cotas na meia-nau, em quadrados, lidas de
+`profKeel` e `profSheer` — e ele faz essa conta e grava `alefriz.z0` no `projeto.json`.
+Sem `--meia-nau` ele só imprime a fórmula, e a conta sobra para você.
 
 `subida`, `tuck` e `extensao` **não** são medidas: são valores de projeto, a prática de
 traçado de quilha corrida. Padrões 0,010 / 0,40 / 2,5. Só deixam de ser arbitrados se o
@@ -177,22 +181,72 @@ Unimodal, máximo na meia-nau: é o que se confere. A baliza 5 cai no piso `p = 
 `k = 1`, e vale exatamente `1 − 1/(p+1) = 0,524`. O madeiramento morre em `x ≈ 12,3`
 quadrados, a 23 % do comprimento contados da proa.
 
-## Bloco do projeto
+## O projeto.json deste casco
 
-```js
-var LOA_SQ = 16;
-NST = 5;
-var SPEC = { planSheer:{...}, profSheer:{...}, profKeel:{...} };
-var ORDER = ['planSheer','profSheer','profKeel'];
-var RAW = { ... };
-var PHOTO_PTS = [[meia_boca, altura_acima_da_quilha], ...];   /* pontos da secao */
-var MID_X = 6.788;
-ui.pmid = 3.23;                                    /* p ajustado na secao mestra */
-FULL_RE = 0.51; FULL_VANTE = 0.20; FULL_EXP = 0.7;
-RAB_Z0 = 1.3779; RAB_SUBIDA = 0.010; RAB_TUCK = 0.40; RAB_TLEN = 2.5;
+É o **único** arquivo que você escreve, e você não escreve tudo dele. Dois scripts gravam
+direto no arquivo, fundindo com o que já estiver lá — não copie a saída deles de volta:
+
+```bash
+# grava curvas e medidos
+python scripts/ajustar.py --loa-sq 16 --projeto projeto.json \
+    --curva planSheer 0,1.6328 1.865,2.2898 ... --curva profSheer ... --curva profKeel ...
+
+# grava secao.pts, cheia.p e — por causa do --meia-nau — alefriz.z0
+python scripts/homografia.py --secao 0,0 0.340,0.542 ... 3.083,4.198 \
+    --projeto projeto.json --meia-nau 0.0817,4.5915
 ```
 
-`montar.py` escreve tudo isso a partir do `projeto.json`. Você não digita este bloco.
+À mão sobram a identificação, as dimensões, as frações de cheia, os três parâmetros
+arbitrados do alefriz e o `registro`:
+
+```json
+{
+  "casco": "quilha-cheia",
+  "nome": "Luiz",
+  "titulo": "Casco de Quilha Corrida",
+  "subtitulo": "Quilha corrida · baliza em wineglass · pé de roda profundo",
+  "loa_m": 6.8, "loa_sq": 16, "balizas": 5, "mid_x": 6.788,
+  "curvas": {
+    "planSheer": [[0,1.6328,0.367],[1.865,2.2898,0.33756], ..., [16,0,-0.68897]],
+    "profSheer": [[0,4.821,-0.04228], ..., [16,5.571,0.20858]],
+    "profKeel":  [[0,0.032,-0.03373],[2.581,0,0.00893], ..., [16,5.571,1.41532]]
+  },
+  "medidos": { "planSheer": [[0,1.6328],[1.865,2.2898], ...], "profSheer": [...],
+               "profKeel": [...] },
+  "secao":   { "pts": [[0,0],[0.34,0.542],[0.683,0.948], ..., [3.083,4.198]] },
+  "cheia":   { "p": 3.23, "re": 0.51, "vante": 0.20, "exp_vante": 0.7 },
+  "alefriz": { "z0": 1.3779, "subida": 0.010, "tuck": 0.40, "extensao": 2.5 },
+  "registro": { "calibracao": "…", "notas": ["…"] }
+}
+```
+
+Os `...` são corte desta página: `curvas`, `medidos` e `secao` saem inteiros dos scripts.
+Arrays sempre compactos, um ponto por linha no máximo — nunca um número por linha: o mesmo
+arquivo custa 383 tokens compacto e 1.001 com `indent=2` explodindo os números.
+
+Obrigatórios: `casco`, `nome`, `loa_m` (metros, informado pela pessoa), `loa_sq`
+(quadrados da malha, não metros nem balizas), `balizas`, `mid_x` (a coordenada X da
+meia-nau, não o número da baliza), `curvas` e `alefriz.z0`. `titulo` e `subtitulo` são
+opcionais — sem `titulo`, o padrão vem do tipo de casco. Os demais:
+
+| Campo | Padrão | O que é |
+|---|---|---|
+| `medidos` | — | pontos lidos na foto; viram as cruzes das vistas |
+| `secao.pts` | — | seção reprojetada, `[meia_boca, altura_acima_da_quilha]`. **Nove** pontos, não os cinco a sete do redondo: quatro entre 10 % e 45 % do pontal, cercando a garganta |
+| `cheia.p` | 2,32 | cheia da baliza, ajustada na seção mestra. O padrão é o do croqui redondo de referência, não o do seu — deixe o script gravar |
+| `cheia.re` | 0,93 | fração da cheia da meia-nau no espelho |
+| `cheia.vante` | 0,62 | fração da cheia da meia-nau na proa |
+| `cheia.exp_vante` | 0,7 | expoente da suavização à vante; a seção acima diz por quê |
+| `alefriz.z0` | **nenhum** | cota do alefriz na meia-nau, em quadrados; `montar.py` recusa o projeto sem ela |
+| `alefriz.subida` | 0,010 | subida do alefriz por quadrado, para vante |
+| `alefriz.tuck` | 0,40 | levantamento do tuck em quadrados, sobre o prolongamento da reta — rende 0,375 qd em relação à cota do alefriz no fim do tuck, que é o que se mede num traçado pronto |
+| `alefriz.extensao` | 2,5 | extensão do tuck a partir do espelho, em quadrados |
+| `registro` | — | `{ "calibracao": "…", "notas": ["…"] }`. Só fato deste barco |
+
+Não escreva o que é derivado: `montar.py` e o motor cuidam de rótulos, camadas de
+exportação, ordem das curvas, `fixLast` e o vínculo das curvas de perfil no topo da roda,
+escala, altura dos painéis, limites dos nós, `viewBox`, espaçamento das balizas e posição
+dos números — e do bloco `var` do modelo, que você nunca digita.
 
 ## Restrição própria deste modelo
 
@@ -205,3 +259,20 @@ pode inflexionar são as curvas de planta e de perfil.
 Igual à do redondo — meias-bocas em linhas de água fracionárias do pontal local (um
 quarto, metade, três quartos), mais altura de quilha e de borda. O painel da seção mostra
 à parte, em texto, a que porcentagem do pontal está a garganta daquela baliza.
+
+## O que escrever no `registro`
+
+Só fato deste croqui. O painel do documento já traz gravada, acima do seu texto, a seção
+*Como isto é feito*, e ela cobre tudo que esta referência explica: a homografia e a
+tolerância de 0,05 quadrado, o alisamento por convexidade, a família de dois expoentes e o
+que `p` e `k` fazem, a garganta como cota absoluta e não fração do pontal, o alefriz, o
+madeiramento que morre sozinho no pé de roda, e por que a suavização à vante é elevada a
+um expoente menor que 1. **Não reescreva nada disso** — foi metade do registro da versão
+anterior, e é idêntico em toda corrida.
+
+No `registro` vão os números: resíduo da calibração; `p` e `k` ajustados e o resíduo, com
+a comparação contra a super-elipse; onde caiu a garganta e onde ela está medida no croqui;
+`alefriz.z0` e quais dos parâmetros do alefriz são valores de projeto e não medidas; a
+estação em que o madeiramento morre; a garganta e o Cm baliza a baliza; a discordância
+entre vistas e qual você adotou; e quanto cada nó foi deslocado. Teste cada frase com
+*"ela seria idêntica para outro croqui?"* — se for, é método, e método já está no modelo.

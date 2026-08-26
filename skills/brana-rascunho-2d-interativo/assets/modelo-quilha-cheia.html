@@ -427,7 +427,48 @@
   <details class="rec">
     <summary>Registro da extração — malha, calibração, reconciliação</summary>
     <div class="rec-body">
-      <!--{{REGISTRO}}-->
+      <div>
+        <h3>Como isto é feito</h3>
+        <p>Este documento nasceu da fotografia de um croqui feito à mão em papel quadriculado. O que vem abaixo é o <em>método</em>, e vale para qualquer croqui lido por esta ferramenta: nenhum número deste barco aparece aqui. Os números deste barco estão em <strong>Este croqui</strong>, na tabela de cotas digitalizadas e na tabela de cotas do documento.</p>
+
+        <p><strong>A malha é a escala.</strong> Não se mede milímetro nenhum na fotografia — mede-se em quadrados do papel, e o próprio desenho fornece a referência: marcas de baliza rotuladas e um traço da malha delimitam no papel um retângulo de proporções sabidas, cujos quatro cantos se reconhecem na imagem. A escala absoluta não sai do croqui. Ela vem do comprimento total que a pessoa informa, e entra só no fim, para converter quadrados em milímetros.</p>
+
+        <p><strong>A perspectiva é desfeita antes de qualquer leitura.</strong> A foto de uma folha de caderno não é uma vista ortogonal: o papel aparece em fuga, e decalcar contando pixels erra em vários por cento — mais na borda distante da folha do que na próxima. Os quatro cantos daquele retângulo fixam uma homografia plano a plano, resolvida exatamente, e toda leitura de pixel volta ao papel pela inversa dela. A calibração é então conferida contra dados que não entraram no ajuste: as marcas de baliza restantes têm de cair nas posições nominais dentro de <strong>0,05 quadrado</strong> — a margem de quem aponta um traço a olho. Fora disso a calibração é reprovada e a leitura, refeita. A tolerância não se afrouxa para fazer um croqui passar.</p>
+
+        <p><strong>As curvas longitudinais não podem inflexionar.</strong> Borda e quilha de um casco são curvas de sentido único de curvatura: uma ondulação nelas é ruído de leitura, não forma de barco. Cada curva aqui é uma cadeia de Bézier cúbicas unidas em G1 — os dois punhos de um nó dividem a mesma reta tangente. Uma Bézier plana não inflexiona se o seu polígono de controle não inflexionar, de modo que a verificação é combinatória e barata: toma-se o produto vetorial de cada par de arestas consecutivas ao longo do polígono inteiro e exige-se um único sinal, admitindo giros colineares. Alisar, aqui, é resolver as declividades dos nós que satisfazem essa condição <em>passando por todos os pontos lidos</em> — não é aproximar por mínimos quadrados e aceitar o que sair.</p>
+
+        <p><strong>A restrição morde durante o arrasto, não depois.</strong> Um movimento que quebraria a regra não é recusado: é bissectado entre o último estado válido e o pedido, e o punho desliza até a restrição e para ali. A mesma máquina mantém a ordem em x, limita cada punho a uma fração da sua corda para que nenhum segmento faça laço, prende todo nó dentro da folha e impõe quilha abaixo da borda no perfil. Arrastar um nó com a tangente congelada trava quase de imediato numa curva rasa, então o arrasto tenta primeiro com as tangentes intactas e só re-alisa quando isso falha: o nó e os dois vizinhos recebem direções de Catmull-Rom e os punhos encolhem até o estado ficar legal. Como os comprimentos tendem a zero, o polígono de controle tende à poligonal dos nós — qualquer arranjo convexo de posições continua alcançável. É por isso que a regra morde na forma que você está desenhando, e não na parametrização.</p>
+
+        <p>Arraste um botão vermelho e a tangente daquele nó passa a ser sua: o botão preenche e o re-alisamento a deixa em paz. <strong>Auto-alisar</strong> governa apenas a regra de curvatura. Desligado, os pontos de controle vão exatamente para onde você os põe, as curvas podem inflexionar, o pente de curvatura acende e um selo conta quantas inflexionaram — todo o resto continua imposto, porque é o que mantém o modelo avaliável, e não apenas bonito. Ao religar, cada curva recuperável só com tangentes e comprimentos de punho volta à regra; uma curva cujos <em>nós</em> formam um S não é recuperável assim, e é dispensada em vez de ser jogada para onde você não pediu. Note que uma curva pode passar pela reta e sair curvando para o outro lado sem inflexionar em instante algum — é assim que uma borda oca vira convexa.</p>
+
+        <p><strong>O plano de balizas é gerado, não desenhado.</strong> Nenhuma baliza foi traçada à mão além da mestra. Em cada estação a planta dá a meia-boca e o perfil dá as alturas de quilha e de borda; a forma entre esses extremos vem da família descrita a seguir. Por isso mexer numa curva longitudinal repinta o plano de balizas, a tabela de cotas e a curva de áreas na mesma ação: é um modelo só, visto de três lados.</p>
+
+        <p><strong>A forma da baliza: dois expoentes.</strong> A super-elipse do casco de bojo redondo não serve aqui. Ela é côncava da quilha ao convés, e a baliza de um casco de quilha corrida <em>inverte a curvatura</em> perto do fundo: sobe estreita e quase vertical junto à quilha, na lâmina do madeiramento morto, abre numa <strong>garganta</strong>, e daí vira taça até o convés. É a seção em <em>wineglass</em>, e uma família de um parâmetro só não a alcança. A adotada tem dois, escrita sobre a meia-baliza normalizada, com <code>u = 0</code> na quilha e <code>u = 1</code> no convés:</p>
+        <div class="matrix">s(u) = [ 1 − (1 − u)^p ]^k</div>
+        <p><code>p</code> é a <strong>cheia</strong>; <code>k</code> é o <strong>estrangulamento do pé</strong>. Junto à quilha <code>s ≈ (p·u)^k</code>: com <code>k</code> maior que <code>1</code> o pé sobe como lâmina fina e a garganta aparece; com <code>k = 1</code> a baliza é côncava pura, sem garganta, e a família recai na do bojo redondo. No convés a derivada é nula, então a boca máxima continua no convés, como o croqui mostra. Acima de <code>1</code> a curva tem <strong>exatamente uma</strong> inflexão — que é a garganta — e essa inflexão tem forma fechada. Por isso <code>k</code> sai de uma inversão direta a partir da cota de garganta pedida, sem busca numérica: cada baliza é calculada, não procurada.</p>
+
+        <p><strong>A garganta é a linha de alefriz.</strong> É este o ponto que separa o método de um mero ajuste de curva. A garganta não é uma fração do pontal — é uma <em>cota absoluta</em>, a linha em que o tabuado do costado morre contra a quilha, e a fração é consequência dela. Num casco de quilha corrida o alefriz corre praticamente reto a ré do pé de roda, sobe de leve para vante conforme o madeiramento afina, e levanta no tuck ao entrar no cadaste. Amarrar a garganta a uma fração do pontal daria uma garganta que sobe e desce junto com o pontal, o que traçado real nenhum faz.</p>
+
+        <p><strong>O madeiramento morre sozinho na proa.</strong> Onde o perfil da quilha sobe e alcança o alefriz não existe mais madeiramento <em>sob</em> a baliza: ele está à vante dela, não embaixo. Dali para a proa a seção é corpo canoa inteiro, sem garganta. Isso não é uma regra costurada por fora — cai de graça da fórmula, porque garganta pedida em <code>u = 0</code> devolve exatamente <code>k = 1</code>. A estação em que isso acontece está declarada em <strong>Este croqui</strong>: é consequência do croqui, não escolha de quem traçou.</p>
+
+        <p><strong>Cheia e garganta são independentes.</strong> Desacoplar as duas deixa a cheia afinar depressa no pé de roda sem arrastar a garganta junto, mas cobra uma correção. Com a suavização simples do modelo de bojo redondo, a baliza vizinha à proa sai com coeficiente de baliza <em>maior</em> que o da mestra, o que não existe: o Cm máximo é o da meia-nau, por definição. A suavização à vante é por isso elevada a um expoente menor que <code>1</code>, e a curva de Cm volta a ser unimodal.</p>
+
+        <p><strong>Onde um croqui de uma seção só não chega.</strong> A cota do alefriz na meia-nau sai do ajuste da seção mestra. A inclinação para vante e o levantamento do tuck, não: são valores de projeto, escolhidos pela prática de traçado de quilha corrida. Com uma segunda seção no croqui — de preferência a do espelho — dois dos três parâmetros do alefriz deixariam de ser arbitrados. O que neste barco é medida e o que é reconstrução está dito item a item em <strong>Este croqui</strong>.</p>
+
+        <p><strong>Onde isto é estimativa.</strong> A fotografia foi lida a olho — nenhum processamento de imagem teve acesso aos pixels. Cada ponto carrega o erro de quem aponta, da ordem daqueles <strong>0,05 quadrado</strong>: menor que a espessura do traço do próprio croqui, mas presente. A homografia é exata dadas essas leituras; a incerteza está na leitura, não na álgebra. E onde as vistas do croqui discordam entre si, uma delas foi adotada e a outra não — a discordância é medida e declarada em <strong>Este croqui</strong>, em vez de ser dissolvida numa média que esconderia as duas.</p>
+      </div>
+
+      <div>
+        <h3>Este croqui</h3>
+        <!--{{REGISTRO}}-->
+      </div>
+
+      <div>
+        <h3>Cotas digitalizadas, antes do alisamento</h3>
+        <p>Cada linha é uma leitura de pixel devolvida ao papel pela inversa da homografia, antes de qualquer alisamento: meias-bocas em quadrados a partir da linha de centro, alturas em quadrados acima do ponto mais baixo da quilha. São as cruzes desenhadas sobre as vistas — o dado bruto, para se ver de quanto o alisamento precisou se afastar dele.</p>
+        <div class="tablewrap"><table id="rawTable"></table></div>
+      </div>
+
     </div>
   </details>
 
@@ -1345,7 +1386,8 @@ function renderRaw(){
          ' · pontal '+fmt(_D,3)+' · expoentes p = '+fmt(_pm.p,2)+' e k = '+fmt(_pm.k,3)+
          ' · garganta a '+fmt(sectThroat(_pm.p,_pm.k)*100,0)+' % do pontal'+
          ' · Cm = '+fmt(sectCm(_pm.p,_pm.k),3)+'</td></tr>';
-  document.getElementById('rawTable').innerHTML = h + '</tbody>';
+  var _rt = document.getElementById('rawTable');
+  if(_rt) _rt.innerHTML = h + '</tbody>';
 }
 
 /* ============================================================

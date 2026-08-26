@@ -9,8 +9,14 @@
 'use strict';
 const fs = require('fs');
 
-const ARQ = process.argv[2];
-if (!ARQ) { console.error('uso: node verificar.js <arquivo.html>'); process.exit(2); }
+/* --resumo: cala as linhas de PASSOU e as secoes, mantendo falhas, dimensoes e placar.
+   A saida completa custa ~1.200 tokens; o resumo custa ~30. Quando algo falhar, rode
+   de novo sem --resumo para ver o detalhe. */
+const RESUMO = process.argv.includes('--resumo');
+const grita = console.log.bind(console);      // sai sempre
+if (RESUMO) console.log = () => {};           // o resto cala
+const ARQ = process.argv.slice(2).find(a => a.indexOf('--') !== 0);
+if (!ARQ) { console.error('uso: node verificar.js [--resumo] <arquivo.html>'); process.exit(2); }
 
 /* ---------- DOM de mentira ---------- */
 const noop = () => {};
@@ -83,7 +89,7 @@ if (FALTA.length) { console.error('ERRO: o modelo nao expoe ' + FALTA.join(', ')
 let falhas = 0, passes = 0;
 const ok = (n, c, extra) => {
   if (c) { passes++; console.log('  PASSOU  ' + n + (extra ? '   ' + extra : '')); }
-  else { falhas++; console.log('  FALHOU  ' + n + (extra ? '   ' + extra : '')); }
+  else { falhas++; grita('  FALHOU  ' + n + (extra ? '   ' + extra : '')); }
 };
 const zerar = () => Object.assign(A.model, A.cloneModel(A.INITIAL));
 const MM = () => A.ui.loa * 1000 / A.LOA_SQ;   // mm por quadrado
@@ -121,7 +127,7 @@ function inflexao(nodes) {
   return dom < 1e-9 ? 0 : Math.min(pos, neg) / dom;
 }
 
-console.log('\n' + ARQ + '  ·  casco ' + TIPO +
+grita('\n' + ARQ + '  ·  casco ' + TIPO +
             '  ·  ' + A.ORDER.length + ' curvas  ·  ' + NST + ' balizas  ·  ' +
             A.LOA_SQ + ' quadrados');
 
@@ -213,7 +219,7 @@ console.log('\n=== 6. Dimensoes principais ===');
 {
   zerar();
   const M = A.metrics();
-  console.log('   LOA ' + (M.loa / 1000).toFixed(3) + ' m · boca ' + (M.boa / 1000).toFixed(3) +
+  grita('   LOA ' + (M.loa / 1000).toFixed(3) + ' m · boca ' + (M.boa / 1000).toFixed(3) +
               ' m · C/B ' + M.ratio.toFixed(2) + ' · pontal ' + M.depthMid.toFixed(0) + ' mm' +
               (M.cm !== undefined ? ' · Cm ' + M.cm.toFixed(3) : ''));
   ok('todas as dimensoes sao numeros finitos',
@@ -455,6 +461,6 @@ if (QUILHA) {
   zerar();
 }
 
-console.log('\n' + (falhas ? 'FALHAS: ' + falhas : 'todas as ' + passes + ' verificacoes passaram') +
+grita('\n' + (falhas ? 'FALHAS: ' + falhas : 'todas as ' + passes + ' verificacoes passaram') +
             '   (' + passes + '/' + (passes + falhas) + ')');
 process.exit(falhas ? 1 : 0);

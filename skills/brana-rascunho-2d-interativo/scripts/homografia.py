@@ -21,13 +21,107 @@ pixels para coordenadas de papel, e confere se as balizas caem onde deveriam.
   python homografia.py --secao 0,0 0.340,0.542 0.683,0.948 1.026,1.149 \
       1.711,1.484 2.328,2.024 2.740,2.838 2.973,3.654 3.083,4.198
 
+  # gravar o ajuste direto no projeto.json, em vez de imprimir para o agente copiar.
+  # ai a secao TEM de vir em quadrados: e assim que ela vai para o arquivo.
+  python homografia.py --secao 0,0 ... --projeto projeto.json --meia-nau 0.0817,4.5915
+
+Com --projeto vao para o arquivo "secao.pts" e "cheia.p" da familia recomendada; com
+--meia-nau z_quilha,z_borda (as duas cotas na meia-nau, em quadrados, lidas de profKeel
+e profSheer) vai tambem "alefriz.z0", que ate agora o agente calculava a mao.
+
 Os quatro pontos, nesta ordem:
   p1 = baliza 1    x linha de centro da planta
   p2 = ultima      x linha de centro da planta
   p3 = ultima      x linha das marcas
   p4 = baliza 1    x linha das marcas
 """
-import argparse, math, sys
+import argparse, io, json, math, os, sys
+
+
+# ---------------------------------------------------------------------- projeto.json
+# Este bloco e igual no ajustar.py, de proposito: os dois scripts gravam no mesmo
+# arquivo, e nao valia acrescentar um quinto arquivo ao pacote para dividir trinta
+# linhas. Se mexer aqui, mexa la.
+#
+# Duas regras dao a economia. Chave em ordem fixa, para o arquivo nao embaralhar de uma
+# rodada para outra e o diff mostrar so o que mudou. E array de numeros escrito cheio
+# ate a margem, nunca um numero por linha: o mesmo projeto.json custa 1.001 tokens com
+# json.dumps(indent=2) e cerca de 400 assim, sem ficar ilegivel para gente.
+
+ORDEM_CHAVES = [
+    'casco', 'nome', 'titulo', 'subtitulo', 'loa_m', 'loa_sq', 'balizas', 'mid_x',
+    'curvas', 'medidos', 'secao', 'cheia', 'alefriz', 'registro',
+    'planSheer', 'planChine', 'profSheer', 'profChine', 'profKeel',
+    'pts', 'keel', 'chine', 'deck',
+    'p', 're', 'vante', 'exp_vante',
+    'z0', 'subida', 'tuck', 'extensao',
+    'calibracao', 'notas',
+]
+MARGEM = 92
+
+
+def _chaves(d):
+    """As conhecidas na ordem canonica; o resto atras, na ordem em que ja estava."""
+    return ([k for k in ORDEM_CHAVES if k in d] +
+            [k for k in d if k not in ORDEM_CHAVES])
+
+
+def _texto(v, ind=0):
+    pad = ' ' * ind
+    if isinstance(v, dict):
+        if not v:
+            return '{}'
+        itens = ['%s  %s: %s' % (pad, json.dumps(k, ensure_ascii=False), _texto(v[k], ind + 2))
+                 for k in _chaves(v)]
+        return '{\n' + ',\n'.join(itens) + '\n' + pad + '}'
+    if isinstance(v, list):
+        if not v:
+            return '[]'
+        pecas = [_texto(x, ind + 2) for x in v]
+        # so numero e ponto entram na embalagem apertada; texto e objeto ficam um por
+        # linha, que e o que mantem o registro legivel
+        if (any(isinstance(x, (dict, str)) for x in v) or any('\n' in q for q in pecas)):
+            return '[\n' + ',\n'.join(pad + '  ' + q for q in pecas) + '\n' + pad + ']'
+        uma = '[' + ','.join(pecas) + ']'
+        if ind + len(uma) <= MARGEM:
+            return uma
+        linhas, atual = [], ''
+        for i, q in enumerate(pecas):
+            q += '' if i == len(pecas) - 1 else ','
+            if atual and ind + 2 + len(atual) + len(q) > MARGEM:
+                linhas.append(atual)
+                atual = q
+            else:
+                atual += q
+        linhas.append(atual)
+        return '[\n' + '\n'.join(pad + '  ' + l for l in linhas) + '\n' + pad + ']'
+    return json.dumps(v, ensure_ascii=False)
+
+
+def gravar_projeto(caminho, mudancas):
+    """Funde no projeto.json sem destruir nada.
+
+    O que ja estava no arquivo e nao aparece em 'mudancas' continua la: registro,
+    titulo, casco, nome, os escalares. Dicionario funde por sub-chave, entao gravar
+    'cheia.p' nao apaga 'cheia.re', e gravar 'alefriz.z0' nao apaga o tuck.
+    """
+    p = {}
+    if os.path.exists(caminho):
+        try:
+            p = json.load(io.open(caminho, encoding='utf-8'))
+        except ValueError as e:
+            sys.exit('ERRO: %s nao e JSON valido (%s).\n'
+                     '      Conserte o arquivo antes; gravar por cima perderia o que ha nele.'
+                     % (caminho, e))
+        if not isinstance(p, dict):
+            sys.exit('ERRO: %s nao tem um objeto JSON na raiz.' % caminho)
+    for chave, valor in mudancas.items():
+        if isinstance(valor, dict) and isinstance(p.get(chave), dict):
+            p[chave].update(valor)
+        else:
+            p[chave] = valor
+    io.open(caminho, 'w', encoding='utf-8', newline='\n').write(_texto(p) + '\n')
+    return p
 
 
 def par(s):
@@ -213,6 +307,156 @@ def inflexoes(f, n=1500, borda=0.004, h=1e-3):
     return trocas
 
 
+def relatorio_secao(r):
+    """A saida de sempre: as duas familias abertas, com o criterio impresso para
+    conferencia. E o que se ve quando o ajuste NAO vai para o projeto.json."""
+    print('secao mestra: %d pontos · meia-boca %.1f px · pontal %.1f px · razao %.3f'
+          % (len(r['pts']), r['Y'], r['D'], r['D'] / r['Y']))
+
+    # (a) super-elipse: 1 parametro, casco de bojo redondo
+    print('  super-elipse ajustada: p = %.2f' % r['p'])
+    print('  residuo eficaz: %.1f %% da meia-boca' % r['ra'])
+    print('  pior ponto:     %.1f %%' % (100 * r['piora']))
+    print('  Cm = %.3f   (p=2 da a semi-elipse, Cm=%.3f)' % (r['cma'], math.pi / 4))
+    if r['ra'] > 4:
+        print('  AVISO: residuo alto. A secao pode nao ser uma super-elipse —')
+        print('         talvez tenha chine suave ou tumblehome. Diga isso ao usuario.')
+
+    # (b) dois expoentes: 2 parametros, quilha cheia
+    print('\n  dois expoentes ajustados: p = %.2f   k = %.3f    s(u) = [1-(1-u)^p]^k'
+          % (r['pb'], r['kb']))
+    print('  residuo eficaz: %.1f %% da meia-boca' % r['rb'])
+    print('  pior ponto:     %.1f %%' % (100 * r['piorb']))
+    print('  Cm = %.3f' % r['cmb'])
+    if r['ug'] is None:
+        print('  garganta: nao existe (k <= 1) — o ajuste degenerou em baliza concava pura')
+    else:
+        print('  garganta: u = %.3f do pontal local (%.1f %% acima da quilha), forma fechada'
+              % (r['ug'], 100 * r['ug']))
+    print('  inflexoes na varredura da segunda derivada: %d' % r['trocas'])
+
+    # comparacao e recomendacao, com o criterio impresso para conferencia
+    print('\n  criterio: (b) tem um parametro a mais, entao tem de pagar por ele. So vale')
+    print('            se derrubar o residuo em 25 % ou mais E puser a garganta entre')
+    print('            0,10 e 0,50 do pontal. Fora disso a garganta esta no excesso de')
+    print('            parametros, nao nos dados.')
+    print('  residuo: %.1f %% (super-elipse) -> %.1f %% (dois expoentes), queda de %.0f %%'
+          % (r['ra'], r['rb'], r['queda']))
+    if r['rec'] == 'redondo':
+        print('  RECOMENDACAO: REDONDO. O segundo expoente nao pagou por si — a garganta')
+        print('                nao esta nos pontos medidos. Use casco "redondo" com')
+        print('                cheia.p = %.2f.' % r['p'])
+    elif r['rec'] == 'quilha-cheia':
+        print('  RECOMENDACAO: QUILHA CHEIA. A garganta esta nos dados e cai onde a linha')
+        print('                de alefriz de uma quilha corrida cai de verdade.')
+        print('  daqui saem os campos do projeto.json (especificacao, secao 5):')
+        print('    cheia.p    = %.2f' % r['pb'])
+        if r['z0'] is None:
+            print('    alefriz.z0 = z_quilha(mid_x) + %.4f * [ z_borda(mid_x) - z_quilha(mid_x) ]'
+                  % r['ug'])
+            print('                 com z_quilha e z_borda em quadrados, lidos de profKeel e')
+            print('                 profSheer na meia-nau. k NAO vai no json: montar.py o refaz')
+            print('                 por pinchAt a partir do alefriz, com k = [(p-1)/(1-u)^p + 1]/p.')
+        else:
+            zq, zb = r['meia_nau']
+            print('    alefriz.z0 = %.4f   (%.4f + %.4f * [%.4f - %.4f], de --meia-nau)'
+                  % (r['z0'], zq, r['ug'], zb, zq))
+            print('                 k NAO vai no json: montar.py o refaz por pinchAt a partir')
+            print('                 do alefriz, com k = [(p-1)/(1-u)^p + 1]/p.')
+    else:
+        if r['ug'] is None:
+            onde = 'a garganta nao existe (k <= 1)'
+        else:
+            onde = 'a garganta saiu em u = %.3f, fora de 0,10 a 0,50' % r['ug']
+        print('  RECOMENDACAO: AMBIGUO. O residuo caiu %.0f %%, mas %s.' % (r['queda'], onde))
+        print('                Olhe a secao mestra do croqui de novo antes de escolher: o')
+        print('                ganho pode ser tumblehome, chine suave ou ponto mal lido.')
+
+
+def resumo_secao(r, caminho, gravados):
+    """A saida curta, de quando os numeros vao para o arquivo.
+
+    Fica so o que o agente ainda tem de julgar com os olhos: quanto cada familia erra,
+    onde caiu a garganta, e a recomendacao. O resto do relatorio virou numero dentro do
+    projeto.json — imprimi-lo tambem seria pagar duas vezes pelo mesmo dado.
+    """
+    print('super-elipse:   p = %.2f%sresiduo %.1f %%  pior %.1f %%  Cm %.3f'
+          % (r['p'], ' ' * 13, r['ra'], 100 * r['piora'], r['cma']))
+    g = 'sem garganta' if r['ug'] is None else 'garganta u = %.3f' % r['ug']
+    print('dois expoentes: p = %.2f  k = %.3f  residuo %.1f %%  pior %.1f %%  Cm %.3f  %s'
+          % (r['pb'], r['kb'], r['rb'], 100 * r['piorb'], r['cmb'], g))
+    if r['rec'] == 'redondo':
+        print('RECOMENDACAO: REDONDO - o residuo caiu so %.0f %%, entao a garganta esta no '
+              'excesso de parametros, nao nos dados.' % r['queda'])
+        # com (b) descartado, o residuo de (a) e o residuo do casco que vai ser gerado
+        if r['ra'] > 4:
+            print('  AVISO: %.1f %% e residuo alto. A secao pode ter chine suave ou '
+                  'tumblehome. Diga isso ao usuario.' % r['ra'])
+    elif r['rec'] == 'quilha-cheia':
+        print('RECOMENDACAO: QUILHA CHEIA - o residuo caiu %.0f %% e a garganta caiu em '
+              '%.3f do pontal, onde o alefriz de uma quilha corrida cai de verdade.'
+              % (r['queda'], r['ug']))
+    else:
+        onde = ('a garganta nao existe (k <= 1)' if r['ug'] is None
+                else 'a garganta saiu em u = %.3f, fora de 0,10 a 0,50' % r['ug'])
+        print('RECOMENDACAO: AMBIGUO - o residuo caiu %.0f %%, mas %s. Olhe a secao mestra '
+              'do croqui de novo: o ganho pode ser tumblehome, chine suave ou ponto mal '
+              'lido.' % (r['queda'], onde))
+    # a varredura da segunda derivada e a conferencia numerica da forma fechada; so
+    # interessa quando as duas discordam
+    esperadas = 0 if r['ug'] is None else 1
+    if r['trocas'] != esperadas:
+        print('  AVISO: a forma fechada anuncia %d inflexao(oes) e a varredura da segunda '
+              'derivada achou %d. Olhe antes de gerar o casco.' % (esperadas, r['trocas']))
+    print('%s: %s' % (caminho, ', '.join(gravados)))
+    if r['rec'] == 'quilha-cheia' and r['z0'] is None:
+        print('  alefriz.z0 NAO gravado: z0 = z_quilha(mid_x) + %.4f * [ z_borda(mid_x) - '
+              'z_quilha(mid_x) ], em quadrados.' % r['ug'])
+        print('  Passe --meia-nau z_quilha,z_borda para gravar. k nao vai no json: '
+              'montar.py o refaz por pinchAt.')
+
+
+def secao_para_projeto(caminho, r):
+    """Grava secao.pts, cheia.p e (com --meia-nau) alefriz.z0, e imprime o resumo."""
+    pts = r['pts']
+    grande = max(max(abs(a), abs(b)) for a, b in pts)
+    if grande > 50:
+        sys.exit('ERRO: --projeto grava "secao.pts", e o modelo le esses pontos em\n'
+                 '      QUADRADOS (meia-boca, altura acima da quilha). Estes estao em\n'
+                 '      pixels (maior valor %.0f). A secao mestra e desenhada a parte no\n'
+                 '      croqui, quase sempre em outra escala, entao a homografia da planta\n'
+                 '      nao serve para converte-la: leia a secao em quadrados na propria\n'
+                 '      foto e passe assim.' % grande)
+    uk, vk = pts[0]
+    mud = {'secao': {'pts': [[round(abs(a - uk), 4), round(abs(b - vk), 4)] for a, b in pts]}}
+    gravados = ['secao.pts %d pontos' % len(pts)]
+    # so o p da familia recomendada vai para o arquivo; no caso ambiguo nao vai nenhum,
+    # porque escolher por conta seria decidir o casco no lugar de quem esta olhando
+    if r['rec'] == 'redondo':
+        mud['cheia'] = {'p': round(r['p'], 2)}
+        gravados.append('cheia.p = %.2f' % r['p'])
+    elif r['rec'] == 'quilha-cheia':
+        mud['cheia'] = {'p': round(r['pb'], 2)}
+        gravados.append('cheia.p = %.2f' % r['pb'])
+        if r['z0'] is not None:
+            mud['alefriz'] = {'z0': r['z0']}
+            gravados.append('alefriz.z0 = %.4f' % r['z0'])
+    else:
+        gravados.append('cheia.p NAO gravado (recomendacao ambigua)')
+    gravar_projeto(caminho, mud)
+    resumo_secao(r, caminho, gravados)
+
+
+def px(v):
+    """Pixel do jeito que o agente digitou: sem o ".0" que nao diz nada."""
+    return ('%.4f' % v).rstrip('0').rstrip('.')
+
+
+def qd(v):
+    """Quadrado com tres casas. O + 0.0 mata o "-0.000", que so confunde."""
+    return '%.3f' % (round(v, 3) + 0.0)
+
+
 def main():
     ap = argparse.ArgumentParser(description='Calibracao de croqui em papel quadriculado')
     ap.add_argument('--loa-sq', type=float, help='comprimento do casco em quadrados')
@@ -224,7 +468,19 @@ def main():
     ap.add_argument('--secao', nargs='*', type=par,
                     help='pontos da meia-secao mestra, da quilha para o conves; '
                          'u,v em pixels ou meia-boca,altura em quadrados')
+    ap.add_argument('--projeto', metavar='projeto.json',
+                    help='grava o ajuste da secao neste arquivo, fundindo com o que ja '
+                         'estiver la, e imprime so os dois ajustes e a recomendacao')
+    ap.add_argument('--meia-nau', type=par, metavar='z_quilha,z_borda',
+                    help='cotas da quilha e da borda na meia-nau, em quadrados, para '
+                         'calcular alefriz.z0 em vez de imprimir a formula')
     args = ap.parse_args()
+
+    if args.projeto and not args.secao:
+        sys.exit('ERRO: --projeto so tem o que gravar junto de --secao. A calibracao e os\n'
+                 '      pontos devolvidos ao papel voltam para a tela: e o agente que decide\n'
+                 '      espelhamento e normalizacao entre vistas antes de escrever qualquer\n'
+                 '      coisa no arquivo.')
 
     if args.secao:
         pts = args.secao
@@ -234,68 +490,40 @@ def main():
             sys.exit('ERRO: primeiro ponto deve ser a quilha e o ultimo o conves.')
         nrm = [(abs(u - uk) / Y, abs(vk - v) / D) for u, v in pts]
         n = len(nrm)
-        print('secao mestra: %d pontos · meia-boca %.1f px · pontal %.1f px · razao %.3f'
-              % (len(pts), Y, D, D / Y))
 
         # (a) super-elipse: 1 parametro, casco de bojo redondo
         p, err = ajuste_superelipse(nrm)
-        ra = eficaz(err, n)
-        print('  super-elipse ajustada: p = %.2f' % p)
-        print('  residuo eficaz: %.1f %% da meia-boca' % ra)
-        pior = max(abs(sect_y(z, p) - y) for y, z in nrm)
-        print('  pior ponto:     %.1f %%' % (100 * pior))
-        print('  Cm = %.3f   (p=2 da a semi-elipse, Cm=%.3f)' % (cm(p), math.pi / 4))
-        if ra > 4:
-            print('  AVISO: residuo alto. A secao pode nao ser uma super-elipse —')
-            print('         talvez tenha chine suave ou tumblehome. Diga isso ao usuario.')
-
         # (b) dois expoentes: 2 parametros, quilha cheia
         pb, kb, errb = ajuste_dois(nrm)
-        rb = eficaz(errb, n)
+        ra, rb = eficaz(err, n), eficaz(errb, n)
         ug = garganta(pb, kb)
-        print('\n  dois expoentes ajustados: p = %.2f   k = %.3f    s(u) = [1-(1-u)^p]^k' % (pb, kb))
-        print('  residuo eficaz: %.1f %% da meia-boca' % rb)
-        piorb = max(abs(sect_pk(z, pb, kb) - y) for y, z in nrm)
-        print('  pior ponto:     %.1f %%' % (100 * piorb))
-        print('  Cm = %.3f' % cm_pk(pb, kb))
-        if ug is None:
-            print('  garganta: nao existe (k <= 1) — o ajuste degenerou em baliza concava pura')
-        else:
-            print('  garganta: u = %.3f do pontal local (%.1f %% acima da quilha), forma fechada'
-                  % (ug, 100 * ug))
-        print('  inflexoes na varredura da segunda derivada: %d' % inflexoes(
-            lambda u: sect_pk(u, pb, kb)))
 
-        # comparacao e recomendacao, com o criterio impresso para conferencia
+        # (b) tem um parametro a mais, entao tem de pagar por ele: so vale se derrubar o
+        # residuo em 25 % ou mais E puser a garganta entre 0,10 e 0,50 do pontal
         queda = 100 * (1 - rb / ra) if ra > 1e-9 else 0.0
-        print('\n  criterio: (b) tem um parametro a mais, entao tem de pagar por ele. So vale')
-        print('            se derrubar o residuo em 25 % ou mais E puser a garganta entre')
-        print('            0,10 e 0,50 do pontal. Fora disso a garganta esta no excesso de')
-        print('            parametros, nao nos dados.')
-        print('  residuo: %.1f %% (super-elipse) -> %.1f %% (dois expoentes), queda de %.0f %%'
-              % (ra, rb, queda))
         if queda < 25:
-            print('  RECOMENDACAO: REDONDO. O segundo expoente nao pagou por si — a garganta')
-            print('                nao esta nos pontos medidos. Use casco "redondo" com')
-            print('                cheia.p = %.2f.' % p)
+            rec = 'redondo'
         elif ug is not None and 0.10 <= ug <= 0.50:
-            print('  RECOMENDACAO: QUILHA CHEIA. A garganta esta nos dados e cai onde a linha')
-            print('                de alefriz de uma quilha corrida cai de verdade.')
-            print('  daqui saem os campos do projeto.json (especificacao, secao 5):')
-            print('    cheia.p    = %.2f' % pb)
-            print('    alefriz.z0 = z_quilha(mid_x) + %.4f * [ z_borda(mid_x) - z_quilha(mid_x) ]'
-                  % ug)
-            print('                 com z_quilha e z_borda em quadrados, lidos de profKeel e')
-            print('                 profSheer na meia-nau. k NAO vai no json: montar.py o refaz')
-            print('                 por pinchAt a partir do alefriz, com k = [(p-1)/(1-u)^p + 1]/p.')
+            rec = 'quilha-cheia'
         else:
-            if ug is None:
-                onde = 'a garganta nao existe (k <= 1)'
-            else:
-                onde = 'a garganta saiu em u = %.3f, fora de 0,10 a 0,50' % ug
-            print('  RECOMENDACAO: AMBIGUO. O residuo caiu %.0f %%, mas %s.' % (queda, onde))
-            print('                Olhe a secao mestra do croqui de novo antes de escolher: o')
-            print('                ganho pode ser tumblehome, chine suave ou ponto mal lido.')
+            rec = 'ambiguo'
+
+        z0 = None
+        if args.meia_nau and ug is not None:
+            zq, zb = args.meia_nau
+            z0 = round(zq + ug * (zb - zq), 4)
+
+        r = dict(pts=pts, Y=Y, D=D, p=p, ra=ra, cma=cm(p),
+                 piora=max(abs(sect_y(z, p) - y) for y, z in nrm),
+                 pb=pb, kb=kb, rb=rb, cmb=cm_pk(pb, kb),
+                 piorb=max(abs(sect_pk(z, pb, kb) - y) for y, z in nrm),
+                 ug=ug, trocas=inflexoes(lambda u: sect_pk(u, pb, kb)),
+                 queda=queda, rec=rec, z0=z0, meia_nau=args.meia_nau)
+
+        if args.projeto:
+            secao_para_projeto(args.projeto, r)
+        else:
+            relatorio_secao(r)
         if not args.p1:
             return
 
@@ -340,10 +568,13 @@ def main():
             print('  otimo: foto quase perpendicular.')
 
     if args.pontos:
-        print('\npontos devolvidos ao papel (X, Y em quadrados):')
+        # px -> quadrados, sem moldura: o agente ainda precisa VER estes pontos, porque e
+        # ele quem decide o espelhamento e a normalizacao entre vistas, mas nao precisa
+        # dos rotulos repetidos em cada linha
+        print('\npontos devolvidos ao papel, u,v px -> X,Y quadrados:')
         for u, v in args.pontos:
             X, Y = inverter(H, u, v)
-            print('  (%7.1f, %7.1f) px  ->  X = %7.3f   Y = %7.3f' % (u, v, X, Y))
+            print('  %s,%s -> %s,%s' % (px(u), px(v), qd(X), qd(Y)))
 
 
 if __name__ == '__main__':

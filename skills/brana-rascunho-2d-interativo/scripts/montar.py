@@ -15,7 +15,9 @@ O modelo em assets/ tem 23 mil tokens e NAO precisa ser lido nem reescrito: este
 injeta nele o bloco do projeto (cerca de mil tokens), o logotipo, os textos, e embrulha
 num documento completo. Escreva so o projeto.json.
 
-Esquema do projeto.json, versao 3 (veja references/06-projeto-json.md):
+Esquema do projeto.json, versao 3 (o esquema completo, com exemplo, esta na referencia
+do modelo: references/03-modelo-quinado.md, 04-modelo-redondo.md ou
+07-modelo-quilha-cheia.md):
 
 {
   "casco": "quinado" | "redondo" | "quilha-cheia",
@@ -140,7 +142,15 @@ def bloco_js(p):
         L.append('PHOTO_PTS = [' + ','.join('[' + num(a) + ',' + num(b) + ']' for a, b in pts) + '];')
         ch = p.get('cheia') or {}
         L.append('FULL_RE = %s; FULL_VANTE = %s;' % (num(ch.get('re', 0.93)), num(ch.get('vante', 0.62))))
-        L.append('PMID_INICIAL = %s;' % num(ch.get('p', 2.32)))
+        # cheia.p sai do ajuste da secao mestra (homografia.py --secao). Nao ha padrao
+        # razoavel: 2,32 era o valor de UM croqui antigo, e cair nele em silencio
+        # entregava um casco com a cheia de outro barco sem ninguem perceber.
+        if 'p' not in ch:
+            sys.exit('ERRO: falta "cheia.p" no projeto.json.\n'
+                     '  Ele sai do ajuste da secao mestra:\n'
+                     '    python scripts/homografia.py --secao u,v ... --projeto projeto.json\n'
+                     '  que o grava sozinho. Nao invente um valor.')
+        L.append('PMID_INICIAL = %s;' % num(ch['p']))
     if casco == 'quilha-cheia':
         ch, al = p.get('cheia') or {}, p.get('alefriz') or {}
         if 'z0' not in al:

@@ -11,190 +11,138 @@ metadata:
 
 # Plano de linhas interativo a partir de um croqui
 
-Entrada: a **fotografia de um croqui em papel quadriculado**, com as três vistas
-rotuladas — superior (TOP), lateral (SIDE) e seção mestra (MIDSHIP) — e as balizas
-numeradas ao longo do comprimento.
-
-Saída: **um arquivo HTML único**, autocontido, que abre no navegador e no celular.
+Da foto de um croqui quadriculado, com TOP, SIDE e MIDSHIP rotuladas e as balizas
+numeradas, sai **um HTML único** que abre no navegador e no celular.
 
 ## Regra de ouro: você escreve ~300 tokens, não 23 mil
 
-Os modelos em `assets/` têm 23 mil tokens cada. Eles **não devem ser lidos nem
-reescritos** — `scripts/montar.py` injeta neles um `projeto.json` de umas 40 linhas. Isso
-é a diferença entre gastar ~25 mil tokens numa corrida e gastar ~140 mil.
+Os modelos em `assets/` têm 23 mil tokens cada; `montar.py` injeta neles um `projeto.json`
+de 40 linhas. São ~25 mil tokens por corrida, não ~140 mil. **Nunca:**
 
-**Nunca faça, em nenhuma hipótese:**
-
-- ler `assets/modelo-*.html` (23 mil tokens de entrada);
-- copiar o modelo e editar (23 mil de entrada + 23 mil de saída, que custam ~5×);
-- usar `Read` na imagem do croqui — ela já está no contexto, reler é pagar de novo;
-- tirar capturas de tela do resultado; `scripts/verificar.js` cobre o que importa e
-  devolve texto;
-- ler mais de uma referência de modelo — leia só a do casco que você identificou.
-
-Se algo no modelo precisar mudar de verdade (e quase nunca precisa), use `grep -n` para
-achar a linha e `sed`/`python` para trocar só ela. Nunca despeje o arquivo no contexto.
+- ler `assets/modelo-*.html` nem copiá-lo para editar (a saída custa ~5×); precisando
+  mexer, ache a linha com `grep -n` e troque só ela;
+- usar `Read` na imagem do croqui — ela já está no contexto;
+- tirar captura de tela: `verificar.js` devolve o que importa em texto;
+- ler mais de uma referência de modelo;
+- redigitar número que um script já gravou no `projeto.json` (passos 3 e 4).
 
 ## Antes de começar, pergunte duas coisas
 
-Numa única mensagem, e não avance sem as duas respostas:
+Numa mensagem só, e não avance sem as duas respostas:
 
-1. **O nome de quem está usando a skill.** Vai no nome do arquivo de saída.
-2. **O comprimento total (LOA) em metros.** O croqui dá só proporções — a escala
-   absoluta tem de ser informada. Se a pessoa não souber, pergunte de novo em vez de
-   arbitrar.
+1. **O nome de quem está usando a skill** — vai no arquivo de saída.
+2. **O LOA em metros.** O croqui dá só proporções; se a pessoa não souber, pergunte de
+   novo em vez de arbitrar.
 
-Aproveite e diga que uma foto de ~1500 px de largura já basta: fotos de 4000 px custam
-quatro vezes mais tokens e não melhoram a leitura.
-
-## Nome do arquivo
-
-O nome carrega **sempre** o tipo de casco e o nome da pessoa:
-
-| Tipo de casco | Arquivo de saída |
-|---|---|
-| Quinado (com chine) | `Plano-de-Linhas-Quinado-<Nome>.html` |
-| Redondo (bojo redondo) | `Plano-de-Linhas-Redondo-<Nome>.html` |
-| Quilha cheia (full keel) | `Plano-de-Linhas-Quilha-Cheia-<Nome>.html` |
-
-```
-boat-hand-drawing-example-chine-midship.jpeg      ->  Plano-de-Linhas-Quinado-Brana.html
-boat-hand-drawing-example-round-midship.jpg       ->  Plano-de-Linhas-Redondo-Brana.html
-boat-hand-drawing-example-full-keel-midship.jpg   ->  Plano-de-Linhas-Quilha-Cheia-Luiz.html
-```
-
-`montar.py` monta esse nome sozinho quando você omite o segundo argumento. Use isso em
-vez de digitá-lo.
+Peça foto de ~1500 px: a imagem é reduzida antes de ser lida, então pixel a mais não vira leitura melhor — e em modelo de resolução alta chega a triplicar o custo.
 
 ## Que tipo de casco é
 
-Olhe **a seção mestra**. Os três se separam por duas perguntas.
+Olhe **a seção mestra**; duas perguntas separam os três.
 
-**Tem vértice?**
+**Tem vértice?** Sim → **quinado**: fundo reto até a quina, costado reto até o convés; a
+lateral costuma mostrar três linhas.
 
-- **Sim → quinado.** Fundo reto do centro até a quina, depois costado reto até o convés.
-  A vista lateral costuma mostrar **três** linhas.
+**Não tem. A curva inverte perto da quilha?**
 
-**Não tem vértice. Então: a curva inverte perto da quilha?**
+- **Não → redondo.** Côncava do fundo ao convés, tangente horizontal na linha de centro:
+  a meia-boca cresce cada vez mais devagar ao subir. Lateral com duas linhas.
+- **Sim → quilha cheia.** Sobe estreita e quase vertical junto à quilha — a lâmina do
+  madeiramento morto —, abre numa **garganta** e vira taça: a seção em *wineglass*, com a
+  quilha correndo o casco inteiro na lateral.
 
-- **Não → redondo.** A meia-baliza é côncava do fundo ao convés: a meia-boca cresce cada
-  vez mais devagar à medida que sobe. Fundo arredondado, tangente horizontal na linha de
-  centro. A lateral mostra **duas** linhas.
-- **Sim → quilha cheia.** A meia-baliza sobe estreita e quase vertical junto à quilha —
-  a lâmina do madeiramento morto —, abre numa **garganta**, e daí vira taça até o convés.
-  É a seção em *wineglass*. Na lateral a quilha corre o comprimento inteiro, com pé de
-  roda profundo à proa e, em geral, espelho lançado.
+O olho erra na segunda: **confirme com número** no passo 3.
 
-O olho erra nessa segunda pergunta. **Confirme com número**, no passo 3 do roteiro: o
-ajuste das duas famílias de forma decide por você.
+O arquivo carrega sempre o tipo de casco e o nome da pessoa; `montar.py` o monta se você
+omitir o segundo argumento:
 
-Em dúvida, diga o que vê e pergunte. Trocar depois custa caro.
+| Casco | Arquivo de saída | Modelo |
+|---|---|---|
+| Quinado | `Plano-de-Linhas-Quinado-<Nome>.html` | [03](references/03-modelo-quinado.md) |
+| Redondo | `Plano-de-Linhas-Redondo-<Nome>.html` | [04](references/04-modelo-redondo.md) |
+| Quilha cheia | `Plano-de-Linhas-Quilha-Cheia-<Nome>.html` | [07](references/07-modelo-quilha-cheia.md) |
 
 ## Roteiro
 
 ### 1 · Ler a imagem UMA vez
 
-Numa única passada, anote em pixels **tudo** que você vai precisar. Voltar na imagem
-depois é o erro mais caro desta skill.
+Numa passada só, anote em pixels **tudo** que vai precisar: voltar na imagem é o erro mais
+caro daqui.
 
-- os quatro pontos de calibração (ver [01-calibracao.md](references/01-calibracao.md));
-- os `u` das marcas de baliza;
-- na vista superior: bordas superior e inferior do contorno em cada baliza;
-- na lateral: cada linha em 4 a 6 estações, incluindo espelho, ponto mais fundo da
-  quilha e a roda;
-- na seção mestra: cantos do convés e mais 5 a 7 pontos do contorno. Se a seção parecer
-  wineglass, **adense na garganta** — ver
-  [02-digitalizacao.md](references/02-digitalizacao.md).
+- os quatro pontos de calibração — [01](references/01-calibracao.md) — e os `u` das
+  marcas de baliza;
+- na superior: bordas de cima e de baixo do contorno em cada baliza;
+- na lateral: cada linha em 4 a 6 estações, com espelho, fundo da quilha e roda;
+- na seção mestra: cantos do convés e 5 a 7 pontos; se parecer wineglass, **adense na
+  garganta** — [02](references/02-digitalizacao.md).
 
 ### 2 · Calibrar
 
 ```bash
-python scripts/homografia.py --loa-sq 16 --h-marcas 14.55 \
-    --p1 100,1160 --p2 1268,1149 --p3 1268,82 --p4 100,90 \
-    --balizas 100,393,686,977,1268 \
-    --pontos 100,88 250,118 393,140 ...
+python scripts/homografia.py --loa-sq 16 --h-marcas 14.55 --balizas 100,393,686,977,1268 \
+    --p1 100,1160 --p2 1268,1149 --p3 1268,82 --p4 100,90 --pontos 100,88 250,118 ...
 ```
 
-Ele resolve H, devolve todos os pontos ao papel de uma vez, e **reprova a calibração**
-se as balizas não caírem nas posições nominais (limite 0,05 quadrado). Passe todos os
-pontos numa chamada só.
+Todos numa chamada só: resolve H, devolve tudo ao papel e **reprova a calibração** se as
+balizas saírem das posições nominais (limite 0,05 qd).
 
 ### 3 · Decidir o tipo de casco, com número
 
-Para casco sem quina, passe a seção mestra pelo mesmo script:
+Casco sem quina, seção mestra já em quadrados:
 
 ```bash
-python scripts/homografia.py ... --secao u,v u,v ...
+python scripts/homografia.py --secao 0,0 0.34,0.542 ... \
+    --projeto projeto.json --meia-nau 0.0817,4.5915
 ```
 
-Ele ajusta **as duas** famílias de forma — a super-elipse do bojo redondo e a de dois
-expoentes da quilha cheia — e recomenda uma, por critério explícito: quanto o segundo
-ajuste reduz o resíduo, e onde cai a garganta. Siga a recomendação. Quando ela for
-quilha cheia, o script também imprime como obter `alefriz.z0`.
+Ajusta **as duas** famílias de forma, recomenda uma por critério explícito e **grava
+sozinho** `secao.pts` e `cheia.p`; com `--meia-nau z_quilha,z_borda`, também `alefriz.z0`.
+Siga-a. Essas duas cotas se leem da **curva** em `mid_x` — rode este passo depois do 4.
 
 ### 4 · Ajustar as curvas
 
 ```bash
-python scripts/ajustar.py --loa-sq 16 \
-    --curva planSheer 0,1.633 1.865,2.290 4.166,3.000 6.788,3.343 ... \
-    --curva profSheer 0,4.821 3.995,4.672 7.984,4.563 11.995,4.836 16,5.571 \
-    --curva profKeel  0,0.032 2.581,0 6.422,0.071 ... 16,5.571
+python scripts/ajustar.py --loa-sq 16 --projeto projeto.json \
+    --curva planSheer 0,1.6328 1.865,2.2898 ... --curva profSheer ... --curva profKeel ...
 ```
 
-Ele resolve as declividades dos nós impondo a mesma convexidade que o motor verifica, e
-imprime o bloco `"curvas"` pronto. Não faça essa álgebra à mão — era o segundo maior
-gasto de tokens.
+Resolve as declividades com a mesma convexidade que o motor verifica e **grava `curvas`
+e `medidos`**, fundindo com o que já estiver lá; a tela devolve só o veredito por
+curva. Reprovou: a saída diz se o problema é a leitura ou a cadeia de nós — conserte pela
+[02](references/02-digitalizacao.md) e diga quanto mexeu.
 
-Se ele reclamar que as cordas não são monótonas, **o erro é da sua leitura**, não do
-croqui: refaça o ponto que quebra a sequência.
+### 5 · Completar o projeto.json
 
-Se ele reclamar que as declividades saíram não monótonas com as cordas boas, o problema
-é ruído de leitura amplificado pela cadeia. Mova um nó dentro da margem de leitura da
-foto, ou tire um nó, até fechar — e diga no relatório quanto você mexeu.
+Os passos 3 e 4 já escreveram `curvas`, `medidos`, `secao` e `cheia`. À mão sobram `casco`,
+`nome`, `titulo`, `loa_m`, `loa_sq`, `balizas`, `mid_x`, as frações de cheia e o
+`registro`; cada um com exemplo pronto na referência do seu casco.
 
-### 5 · Escrever o projeto.json
-
-Umas 40 linhas. Esquema em [06-projeto-json.md](references/06-projeto-json.md), e o
-modelo do casco em **uma** destas — leia só a que corresponde ao tipo que você
-identificou:
-
-| Casco | Referência |
-|---|---|
-| Quinado | [03-modelo-quinado.md](references/03-modelo-quinado.md) |
-| Redondo | [04-modelo-redondo.md](references/04-modelo-redondo.md) |
-| Quilha cheia | [07-modelo-quilha-cheia.md](references/07-modelo-quilha-cheia.md) |
+**O `registro` é curto e só fala deste barco.** O método já está gravado no documento, na
+seção estática *Como isto é feito*. Aqui vai só: resíduo da calibração, verificação
+independente, discordância entre vistas e qual você adotou, o que é reconstrução e não
+medida, quanto mexeu em cada nó. Frase que seria idêntica para outro croqui é método —
+apague.
 
 ### 6 · Montar e verificar
 
 ```bash
 python scripts/montar.py projeto.json
-node   scripts/verificar.js Plano-de-Linhas-Quilha-Cheia-Fulano.html
+node scripts/verificar.js --resumo Plano-de-Linhas-Quilha-Cheia-Fulano.html
 ```
 
-`verificar.js` reconhece sozinho o tipo de casco e roda ~31 checagens comuns — validade,
-ausência de inflexão nas curvas longitudinais em todos os estados alcançáveis, aderência
-aos pontos medidos, ordenação entre curvas, nós dentro da folha, marcação SVG e
-transbordo nos extremos do estiramento — mais ~13 específicas quando o casco é de quilha
-cheia, sobre a garganta, o alefriz e a curva de cheia.
-
-**Não pule.** Nesta skill todo defeito real apareceu ao testar, nenhum ao ler o código.
+`verificar.js` reconhece o tipo de casco e roda ~31 checagens comuns, mais ~13 de quilha cheia. Com `--resumo` ele devolve 4 linhas; falhando alguma, rode sem `--resumo` para o
+detalhe. **Não pule:** aqui todo defeito real apareceu ao testar, nenhum ao ler o código.
 
 ### 7 · Entregar
 
-Entregue o arquivo e relate em poucas linhas: o resíduo da calibração, a verificação
-independente (meia-boca da seção mestra contra a meia-boca máxima da planta) e **toda
-discordância entre vistas**, dizendo qual você adotou.
-
-Num casco de quilha cheia, diga também o que ali é **reconstrução e não medida**: o
-croqui traz uma seção só, e a inclinação do alefriz e o levantamento do tuck são valores
-de projeto, não medidos.
+Entregue o arquivo e relate em poucas linhas o que foi para o `registro`.
 
 ## O que não negociar
 
-- **Alisamento das curvas longitudinais.** Toda curva de planta e de perfil mantém um
-  único sentido de curvatura. Não afrouxe a tolerância para fazer um arrasto passar.
-- **A baliza transversal é outra coisa.** Num casco de quilha cheia ela inflexiona por
-  definição, na garganta, e deve. Não confunda as duas regras.
+- **Alisamento das longitudinais.** Planta e perfil mantêm um só sentido de curvatura;
+  não afrouxe a tolerância para um arrasto passar.
+- **A baliza transversal é outra coisa:** em quilha cheia ela inflexiona na garganta, por
+  definição, e deve.
 - **Escala informada.** Sem o LOA não há cota em milímetros.
 - **Perspectiva.** Decalcar contando pixels erra de 5 a 7 % numa foto de caderno.
-- **Identidade Brana.** Ver [05-identidade-brana.md](references/05-identidade-brana.md).
+- **Identidade Brana.** Ver [05](references/05-identidade-brana.md).

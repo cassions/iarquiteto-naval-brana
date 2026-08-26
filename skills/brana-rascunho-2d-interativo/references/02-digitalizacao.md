@@ -52,6 +52,12 @@ Se não for monótono, **o erro é seu, não do croqui**: refaça a leitura do p
 quebra a sequência. Nos dois croquis de referência os dados brutos já eram livres de
 inflexão; alisar foi ajustar splines pelos pontos, não corrigir a forma.
 
+Cordas boas e **declividades** reprovadas é outra coisa: ruído de leitura amplificado pela
+cadeia de nós. Mova ou tire um nó dentro da margem de leitura da foto até fechar — e aí o
+nó deixou de ser a leitura, então passe a leitura original em `--medidos NOME x,y ...`
+(uma por curva), senão as cruzes do desenho mostram o nó corrigido, não o que você mediu.
+Diga no registro quanto mexeu.
+
 ## Dos pontos para os nós da spline
 
 Escolha 4 a 6 nós por curva, nos pontos notáveis. Para cada nó, a declividade `m` tem de

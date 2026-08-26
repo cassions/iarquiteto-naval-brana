@@ -427,7 +427,44 @@
   <details class="rec">
     <summary>Registro da extração — malha, calibração, reconciliação</summary>
     <div class="rec-body">
-      <!--{{REGISTRO}}-->
+      <div>
+        <h3>Como isto é feito</h3>
+        <p>Este documento nasceu da fotografia de um croqui feito à mão em papel quadriculado. O que vem abaixo é o <em>método</em>, e vale para qualquer croqui lido por esta ferramenta: nenhum número deste barco aparece aqui. Os números deste barco estão em <strong>Este croqui</strong>, na tabela de cotas digitalizadas e na tabela de cotas do documento.</p>
+
+        <p><strong>A malha é a escala.</strong> Não se mede milímetro nenhum na fotografia — mede-se em quadrados do papel, e o próprio desenho fornece a referência: marcas de baliza rotuladas e um traço da malha delimitam no papel um retângulo de proporções sabidas, cujos quatro cantos se reconhecem na imagem. A escala absoluta não sai do croqui. Ela vem do comprimento total que a pessoa informa, e entra só no fim, para converter quadrados em milímetros.</p>
+
+        <p><strong>A perspectiva é desfeita antes de qualquer leitura.</strong> A foto de uma folha de caderno não é uma vista ortogonal: o papel aparece em fuga, e decalcar contando pixels erra em vários por cento — mais na borda distante da folha do que na próxima. Os quatro cantos daquele retângulo fixam uma homografia plano a plano, resolvida exatamente, e toda leitura de pixel volta ao papel pela inversa dela. A calibração é então conferida contra dados que não entraram no ajuste: as marcas de baliza restantes têm de cair nas posições nominais dentro de <strong>0,05 quadrado</strong> — a margem de quem aponta um traço a olho. Fora disso a calibração é reprovada e a leitura, refeita. A tolerância não se afrouxa para fazer um croqui passar.</p>
+
+        <p><strong>As curvas longitudinais não podem inflexionar.</strong> Borda e quilha de um casco são curvas de sentido único de curvatura: uma ondulação nelas é ruído de leitura, não forma de barco. Cada curva aqui é uma cadeia de Bézier cúbicas unidas em G1 — os dois punhos de um nó dividem a mesma reta tangente. Uma Bézier plana não inflexiona se o seu polígono de controle não inflexionar, de modo que a verificação é combinatória e barata: toma-se o produto vetorial de cada par de arestas consecutivas ao longo do polígono inteiro e exige-se um único sinal, admitindo giros colineares. Alisar, aqui, é resolver as declividades dos nós que satisfazem essa condição <em>passando por todos os pontos lidos</em> — não é aproximar por mínimos quadrados e aceitar o que sair.</p>
+
+        <p><strong>A restrição morde durante o arrasto, não depois.</strong> Um movimento que quebraria a regra não é recusado: é bissectado entre o último estado válido e o pedido, e o punho desliza até a restrição e para ali. A mesma máquina mantém a ordem em x, limita cada punho a uma fração da sua corda para que nenhum segmento faça laço, prende todo nó dentro da folha e impõe quilha abaixo da borda no perfil. Arrastar um nó com a tangente congelada trava quase de imediato numa curva rasa, então o arrasto tenta primeiro com as tangentes intactas e só re-alisa quando isso falha: o nó e os dois vizinhos recebem direções de Catmull-Rom e os punhos encolhem até o estado ficar legal. Como os comprimentos tendem a zero, o polígono de controle tende à poligonal dos nós — qualquer arranjo convexo de posições continua alcançável. É por isso que a regra morde na forma que você está desenhando, e não na parametrização.</p>
+
+        <p>Arraste um botão vermelho e a tangente daquele nó passa a ser sua: o botão preenche e o re-alisamento a deixa em paz. <strong>Auto-alisar</strong> governa apenas a regra de curvatura. Desligado, os pontos de controle vão exatamente para onde você os põe, as curvas podem inflexionar, o pente de curvatura acende e um selo conta quantas inflexionaram — todo o resto continua imposto, porque é o que mantém o modelo avaliável, e não apenas bonito. Ao religar, cada curva recuperável só com tangentes e comprimentos de punho volta à regra; uma curva cujos <em>nós</em> formam um S não é recuperável assim, e é dispensada em vez de ser jogada para onde você não pediu. Note que uma curva pode passar pela reta e sair curvando para o outro lado sem inflexionar em instante algum — é assim que uma borda oca vira convexa.</p>
+
+        <p><strong>O plano de balizas é gerado, não desenhado.</strong> Nenhuma baliza foi traçada à mão além da mestra. Em cada estação a planta dá a meia-boca e o perfil dá as alturas de quilha e de borda; a forma entre esses extremos vem da família descrita a seguir. Por isso mexer numa curva longitudinal repinta o plano de balizas, a tabela de cotas e a curva de áreas na mesma ação: é um modelo só, visto de três lados.</p>
+
+        <p><strong>A forma da baliza: a super-elipse.</strong> Sem quina não existe vértice onde quebrar a baliza em dois trechos retos: ela é uma curva contínua da quilha à borda, e é preciso escolher uma família de forma. A adotada é a super-elipse</p>
+        <div class="matrix">(y / Y)^p + (1 − z / D)^p = 1</div>
+        <p>com <code>y</code> a meia-boca, <code>z</code> a altura acima da quilha, <code>Y</code> a meia-boca da borda naquela estação e <code>D</code> o pontal local. Ela entrega exatamente o que este tipo de croqui mostra: topo vertical no encontro com a borda — a boca máxima está no convés — e tangente horizontal na linha de centro, ou seja, fundo arredondado sem quina. O expoente <code>p</code> é o único parâmetro de forma: com expoente unitário a baliza é um V reto, com expoente dois é a semi-elipse, e quanto maior o expoente mais ela encorpa em direção a uma caixa.</p>
+
+        <p><code>p</code> é ajustado por mínimos quadrados sobre os pontos lidos na seção mestra desenhada, e o resíduo desse ajuste está declarado em <strong>Este croqui</strong>. É esse resíduo, e não a aparência do traçado, que diz se a família serve para este croqui: uma seção que a super-elipse não alcança é uma seção que inverte a curvatura perto do fundo, e essa pede o modelo de quilha corrida, com dois expoentes.</p>
+
+        <p>Ao longo do comprimento a cheia não é constante: a baliza afina em direção à proa. A distribuição vai de uma fração do valor da meia-nau no espelho a outra fração na roda, suavizada por <em>smoothstep</em>, que chega com derivada nula dos dois lados da meia-nau — sem isso apareceria um joelho na curva de áreas bem na meia-nau, onde ela deveria ser mais lisa. O cursor <em>Cm</em> escala a distribuição inteira, sem mexer nas frações.</p>
+
+        <p><strong>Onde isto é estimativa.</strong> A fotografia foi lida a olho — nenhum processamento de imagem teve acesso aos pixels. Cada ponto carrega o erro de quem aponta, da ordem daqueles <strong>0,05 quadrado</strong>: menor que a espessura do traço do próprio croqui, mas presente. A homografia é exata dadas essas leituras; a incerteza está na leitura, não na álgebra. E onde as vistas do croqui discordam entre si, uma delas foi adotada e a outra não — a discordância é medida e declarada em <strong>Este croqui</strong>, em vez de ser dissolvida numa média que esconderia as duas.</p>
+      </div>
+
+      <div>
+        <h3>Este croqui</h3>
+        <!--{{REGISTRO}}-->
+      </div>
+
+      <div>
+        <h3>Cotas digitalizadas, antes do alisamento</h3>
+        <p>Cada linha é uma leitura de pixel devolvida ao papel pela inversa da homografia, antes de qualquer alisamento: meias-bocas em quadrados a partir da linha de centro, alturas em quadrados acima do ponto mais baixo da quilha. São as cruzes desenhadas sobre as vistas — o dado bruto, para se ver de quanto o alisamento precisou se afastar dele.</p>
+        <div class="tablewrap"><table id="rawTable"></table></div>
+      </div>
+
     </div>
   </details>
 
@@ -1299,7 +1336,8 @@ function renderRaw(){
     h += '<tr><td colspan="2">seção mestra da foto</td><td colspan="3">meia-boca '+fmt(_Y,3)+
          ' · pontal '+fmt(_D,3)+' · super-elipse p = '+fmt(_pm.p,2)+
          ' · Cm = '+fmt(sectCm(_pm.p),3)+'</td></tr>';
-  document.getElementById('rawTable').innerHTML = h + '</tbody>';
+  var _rt = document.getElementById('rawTable');
+  if(_rt) _rt.innerHTML = h + '</tbody>';
 }
 
 /* ============================================================
