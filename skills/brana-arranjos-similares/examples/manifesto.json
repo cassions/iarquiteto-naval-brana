@@ -1,0 +1,274 @@
+{
+  "projetista": "Cassio",
+  "data": "22 de agosto de 2026",
+  "titulo": "Arranjos Gerais Encontrados",
+  "eyebrow": "Brana · Arquitetura Naval · Estudo de Similar",
+  "resumo": "Todas as plantas baixas publicadas que localizei para embarcações de 4,3 a 6,0 m e o que cada uma tem a ver com o skiff de pesca de 5,0 × 1,80 m em fibra, motor de popa de 40 HP, para a Baía de Todos-os-Santos.",
+  "stats": [["12", "pranchas cotadas"], ["4", "estaleiros"], ["4", "em fibra de vidro"], ["3", "similares sem planta"]],
+  "sub_indice": "Ordenadas por comprimento. Célula vazia = o desenho não informa.",
+  "nota_indice": "Peso: Levefort e Orkney publicam casco seco; Plate Alloy publica deslocamento seco já com o motor instalado.",
+
+  "secoes": [
+    {
+      "num": "01",
+      "titulo": "Reino Unido — Orkney Boats",
+      "sub": "Fibra de vidro, laminação manual sólida · 4 pranchas",
+      "bullets": [
+        "Único estaleiro do catálogo com casco em fibra e planta publicada",
+        "Planta e perfil em PNG separados, com fundo transparente"
+      ],
+      "pranchas": [
+        {
+          "id": "PR-01",
+          "nome": "Orkney Coastliner 14",
+          "sub": "Reino Unido · fibra de vidro · o menor da linha",
+          "img": "img/ork_coastliner14.jpg",
+          "pais": "UK",
+          "dados": [["Comprimento", "4,37 m (14′4″)"], ["Boca", "1,73 m"], ["Peso do casco", "200 kg"],
+                    ["Potência máxima", "20 HP"], ["Material", "Fibra de vidro"], ["Categoria CE", "C"]],
+          "nota": ["O QUE MOSTRA", "Bancos transversais corridos num casco leve, sem console. É o degrau abaixo do projeto em complexidade e em preço."],
+          "fonte": "Fonte: Orkney Boats (©) — orkneyboats.com/our-range/coastliner-14"
+        },
+        {
+          "id": "PR-02",
+          "nome": "Orkney 452",
+          "sub": "Reino Unido · fibra de vidro · cockpit autoesgotável · planta e perfil",
+          "img": "img/ork_452.jpg",
+          "pais": "UK",
+          "dados": [["Comprimento", "4,52 m (14′10″)"], ["Boca", "1,83 m"], ["Peso do casco", "365 kg"],
+                    ["Potência máxima", "30 HP"], ["Material", "Fibra de vidro"], ["Categoria CE", "C"]],
+          "nota": ["O QUE MOSTRA", "Casco tipo Nelson, boca cheia a ré e V moderado. Cockpit corrido, banco de popa em caixa e castelo de proa."],
+          "fonte": "Fonte: Orkney Boats (©) — orkneyboats.com/our-range/orkney-452"
+        },
+        {
+          "id": "PR-03",
+          "nome": "Orkney Longliner 16",
+          "sub": "Reino Unido · fibra de vidro · planta da versão aberta, perfil da versão com cuddy",
+          "img": "img/ork_longliner16.jpg",
+          "pais": "UK",
+          "dados": [["Comprimento", "4,88 m (16′0″)"], ["Boca", "1,83 m"], ["Peso do casco", "270 kg"],
+                    ["Potência máxima", "25 HP"], ["Material", "Fibra de vidro"], ["Categoria CE", "C"]],
+          "nota": ["POR QUE IMPORTA", "270 kg num casco de 4,88 m em fibra laminada à mão. É o dado mais direto contra qualquer estimativa de peso inflada."],
+          "fonte": "Fonte: Orkney Boats (©) — orkneyboats.com/our-range/longliner-16"
+        },
+        {
+          "id": "PR-04",
+          "nome": "Orkney 522",
+          "sub": "Reino Unido · fibra + vinilester · o similar em fibra mais próximo do projeto",
+          "img": "img/ork_522.jpg",
+          "pais": "UK",
+          "dados": [["Comprimento", "5,20 m (17′1″)"], ["Boca", "2,00 m"], ["Peso do casco", "545 kg"],
+                    ["Potência máxima", "60 HP"], ["Lotação", "6 pessoas"], ["Material", "Fibra + vinilester"],
+                    ["Categoria CE", "C"], ["Cockpit", "autoesgotável"]],
+          "notas": [
+            ["É ESTE O SIMILAR EM FIBRA", "5,20 m, 6 pessoas, popa de 60 HP, cockpit autoesgotável e categoria CE C — mesma missão do seu skiff, no mesmo material, com planta e perfil publicados."],
+            ["LACUNA", "Não publica pontal nem calado."]
+          ],
+          "fonte": "Fonte: Orkney Boats (©) — orkneyboats.com/our-range/orkney-522"
+        }
+      ]
+    },
+    {
+      "num": "02",
+      "titulo": "Brasil — Levefort",
+      "sub": "Alumínio naval · 2 pranchas",
+      "bullets": ["Perfil, planta e a relação numerada dos itens de série na mesma folha A4"],
+      "pranchas": [
+        {
+          "id": "PR-05",
+          "nome": "Levefort Marajó 16′ Freestyle",
+          "sub": "Alumínio naval · 5,00 × 1,80 m · desenho ML16/2017, rev. 02",
+          "img": "img/lf_marajo16.jpg",
+          "pais": "BR",
+          "dados": [["Comprimento", "5,00 m"], ["Boca máxima", "1,80 m"], ["Pontal", "0,70 m"],
+                    ["Calado", "0,14 m"], ["Peso aproximado", "297 kg"], ["Capacidade de carga", "500 kg"],
+                    ["Lotação", "5 pessoas"], ["Potência máxima", "100 HP"], ["Material", "Alumínio 2,5 mm"]],
+          "nota": ["POR QUE IMPORTA", "Gêmeo dimensional do projeto: mesmo 5,00 × 1,80 m, razão L/B de 2,78. A folha traz 27 itens de série numerados sobre a própria planta."],
+          "fonte": "Fonte: Levefort (©) — PDF levefort.com.br/storage/products/doc/a70713edbafcb31c8b93.pdf · página levefort.com.br/produto/3153"
+        },
+        {
+          "id": "PR-06",
+          "nome": "Levefort Marajó 17′ Machine Freestyle",
+          "sub": "Alumínio naval · 5,20 × 1,80 m · o mesmo tronco alongado em 20 cm",
+          "img": "img/lf_marajo17.jpg",
+          "pais": "BR",
+          "dados": [["Comprimento", "5,20 m"], ["Boca máxima", "1,80 m"], ["Pontal", "0,70 m"],
+                    ["Calado", "0,14 m"], ["Peso aproximado", "327 kg"], ["Lotação", "5 pessoas"],
+                    ["Potência máxima", "100 HP"], ["Material", "Alumínio 2,5 mm"]],
+          "nota": ["O QUE MOSTRA", "Comparando com a PR-05 dá para ver onde entra o comprimento extra: no cockpit central. Proa e popa não mudam."],
+          "fonte": "Fonte: Levefort (©) — PDF levefort.com.br/storage/products/doc/4ec09a25f976a58681d3.pdf · página levefort.com.br/produto/3570"
+        }
+      ]
+    },
+    {
+      "num": "03",
+      "titulo": "Austrália — Plate Alloy",
+      "sub": "Kit em chapa de alumínio 5083 · 4 pranchas",
+      "bullets": [
+        "Folha GENERAL ARRANGEMENT com deadrise, pontal, calado e boca interna cotados",
+        "Publica pares pesca × lazer sobre o mesmo casco — a lógica de duas versões do caso de uso"
+      ],
+      "pranchas": [
+        {
+          "id": "PR-07",
+          "nome": "Plate Alloy 4.83 m Centre Console",
+          "sub": "Kit em chapa 5083 · casco 4,80 m · o mais próximo do porte do projeto",
+          "img": "img/pa_483ccon.jpg",
+          "pais": "AU",
+          "dados": [["LOA", "5,00 m"], ["Comprimento do casco", "4,80 m"], ["Boca", "2,00 m"],
+                    ["Pontal", "1,10 m"], ["Calado", "0,23 m"], ["Deadrise", "15°"],
+                    ["Deslocamento seco", "680 kg c/ 70 HP"], ["Potência máxima", "90 HP"],
+                    ["Boca interna", "1.407 mm"], ["Material", "Alumínio 5083"]],
+          "nota": ["POR QUE IMPORTA", "A planta cota a boca interna livre em 1.407 mm — é a medida que diz quanto convés a boca máxima realmente entrega, e que o seu 1,80 m precisa responder."],
+          "fonte": "Fonte: Plate Alloy Australia (©) — PDF platealloy.com/483CCON.pdf · índice platealloy.com/4m-mono.htm"
+        },
+        {
+          "id": "PR-08",
+          "nome": "Plate Alloy 4.85 m Fly Fisher  — versão pesca",
+          "sub": "Kit em chapa 5083 · plataformas de arremesso a vante e a ré",
+          "img": "img/pa_485fly.jpg",
+          "pais": "AU",
+          "dados": [["LOA", "4,85 m"], ["Boca", "2,00 m"], ["Pontal", "1,00 m"], ["Calado", "0,26 m"],
+                    ["Deadrise", "15°"], ["Deslocamento seco", "450 kg c/ 50 HP"], ["Material", "Alumínio 5083"]],
+          "nota": ["A VERSÃO PESCA", "Convés autoesgotável de ponta a ponta, plataforma elevada de arremesso a vante e a ré, locker central e nenhum banco fixo. É o requisito de convés da sua versão pesca, cotado."],
+          "fonte": "Fonte: Plate Alloy Australia (©) — PDF platealloy.com/485-FLY-WEB.pdf"
+        },
+        {
+          "id": "PR-09",
+          "nome": "Plate Alloy 4.83 m Runabout  — versão lazer",
+          "sub": "Mesmo casco da PR-07, com convés de passeio e para-brisa",
+          "img": "img/pa_480run.jpg",
+          "pais": "AU",
+          "dados": [["LOA", "5,00 m"], ["Comprimento do casco", "4,80 m"], ["Boca", "2,00 m"],
+                    ["Pontal", "1,10 m"], ["Calado", "0,23 m"], ["Deadrise", "15°"],
+                    ["Deslocamento seco", "680 kg c/ 70 HP"], ["Material", "Alumínio 5083"]],
+          "nota": ["A VERSÃO LAZER", "Mesmo fundo da PR-07 e da PR-08, agora com para-brisa de acrílico corrido e bancos. As três folhas lado a lado são a prova documental da lógica de duas versões."],
+          "fonte": "Fonte: Plate Alloy Australia (©) — PDF platealloy.com/480-RUN-WEB.pdf"
+        },
+        {
+          "id": "PR-10",
+          "nome": "Plate Alloy 4.65 m Tiller Steer",
+          "sub": "Kit em chapa 5083 · leme de cana, sem console · calado de 0,13 m",
+          "img": "img/pa_465til.jpg",
+          "pais": "AU",
+          "dados": [["LOA", "4,93 m"], ["Comprimento do casco", "4,65 m"], ["Boca", "2,00 m"],
+                    ["Pontal", "1,02 m"], ["Calado", "0,13 m"], ["Deadrise", "14°"],
+                    ["Potência", "35 HP (cana)"], ["Material", "Alumínio 5083"]],
+          "nota": ["O EXTREMO RASO", "Sem console: prateleiras laterais corridas e convés livre. O calado de 0,13 m é o menor da amostra — útil como limite inferior para as praias rasas de Itaparica."],
+          "fonte": "Fonte: Plate Alloy Australia (©) — PDF platealloy.com/465-TIL-WEB.pdf"
+        }
+      ]
+    },
+    {
+      "num": "04",
+      "titulo": "Nova Zelândia — Stabicraft",
+      "sub": "Alumínio com câmaras seladas · 2 pranchas",
+      "bullets": ["Publica boca externa E boca interna, deadrise e volume de flutuação selada"],
+      "pranchas": [
+        {
+          "id": "PR-11",
+          "nome": "Stabicraft 1450 Series — Explorer e Frontier",
+          "sub": "Nova Zelândia · planta e perfil cotados na mesma folha",
+          "img": "img/st_1450serie.jpg",
+          "pais": "NZ",
+          "dados": [["Comprimento", "4,42 m (14,5 ft)"], ["Boca externa", "1,89 m"], ["Boca interna", "1,35 m"],
+                    ["Deadrise", "15°"], ["Peso seco", "227 / 302 kg"], ["Potência máxima", "40 / 50 HP"],
+                    ["Volume selado", "960 L"], ["Material", "Alumínio 4 mm"]],
+          "nota": ["O QUE MOSTRA", "O par boca externa 1,89 m / interna 1,35 m mede o preço em convés das câmaras seladas: 54 cm somados nos dois bordos."],
+          "fonte": "Fonte: Stabicraft (©) — PDF stabicraft.com/assets/Uploads/Model-Brochures/1450_SERIES_PLATFORM.pdf"
+        },
+        {
+          "id": "PR-12",
+          "nome": "Stabicraft 1550 Fisher",
+          "sub": "Nova Zelândia · duas plantas na mesma folha, uma por pacote de convés",
+          "img": "img/st_1550fisher.jpg",
+          "pais": "NZ",
+          "dados": [["Comprimento", "4,64 m (15,2 ft)"], ["Boca externa", "2,01 m"], ["Boca interna", "1,46 m"],
+                    ["Deadrise", "15°"], ["Peso seco do casco", "415 kg"], ["Potência máxima", "75 HP"],
+                    ["Lotação", "5 pessoas"], ["Volume selado", "984 L"], ["Material", "Alumínio 4 mm"]],
+          "nota": ["POR QUE IMPORTA", "Duas plantas do mesmo casco, uma por pacote — de novo a lógica de versões. E é o único desenho da amostra que publica volume de flutuação selada, que é como se documenta insubmergibilidade."],
+          "fonte": "Fonte: Stabicraft (©) — PDF stabicraft.com/assets/Uploads/Model-Brochures/Stabicraft-1550-Fisher.pdf"
+        }
+      ]
+    }
+  ],
+
+  "sem_planta": [
+    {
+      "id": "SP-1",
+      "nome": "Carolina Skiff 17 LS e 162 JLS — sem planta",
+      "sub": "Os dois similares norte-americanos do estudo. Só existe vista lateral oficial.",
+      "img": "img/cs_lateral.jpg",
+      "pais": "EUA",
+      "dados": [["Planta baixa", "não publica"], ["Arranjo geral", "não publica"],
+                ["Vista de cima", "não publica"], ["Vista lateral", "sim"], ["Fotos de convés", "sim"]],
+      "notas": [
+        ["ONDE PROCUREI", "Site do fabricante, configurador Build My Skiff, revendas, BoatTEST, teste da Suzuki Marine, Boat Trader e YachtWorld. Também DeckPad e SeaDek, que às vezes publicam gabarito de convés."],
+        ["O QUE HÁ DE ÚTIL", "A vista lateral serve para conferir bordo livre e altura do console. Nada mais."]
+      ],
+      "fonte": "Imagens: recortes oficiais do estaleiro (© Carolina Skiff), carolinaskiff.com. Busca em 22/08/2026."
+    },
+    {
+      "id": "SP-2",
+      "nome": "Panga 15 Large — sem planta, mas com fotos do convés",
+      "sub": "O similar brasileiro do estudo. 4,70 × 1,70 m · borda 0,56 m · 250 kg · 25–60 HP",
+      "img": "img/panga.jpg",
+      "pais": "BR",
+      "dados": [["Comprimento", "4,70 m"], ["Boca", "1,70 m"], ["Borda", "0,56 m"], ["Calado", "0,12 m"],
+                ["Casco sem motor", "250 kg"], ["Lotação", "6 pessoas"], ["Motorização", "25–60 HP"]],
+      "nota": ["O QUE A FONTE DIZ DO CONVÉS", "Apenas três itens: console central de cortesia, friso inox e compartimento de bateria. Não há planta, nem lista numerada, nem vista de cima."],
+      "fonte": "Imagens: fotos do estaleiro (© Estaleiro Panga), panga.com.br/panga-15-large"
+    }
+  ],
+
+  "titulo_comparativo": "As 12 pranchas contra o seu projeto",
+  "sub_comparativo": "Onde o skiff de 5,0 × 1,80 m cai dentro do que os desenhos publicados mostram",
+  "comparativo": [
+    ["Comprimento", "4,37 a 5,20 m", "5,00 m", "no centro da faixa"],
+    ["Boca", "1,73 a 2,01 m", "1,80 m", "no terço inferior — barco esguio, como o caso de uso pede"],
+    ["Pontal", "0,70 a 1,10 m", "0,80 m", "acima dos brasileiros, abaixo dos australianos"],
+    ["Calado", "0,13 a 0,26 m", "0,30 m", "acima da faixa — por causa do motor de popa; ainda dentro do limite de 0,45 m"],
+    ["Deadrise", "14° a 15°", "a definir", "a amostra converge: 14° a 16° no espelho"],
+    ["Peso do casco em fibra", "200 a 545 kg", "a definir", "para 5,0 m em fibra laminada à mão, 250 a 400 kg"]
+  ],
+  "nota_comparativo": "Faixas medidas apenas sobre as 12 pranchas cotadas deste documento.",
+
+  "titulo_leituras": "O que estas plantas mudam no projeto",
+  "leituras": [
+    ["01", "Existe planta de casco em fibra", "A Orkney publica planta e perfil dos quatro modelos, em laminação manual sólida com vinilester. O 522 — 5,20 × 2,00 m, 545 kg, 60 HP, 6 pessoas, cockpit autoesgotável — é o similar em fibra que faltava."],
+    ["02", "Duas versões é prática documentada", "A Plate Alloy publica Fly Fisher, Centre Console e Runabout sobre o mesmo fundo, e a Stabicraft desenha dois pacotes de convés na mesma folha. A sua versão pesca e versão passeio é o padrão da indústria."],
+    ["03", "Cote a boca interna, não só a boca máxima", "Plate Alloy cota 1.407 mm num casco de 2,00 m; Stabicraft publica 1,35 m interna com 1,89 externa. É essa medida que diz quanto convés os seus 1,80 m entregam."],
+    ["04", "O peso de referência em fibra", "Coastliner 200 kg com 4,37 m, Longliner 16 270 kg com 4,88 m, Orkney 452 365 kg com 4,52 m. Só o 522, mais robusto, chega a 545 kg em 5,20 m."],
+    ["05", "Deadrise da classe", "A amostra converge em 14° a 15° no espelho. Para onda de 0,5 a 1,5 m na Baía de Todos-os-Santos, é a faixa certa."],
+    ["06", "O documento a copiar", "A folha da Levefort — perfil, planta e a relação numerada de itens de série numa única A4 — é o formato que o seu estaleiro vai precisar para produzir em série."]
+  ],
+  "nota_leituras": "Leituras derivadas apenas do que está cotado nas 12 pranchas. Nada aqui foi desenhado ou estimado.",
+
+  "fontes": [
+    {
+      "titulo": "Fontes",
+      "nota": "Todos os desenhos são publicações dos próprios estaleiros, reproduzidos com crédito para estudo de projeto. Acesso em 22 de agosto de 2026.",
+      "grupos": [
+        ["Orkney Boats · Reino Unido · fibra de vidro", [
+          "Coastliner 14 · 452 · Longliner 16 · 522 — orkneyboats.com/our-range/<modelo>",
+          "Desenhos: /sites/default/files/2024-07/orkney-522-plan.png e -profile.png (mesmo padrão nos demais)"
+        ]],
+        ["Levefort · Brasil · alumínio", [
+          "Marajó 16′ — levefort.com.br/produto/3153 · PDF /storage/products/doc/a70713edbafcb31c8b93.pdf",
+          "Marajó 17′ Machine — /produto/3570 · PDF /storage/products/doc/4ec09a25f976a58681d3.pdf"
+        ]],
+        ["Plate Alloy · Austrália · kit em chapa 5083", [
+          "Índice: platealloy.com/4m-mono.htm",
+          "483CCON.pdf · 485-FLY-WEB.pdf · 480-RUN-WEB.pdf · 465-TIL-WEB.pdf"
+        ]],
+        ["Stabicraft · Nova Zelândia · alumínio", [
+          "1450 Series — stabicraft.com/the-boats/1450-frontier/ · PDF /assets/Uploads/Model-Brochures/1450_SERIES_PLATFORM.pdf",
+          "1550 Fisher — stabicraft.com/the-boats/1550-fisher/ · PDF .../Stabicraft-1550-Fisher.pdf"
+        ]],
+        ["Sem planta publicada", [
+          "carolinaskiff.com/boats/17-ls · /boats/162-jls · panga.com.br/panga-15-large"
+        ]]
+      ]
+    }
+  ]
+}
