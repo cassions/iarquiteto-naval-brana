@@ -21,8 +21,22 @@ balanço a quilha sobe para as duas pontas.
    estações, incluindo os pontos notáveis: espelho, ponto mais fundo da quilha, e onde a
    curvatura muda de ritmo.
 3. Ache o ponto mais fundo da quilha e use-o como Z = 0.
-4. Leia a seção mestra: cantos do convés, e para casco redondo mais 5 a 7 pontos ao
+4. Leia a seção mestra: cantos do convés, e para casco sem quina mais 5 a 7 pontos ao
    longo da metade direita.
+
+## Na seção mestra em wineglass, adense a garganta
+
+Se a meia-baliza inverte a curvatura perto da quilha, o casco é de quilha cheia e o ajuste
+tem **dois** expoentes para achar, não um — e o que os separa é a garganta, o ponto onde a
+curva vira. Leia ali **8 a 10 pontos** em vez de 5 a 7, e ponha **quatro deles entre 10 %
+e 45 % do pontal**: um ainda na lâmina do madeiramento, abaixo da garganta; um o mais
+perto que der do ponto de virada; e dois logo acima, já na taça. Some a esses o pé na
+linha de centro e o canto do convés.
+
+Não economize aqui. Com dois ou três pontos mal colocados a garganta some entre eles: a
+corda que os liga é quase reta, a super-elipse ajusta bem nessa corda, e você classifica
+como bojo redondo um casco que não é. O erro não aparece no resíduo — aparece no plano de
+balizas, tarde.
 
 ## Confira o alisamento ANTES de ajustar
 

@@ -1,6 +1,6 @@
 # Casco quinado (com chine)
 
-Modelo: `assets/modelo-quinado.html`. Saída: `Plano-de-Linhas-<Nome>.html`.
+Modelo: `assets/modelo-quinado.html`. Saída: `Plano-de-Linhas-Quinado-<Nome>.html`.
 
 ## Cinco curvas
 

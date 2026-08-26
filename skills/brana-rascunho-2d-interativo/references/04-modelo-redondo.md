@@ -1,6 +1,14 @@
 # Casco de bojo redondo
 
-Modelo: `assets/modelo-redondo.html`. Saída: `Casco-Redondo-<Nome>.html`.
+Modelo: `assets/modelo-redondo.html`. Saída: `Plano-de-Linhas-Redondo-<Nome>.html`.
+
+> **Antes de seguir: a seção mestra inverte a curvatura perto da quilha?** Se inverte, o
+> casco **não** é redondo, e a referência certa é a
+> [07-modelo-quilha-cheia.md](07-modelo-quilha-cheia.md). No redondo a meia-boca cresce
+> cada vez mais devagar da quilha ao convés, sempre côncava, com tangente horizontal na
+> linha de centro. Na quilha cheia ela sobe estreita e quase vertical junto à quilha,
+> abre numa garganta e só então vira taça — a seção em wineglass. Não decida no olho:
+> `homografia.py --secao` ajusta as duas famílias e diz qual reduz o resíduo.
 
 ## Três curvas e uma forma de baliza
 

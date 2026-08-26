@@ -427,68 +427,7 @@
   <details class="rec">
     <summary>Registro da extração — malha, calibração, reconciliação</summary>
     <div class="rec-body">
-
-      <div>
-        <h3>1 · Geometria da malha</h3>
-        <p>A folha é papel quadriculado. O próprio desenho serviu de escala: as seis marcas rotuladas <em>SECTIONS 1…6</em> estão a quatro quadrados uma da outra, de modo que o casco tem exatamente 20 quadrados do espelho de popa à roda de proa, e a linha das marcas cai sobre um traço da malha 4,38 quadrados abaixo da linha de centro da planta. Isso dá um retângulo de proporções conhecidas — 20 × 4,38 quadrados — cujos quatro cantos são identificáveis na fotografia.</p>
-        <p>A linha de centro da planta foi recuperada de forma independente, bissectando o contorno em cada baliza: as duas metades concordam dentro de 0,05 quadrado.</p>
-      </div>
-
-      <div>
-        <h3>2 · Calibração da perspectiva</h3>
-        <p>Mesma receita do projeto anterior: quatro pontos de referência — as verticais das balizas 1 e 6 cruzadas com a linha de centro da planta e com a linha das marcas — fixam uma homografia plano a plano, resolvida exatamente.</p>
-        <div class="matrix">papel (X,Y em quadrados)  →  imagem (u,v em pixels)
-
-      ⎡ 50,9460    −1,54060   452,000 ⎤
-  H = ⎢ −0,15056   50,74900   216,000 ⎥      u = (H₀·p)/(H₂·p)
-      ⎣ −2,6185e−6 −8,927e−4     1,0  ⎦      v = (H₁·p)/(H₂·p)</div>
-        <ul class="tight">
-          <li>Escala na origem: <code>50,95 px</code> por quadrado em X e <code>50,75 px</code> em Y. A anisotropia é de apenas <strong>0,4 %</strong> — esta foto foi tirada quase perpendicular ao papel, uma inclinação fora do plano de cerca de <strong>5°</strong>, contra os 21,8° do croqui do casco quinado.</li>
-          <li>Rotação no plano de <strong>0,17°</strong>, cisalhamento de <strong>1,74°</strong>, e o denominador projetivo varia só <strong>0,4 %</strong> de canto a canto. É um croqui bem mais fácil de ler que o primeiro.</li>
-          <li><strong>Verificação.</strong> Devolvendo as seis marcas de baliza pela inversa de H, elas caem em X = 0,000 · 4,024 · 8,008 · 11,973 · 15,997 · 19,981 contra os nominais 0 · 4 · 8 · 12 · 16 · 20 — erro máximo de <strong>0,027 quadrado</strong>, cerca de 8 mm num comprimento total de 6 m.</li>
-        </ul>
-      </div>
-
-      <div>
-        <h3>3 · Cotas digitalizadas, antes do alisamento</h3>
-        <p>Cada ponto é uma leitura de pixel devolvida pela inversa de H. Meias-bocas em quadrados a partir da linha de centro, alturas em quadrados acima do ponto mais baixo da quilha. São as cruzes desenhadas nas vistas.</p>
-        <div class="tablewrap"><table id="rawTable"></table></div>
-      </div>
-
-      <div>
-        <h3>4 · A forma da baliza</h3>
-        <p>Aqui está a diferença de fundo para o casco quinado. Sem chine não existe vértice onde quebrar a baliza em dois trechos retos: ela é uma curva contínua da quilha à borda. Adotei a super-elipse</p>
-        <div class="matrix">(y / Y)^p + (1 − z / D)^p = 1</div>
-        <p>que entrega exatamente o que o croqui mostra: topo vertical no encontro com a borda — a boca máxima está no convés — e tangente horizontal na linha de centro, ou seja, fundo arredondado sem quina. O expoente <code>p</code> é o único parâmetro de forma: <code>p = 1</code> é um V reto, <code>p = 2</code> é a semi-elipse, e quanto maior mais a baliza encorpa em direção a uma caixa.</p>
-        <p>Li sete pontos sobre a metade direita da seção mestra desenhada e ajustei <code>p</code> por mínimos quadrados: <strong>p = 2,32</strong>, com resíduo eficaz de <strong>1,0 %</strong> da meia-boca — a maior discrepância isolada é de 1,9 %, no joelho do bojo. Isso corresponde a um coeficiente de baliza <strong>Cm = 0,827</strong>, um pouco mais cheio que a semi-elipse (0,785). Os sete pontos medidos aparecem tracejados sobre o plano de balizas, para a comparação continuar visível.</p>
-        <p>Ao longo do comprimento a cheia não é constante: a baliza afina em direção à proa. A distribuição vai de 0,93 do valor da meia-nau no espelho a 0,62 na roda, suavizada por <em>smoothstep</em>, que chega com derivada nula dos dois lados da meia-nau. O cursor <em>Cm</em> escala a distribuição inteira.</p>
-      </div>
-
-      <div>
-        <h3>5 · Alisamento e reconciliação</h3>
-        <ul class="tight">
-          <li>Os dados digitalizados já são livres de inflexão nas três curvas — a sequência de declividades é monótona do começo ao fim —, então alisar foi ajustar splines de Hermite pelos pontos, não corrigir a forma do croqui.</li>
-          <li><span class="flag">verificação</span> A meia-boca máxima da planta dá <code>3,455</code> quadrados; a seção mestra, desenhada à parte e reprojetada pela mesma homografia, dá <code>3,536</code> — concordância de <strong>2,3 %</strong> numa medida que o ajuste nunca viu.</li>
-          <li><span class="flag">conflito</span> O pontal discorda entre as vistas: o perfil dá 3,369 quadrados na meia-nau, a seção desenhada dá 3,083 — <strong>8,5 %</strong>. As alturas vêm do perfil, como manda a prática, e por isso a seção da foto aparece um pouco mais rasa que a baliza gerada.</li>
-          <li>O perfil tem balanço nas duas pontas: a quilha sobe 0,945 quadrado do ponto mais fundo até o espelho de popa. Isso foi preservado, não aplainado.</li>
-          <li>A borda sobe 1,04 quadrado em todo o comprimento, praticamente reta. Alisada como um único arco.</li>
-        </ul>
-      </div>
-
-      <div>
-        <h3>6 · A restrição de alisamento</h3>
-        <p>Cada curva é uma cadeia de segmentos de Bézier cúbicos unidos em G1 — os dois botões de um nó compartilham a mesma reta tangente, exatamente como no punho de referência. Uma Bézier plana não pode inflexionar se o seu polígono de controle não inflexiona, então a verificação é puramente combinatória: toma-se o produto vetorial de cada par de arestas consecutivas ao longo de todo o polígono e exige-se um único sinal, admitindo giros colineares.</p>
-        <p>Um arrasto que quebraria isso não é recusado de imediato. O movimento é bissectado entre o último estado válido e o pedido, de modo que o punho desliza até a restrição e para. A mesma máquina mantém a monotonicidade em x, limita os punhos a 92 % da sua corda para que nenhum segmento faça laço, mantém todo nó dentro da folha e impõe quilha ≤ borda em perfil.</p>
-        <p>Mover um nó com a tangente congelada trava contra a convexidade quase de imediato numa curva rasa como a borda, então o arrasto de nó primeiro tenta com as suas tangentes intactas e só re-alisa quando isso falha: o nó e os dois vizinhos recebem direções de Catmull-Rom e os comprimentos dos punhos encolhem até o estado ficar legal. Como os comprimentos tendem a zero, o polígono de controle tende à poligonal dos nós, de modo que qualquer arranjo convexo de posições continua alcançável — é por isso que a restrição morde na forma que você está desenhando, e não na parametrização. Arraste um botão vermelho e a tangente daquele nó trava, preenchendo o botão; ela passa a ser sua e o re-alisamento a deixa em paz.</p>
-        <p><strong>Auto-alisar</strong> governa apenas a regra de curvatura. Desligado, os pontos de controle vão exatamente para onde você os põe, as tangentes nunca são re-alisadas pelas suas costas e as curvas podem inflexionar — o pente de curvatura acende para você ver, e um selo conta quantas curvas inflexionam. Todo o resto continua imposto, porque essas restrições são o que mantém o modelo avaliável, e não apenas bonito. Ao religar, cada curva que puder ser recuperada só com tangentes e comprimentos de punho é re-alisada; uma curva cujos <em>nós</em> formam um S não pode ser, então ela é dispensada em vez de ser jogada para onde você não pediu, e volta à regra assim que você a traz de novo ao alisamento.</p>
-        <p>Uma curva ainda pode passar pela reta e sair curvando para o outro lado — é uma viagem contínua sem inflexão em nenhum instante, e é assim que uma borda oca vira convexa. Varrer o nó central da borda do perfil por 0,6 quadrado de curso faz exatamente isso: treze estados convexos, um reto, dezoito côncavos, e nenhuma inflexão em ponto algum do caminho.</p>
-      </div>
-
-      <div>
-        <h3>7 · Onde isto é estimativa</h3>
-        <p>A fotografia foi lida a olho — nenhum processamento de imagem teve acesso aos pixels —, então os pontos de referência e os pontos traçados carregam um erro de operador da ordem de ±3 px, cerca de 0,05 quadrado, ou 15 mm num comprimento total de 6 m. A homografia em si é exata dadas essas leituras; a incerteza está na leitura, e é menor que a espessura do traço do próprio croqui.</p>
-      </div>
-
+      <!--{{REGISTRO}}-->
     </div>
   </details>
 
@@ -545,7 +484,8 @@ layout();                              /* uma vez, antes de qualquer uso */
    Casco redondo nao tem chine, entao a baliza nao e uma poligonal: e uma curva unica da
    quilha ate a borda. Vale uma super-elipse  (y/Y)^p + (1 - z/D)^p = 1 , que da topo
    vertical na borda e tangente horizontal na quilha — exatamente o U do croqui. p = 2 e a
-   semi-elipse; ajustando aos sete pontos medidos na seçao mestra deu p = 2,32. */
+   semi-elipse. O p de cada projeto sai do ajuste da propria seçao mestra, feito por
+   scripts/homografia.py --secao; nao ha valor certo gravado aqui. */
 function sectY(u, p){                 /* u = altura relativa; devolve meia-boca relativa */
   if(u <= 0) return 0;
   if(u >= 1) return 1;
@@ -1352,7 +1292,13 @@ function renderRaw(){
     h += '<tr><td>'+(i+1)+'</td><td>'+fmt(rs[i][0],2)+'</td><td>'+fmt(rs[i][1],3)+'</td><td>'+
          lut(RAW.profSheer,rs[i][0])+'</td><td>'+lut(RAW.profKeel,rs[i][0])+'</td></tr>';
   }
-  h += '<tr><td colspan="2">seção mestra da foto</td><td colspan="3">meia-boca 3,536 · pontal 3,083 · super-elipse p = 2,32 · Cm = 0,827</td></tr>';
+  /* Estes numeros sao do projeto carregado, nao do croqui que deu origem ao modelo. */
+  var _pm = sectionAt(MID_X, allSegs()), _Y = 0, _D = 0, _q;
+  for(i=0;i<PHOTO_PTS.length;i++){ _q = PHOTO_PTS[i]; if(_q[0] > _Y) _Y = _q[0]; if(_q[1] > _D) _D = _q[1]; }
+  if(PHOTO_PTS.length)
+    h += '<tr><td colspan="2">seção mestra da foto</td><td colspan="3">meia-boca '+fmt(_Y,3)+
+         ' · pontal '+fmt(_D,3)+' · super-elipse p = '+fmt(_pm.p,2)+
+         ' · Cm = '+fmt(sectCm(_pm.p),3)+'</td></tr>';
   document.getElementById('rawTable').innerHTML = h + '</tbody>';
 }
 

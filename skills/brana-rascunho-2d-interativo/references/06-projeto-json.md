@@ -3,6 +3,10 @@
 É o **único** arquivo que você escreve. Umas 40 linhas, ~300 tokens. `montar.py` injeta
 o conteúdo dele no modelo, que nunca precisa entrar no seu contexto.
 
+Esquema na **versão 3**: três tipos de casco, e dois campos que só existem no terceiro
+(`cheia.exp_vante` e o bloco `alefriz`). Para `quinado` e `redondo` nada mudou — sem
+`alefriz`, sem `exp_vante`.
+
 ## Casco redondo
 
 ```json
@@ -51,11 +55,45 @@ Iguais, trocando as curvas e a seção:
 }
 ```
 
+## Casco de quilha cheia
+
+Mesmas três curvas do redondo, mesma ordem. O que aparece a mais são `cheia.exp_vante` e
+o bloco `alefriz`:
+
+```json
+{
+  "casco": "quilha-cheia",
+  "nome": "Luiz",
+  "titulo": "Casco de Quilha Corrida",
+  "subtitulo": "Quilha corrida · baliza em wineglass · pé de roda profundo",
+  "loa_m": 6.8, "loa_sq": 16, "balizas": 5, "mid_x": 6.788,
+  "curvas": {
+    "planSheer": [[0,1.6328,0.367], [1.865,2.2898,0.33756], [6.788,3.3428,-0.01907],
+                  ..., [16,0,-0.68897]],
+    "profSheer": [[0,4.821,-0.04228], ..., [16,5.571,0.20858]],
+    "profKeel":  [[0,0.032,-0.03373], [2.581,0,0.00893], ..., [16,5.571,1.41532]]
+  },
+  "medidos": { "planSheer": [...], "profSheer": [...], "profKeel": [...] },
+  "secao": { "pts": [[0,0], [0.34,0.542], [0.683,0.948], [1.026,1.149], [1.711,1.484],
+                     [2.328,2.024], [2.74,2.838], [2.973,3.654], [3.083,4.198]] },
+  "cheia":   { "p": 3.23, "re": 0.51, "vante": 0.20, "exp_vante": 0.7 },
+  "alefriz": { "z0": 1.3779, "subida": 0.010, "tuck": 0.40, "extensao": 2.5 }
+}
+```
+
+`alefriz.z0` é a cota da garganta na meia-nau, em quadrados. **Não tem padrão** — sai do
+ajuste da seção mestra, e `montar.py` recusa o projeto sem ela. Os outros três são valores
+de projeto, não medidas. Ver [07-modelo-quilha-cheia.md](07-modelo-quilha-cheia.md).
+
+`secao.pts` vai com nove pontos, não com os cinco a sete do redondo: quatro deles caem
+entre 10 % e 45 % do pontal, cercando a garganta. É o adensamento que
+[02-digitalizacao.md](02-digitalizacao.md) pede.
+
 ## Campos
 
 | Campo | Obrigatório | O que é |
 |---|---|---|
-| `casco` | sim | `"quinado"` ou `"redondo"` |
+| `casco` | sim | `"quinado"`, `"redondo"` ou `"quilha-cheia"` |
 | `nome` | sim | primeiro nome de quem pediu; entra no nome do arquivo |
 | `loa_m` | sim | comprimento total em metros, **informado pela pessoa** |
 | `loa_sq` | sim | comprimento em quadrados da malha |
@@ -64,7 +102,12 @@ Iguais, trocando as curvas e a seção:
 | `curvas` | sim | saída de `ajustar.py`: `[x, y, declividade]` por nó |
 | `medidos` | não | pontos lidos na foto; viram as cruzes nas vistas |
 | `secao` | não | seção mestra reprojetada, tracejada sobre o plano de balizas |
-| `cheia` | só redondo | `p` da super-elipse, e as frações de cheia a ré e a vante |
+| `cheia` | redondo e quilha cheia | `p` da forma da baliza, e as frações de cheia a ré e a vante |
+| `cheia.exp_vante` | só quilha cheia | expoente da suavização à vante. Padrão **0,7**. Com 1,0 — a suavização simples do redondo — o Cm da baliza vizinha à proa sai maior que o da mestra, o que não existe |
+| `alefriz.z0` | **sim**, em quilha cheia | cota do alefriz na meia-nau, em quadrados. Sem padrão: vem do ajuste da seção mestra |
+| `alefriz.subida` | não | subida do alefriz por quadrado, para vante. Padrão **0,010** |
+| `alefriz.tuck` | não | levantamento do alefriz no tuck, em quadrados, medido sobre o prolongamento da reta. Padrão **0,40** — que rende 0,375 qd de levantamento em relação à cota do alefriz no fim do tuck, que é o número que se mede num traçado pronto. |
+| `alefriz.extensao` | não | extensão do tuck a partir do espelho, em quadrados. Padrão **2,5** |
 | `titulo` | não | título da página; o padrão vem do tipo de casco |
 | `subtitulo` | não | frase do selo |
 | `registro` | não | `{ "calibracao": "…", "notas": ["…"] }`, texto do registro |

@@ -420,60 +420,7 @@
   <details class="rec">
     <summary>Registro da extração — malha, calibração, reconciliação</summary>
     <div class="rec-body">
-
-      <div>
-        <h3>1 · Geometria da malha</h3>
-        <p>A folha é papel quadriculado. O próprio desenho serviu de escala: as oito marcas de baliza rotuladas <em>SECTIONS 1…8</em> estão a dois quadrados uma da outra, de modo que o casco tem exatamente 14 quadrados do espelho de popa à roda de proa, e a linha das marcas cai sobre um traço da malha 2,77 quadrados abaixo da linha de centro da planta. Isso dá um retângulo de proporções conhecidas — 14 × 2,77 quadrados — cujos quatro cantos são identificáveis na fotografia.</p>
-        <p>A linha de centro da planta foi recuperada de forma independente, bissectando o contorno em cada baliza: as duas metades concordam dentro de 0,02 a 0,11 quadrado, que é a assimetria do próprio desenho à mão, não erro de calibração.</p>
-      </div>
-
-      <div>
-        <h3>2 · Calibração da perspectiva</h3>
-        <p>Quatro pontos de referência — as verticais das balizas 1 e 8 cruzadas com a linha de centro da planta e com a linha das marcas — fixam uma homografia plano a plano. Resolvida exatamente (resíduo nulo por construção nos quatro pontos):</p>
-        <div class="matrix">papel (X,Y em quadrados)  →  imagem (u,v em pixels)
-
-      ⎡ 59,7620   −2,58850   68,0000 ⎤
-  H = ⎢  0,78000   55,48900  147,5000 ⎥      u = (H₀·p)/(H₂·p)
-      ⎣  0,0030170 −0,0068126   1,0   ⎦      v = (H₁·p)/(H₂·p)</div>
-        <ul class="tight">
-          <li>Escala na origem: <code>59,76 px</code> por quadrado ao longo do X do papel, <code>55,49 px</code> ao longo do Y. Os 7,1 % de anisotropia são a câmera olhando de cima para o caderno — uma inclinação fora do plano de cerca de <strong>21,8°</strong>.</li>
-          <li>Rotação no plano de <strong>0,75°</strong>; as verticais do papel cisalham <strong>2,67°</strong> na imagem.</li>
-          <li>O denominador projetivo vai de 0,981 a 1,042 ao longo da folha — uma variação de escala de <strong>6,2 %</strong> de canto a canto. É justamente essa parte que um decalque feito contando pixels erra.</li>
-        </ul>
-        <p><strong>Verificação independente.</strong> A calibração foi resolvida só com a vista em planta e depois usada para reprojetar a seção mestra, desenhada à parte. A meia-boca do convés resulta em <code>2,340</code> quadrados contra a meia-boca máxima da planta, de <code>2,356</code> — concordância de 0,7 %, numa medida que o ajuste nunca viu. O pontal da seção contra o pontal do perfil concorda em 5,5 %.</p>
-      </div>
-
-      <div>
-        <h3>3 · Cotas digitalizadas, antes do alisamento</h3>
-        <p>Cada ponto abaixo é uma leitura de pixel devolvida pela inversa de H. Meias-bocas em quadrados a partir da linha de centro, alturas em quadrados acima do ponto mais baixo da quilha. São as cruzes desenhadas nas vistas.</p>
-        <div class="tablewrap"><table id="rawTable"></table></div>
-      </div>
-
-      <div>
-        <h3>4 · Alisamento e reconciliação</h3>
-        <ul class="tight">
-          <li>Os dados digitalizados já não têm inflexão em nenhuma curva — a sequência de declividades é monótona do começo ao fim —, de modo que alisar significou ajustar splines de Hermite pelos pontos, não corrigir a forma do croqui.</li>
-          <li><span class="flag">corrigido</span> O perfil foi desenhado cerca de 0,55 quadrado à direita da planta e 0,55 curto no espelho de popa. Aqui as duas vistas estão normalizadas para X ∈ [0, 14].</li>
-          <li><span class="flag">acrescentado</span> O croqui não tem o chine em planta, então o casco não podia ser seccionado em nenhum lugar além da meia-nau. Foi acrescentada uma curva de meia-boca do chine, fixada em 76 % da borda na baliza 4 para casar exatamente com a seção desenhada, afinando para 80 % no espelho e 74 % à vante.</li>
-          <li><span class="flag">conflito</span> As duas vistas discordam sobre a altura do chine. O perfil o põe 0,944 quadrado acima da quilha na baliza 4 (ângulo de V de 28,3°); a seção desenhada o põe em 0,759 (23,3°). As alturas vêm do perfil, como manda a prática, e a seção reprojetada é desenhada sobre o plano de balizas em traço tracejado cinza para que a diferença de 0,19 quadrado continue visível. Arraste o chine do perfil para baixo até coincidir, se preferir a seção.</li>
-          <li>A borda, como desenhada, é quase reta — sobe apenas 0,27 quadrado em todo o comprimento. Isso foi preservado em vez de embelezado; ela é alisada como um único arco convexo.</li>
-        </ul>
-      </div>
-
-      <div>
-        <h3>5 · A restrição de alisamento</h3>
-        <p>Cada curva é uma cadeia de segmentos de Bézier cúbicos unidos em G1 — os dois botões de um nó compartilham a mesma reta tangente, exatamente como no punho de referência. Uma Bézier plana não pode inflexionar se o seu polígono de controle não inflexiona, então a verificação é puramente combinatória: toma-se o produto vetorial de cada par de arestas consecutivas ao longo de todo o polígono e exige-se um único sinal, admitindo giros colineares.</p>
-        <p>Um arrasto que quebraria isso não é recusado de imediato. O movimento é bissectado entre o último estado válido e o pedido, de modo que o punho desliza até a restrição e para. A mesma máquina mantém a monotonicidade em x, limita os punhos a 92 % da sua corda para que nenhum segmento faça laço, mantém todo nó dentro da folha e impõe chine ≤ borda em planta e quilha ≤ chine ≤ borda em perfil.</p>
-        <p>Mover um nó com a tangente congelada trava contra a convexidade quase de imediato numa curva rasa como a borda, então o arrasto de nó primeiro tenta com as suas tangentes intactas e só re-alisa quando isso falha: o nó e os dois vizinhos recebem direções de Catmull-Rom e os comprimentos dos punhos encolhem até o estado ficar legal. Como os comprimentos tendem a zero, o polígono de controle tende à poligonal dos nós, de modo que qualquer arranjo convexo de posições continua alcançável — é por isso que a restrição morde na forma que você está desenhando, e não na parametrização. Arraste um botão vermelho e a tangente daquele nó trava, preenchendo o botão; ela passa a ser sua e o re-alisamento a deixa em paz.</p>
-        <p><strong>Auto-alisar</strong> governa apenas a regra de curvatura. Desligado, os pontos de controle vão exatamente para onde você os põe, as tangentes nunca são re-alisadas pelas suas costas e as curvas podem inflexionar — o pente de curvatura acende para você ver, e um selo conta quantas curvas inflexionam. Todo o resto continua imposto, porque essas restrições são o que mantém o modelo avaliável, e não apenas bonito. Ao religar, cada curva que puder ser recuperada só com tangentes e comprimentos de punho é re-alisada; uma curva cujos <em>nós</em> formam um S não pode ser, então ela é dispensada em vez de ser jogada para onde você não pediu, e volta à regra assim que você a traz de novo ao alisamento.</p>
-        <p>Uma curva ainda pode passar pela reta e sair curvando para o outro lado — é uma viagem contínua sem inflexão em nenhum instante, e é assim que uma borda oca vira convexa. Varrer o nó central da borda do perfil por 0,6 quadrado de curso faz exatamente isso: treze estados convexos, um reto, dezoito côncavos, e nenhuma inflexão em ponto algum do caminho.</p>
-      </div>
-
-      <div>
-        <h3>6 · Onde isto é estimativa</h3>
-        <p>A fotografia foi lida a olho — nenhum processamento de imagem teve acesso aos pixels —, então os pontos de referência e os pontos traçados carregam um erro de operador da ordem de ±3 px, cerca de 0,05 quadrado, ou 22 mm num comprimento total de 6 m. A homografia em si é exata dadas essas leituras; a incerteza está na leitura, e é menor que a espessura do traço do próprio croqui.</p>
-      </div>
-
+      <!--{{REGISTRO}}-->
     </div>
   </details>
 
