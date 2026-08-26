@@ -2,7 +2,7 @@
   "name": "brana-naval",
   "owner": {
     "name": "cassions",
-    "url": "https://github.com/cassions"
+    "url": "https://github.com/cassions/"
   },
   "metadata": {
     "description": "Marketplace de skills de arquitetura naval do Brana Projetos Navais.",
@@ -12,7 +12,7 @@
     {
       "name": "iarquiteto-naval-brana",
       "source": {
-        "source": "github",
+        "source": "./",
         "repo": "cassions/iarquiteto-naval-brana"
       },  
       "description": "Skills de arquitetura naval: entrevista guiada de Caso de Uso, estudo de similares e dimensionamento preliminar de embarcacoes.",
