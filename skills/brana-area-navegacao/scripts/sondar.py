@@ -26,8 +26,8 @@ def main(argv=None):
     ap.add_argument("lon", type=float)
     ap.add_argument("--raio", type=float, default=10.0,
                     help="metade do lado do mapa, em km (padrao 10)")
-    ap.add_argument("--colunas", type=int, default=61,
-                    help="largura do mapa em caracteres (padrao 61)")
+    ap.add_argument("--colunas", type=int, default=45,
+                    help="largura do mapa em caracteres (padrao 45)")
     ap.add_argument("--carta", default=None,
                     help="forca uma carta; sem isso usa a mais detalhada do ponto")
     ap.add_argument("--dados", default=None, help="pasta do acervo raster do CHM")

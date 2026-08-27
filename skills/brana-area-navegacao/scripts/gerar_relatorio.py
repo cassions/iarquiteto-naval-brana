@@ -4,7 +4,8 @@
 Uso minimo:
     python gerar_relatorio.py --nome "Fulano" --partida "Salvador" --chegada "Itacare"
 
-Ver `python gerar_relatorio.py --ajuda-longa` para todas as opcoes.
+O script contorna a terra sozinho lendo o raster das cartas e confere a
+derrota pixel a pixel. Ver `--help` e references/OPCOES.md para as opcoes.
 """
 
 import argparse
@@ -15,6 +16,7 @@ import sys
 AQUI = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, AQUI)
 import navegacao as N  # noqa: E402
+import roteador as R  # noqa: E402
 
 from reportlab.lib import colors                                    # noqa: E402
 from reportlab.lib.enums import TA_JUSTIFY, TA_CENTER               # noqa: E402
@@ -22,6 +24,7 @@ from reportlab.lib.pagesizes import A4                              # noqa: E402
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle  # noqa: E402
 from reportlab.lib.units import cm                                  # noqa: E402
 from reportlab.pdfbase import pdfmetrics                            # noqa: E402
+from reportlab.pdfgen import canvas as rl_canvas                    # noqa: E402
 from reportlab.pdfbase.ttfonts import TTFont                        # noqa: E402
 from reportlab.platypus import (SimpleDocTemplate, Paragraph, Spacer,  # noqa: E402
                                 Table, TableStyle, Image, PageBreak)
@@ -94,12 +97,37 @@ S = {
 }
 S["li"] = ParagraphStyle("li", parent=S["p"], leftIndent=12, bulletIndent=2, spaceAfter=3)
 S["celb"] = ParagraphStyle("celb", parent=S["cel"], fontName=NEG, textColor=colors.white)
+# tabela longa (derrota com muitos pontos de passagem) cabe apertando a linha,
+# em vez de empurrar o relatorio para uma 11a pagina
+S["celp"] = ParagraphStyle("celp", parent=S["cel"], fontSize=7.9, leading=9.4)
 S["nota"] = ParagraphStyle("nota", parent=S["p"], fontSize=8.8, leading=11.6,
                            textColor=CINZA)
 S["instr"] = ParagraphStyle("instr", parent=S["p"], fontName=ITA, fontSize=9.5,
                             leading=13, textColor=CINZA)
 
 f = N._fmt
+
+
+def rotulo_declinacao(g):
+    """Rotulo curto da declinacao. A convencao interna e W positivo."""
+    if abs(g) < 0.5:
+        return "declinação nula"
+    return "declinação %s\u00b0 %s" % (f(abs(g), 0), "W" if g > 0 else "E")
+
+
+def frase_declinacao(g):
+    """Como sair do rumo verdadeiro para o rumo da bussola, sem numero negativo."""
+    if g is None:
+        return ("confira a declinação magnética na rosa impressa na carta e some ao "
+                "rumo verdadeiro.")
+    if abs(g) < 0.5:
+        return ("a declinação magnética é praticamente nula nesta área, e por isso os "
+                "dois rumos coincidem.")
+    if g > 0:
+        return ("some %s graus ao rumo verdadeiro (declinação de %s\u00b0 W, lida na "
+                "rosa das cartas)." % (f(g, 0), f(g, 0)))
+    return ("subtraia %s graus do rumo verdadeiro (declinação de %s\u00b0 E, lida na "
+            "rosa das cartas)." % (f(-g, 0), f(-g, 0)))
 
 
 def esc(t):
@@ -137,15 +165,17 @@ def img(nome, larg_cm=None, alt_cm=None):
     return Image(nome, width=w * escala, height=h * escala)
 
 
-def tabela(dados, larguras, centro=()):
-    linhas = [[Paragraph(esc(c), S["celb"] if i == 0 else S["cel"]) for c in ln]
+def tabela(dados, larguras, centro=(), compacto=False):
+    est = S["celp"] if compacto else S["cel"]
+    linhas = [[Paragraph(esc(c), S["celb"] if i == 0 else est) for c in ln]
               for i, ln in enumerate(dados)]
     t = Table(linhas, colWidths=[w * cm for w in larguras], repeatRows=1)
+    folga = 1.2 if compacto else 3
     cmd = [("BACKGROUND", (0, 0), (-1, 0), VERMELHO),
            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
            ("GRID", (0, 0), (-1, -1), 0.4, GRADE),
-           ("TOPPADDING", (0, 0), (-1, -1), 3),
-           ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+           ("TOPPADDING", (0, 0), (-1, -1), folga),
+           ("BOTTOMPADDING", (0, 0), (-1, -1), folga),
            ("LEFTPADDING", (0, 0), (-1, -1), 4.5),
            ("RIGHTPADDING", (0, 0), (-1, -1), 4.5),
            ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, OURO])]
@@ -199,20 +229,45 @@ def lado_a_lado(imagem, titulo, itens, extra, larg_img_cm, fonte=8.6):
 
 def proc(c):
     """Linha de procedencia de uma carta."""
-    return ("<b>Carta %s \u2014 %s</b>, escala 1:%s, DHN/CHM \u2013 Marinha do Brasil. "
-            "Edição %s, Aviso aos Navegantes %s. Datum %s. Linha tracejada roxa = "
-            "derrota aproximada." % (c["numero"], c["titulo"], c["escala"] or "?",
-                                     c["edicao"] or "?", c["aviso"] or "?",
-                                     c["datum"] or "WGS-84"))
+    return ("<b>Carta %s \u2014 %s</b>, escala 1:%s (painel %s do acervo), DHN/CHM "
+            "\u2013 Marinha do Brasil. Edição %s, Aviso aos Navegantes %s. Datum %s. "
+            "Linha tracejada roxa = derrota aproximada."
+            % (c.get("numero_oficial") or c["numero"],
+               c.get("titulo_oficial") or c["titulo"], c["escala"] or "?", c["numero"],
+               c["edicao"] or "?", c["aviso"] or "?", c["datum"] or "WGS-84"))
 
 
 # --------------------------------------------------------------------------
 # montagem
 # --------------------------------------------------------------------------
 
+class CanvasNumerado(rl_canvas.Canvas):
+    """Guarda as paginas e so escreve "pagina X de Y" no fim, quando o total ja
+    e conhecido. Assim o documento e montado UMA vez: o reportlab altera os
+    proprios flowables durante a montagem, e remonta-los quebrava."""
+
+    def __init__(self, *a, **kw):
+        self._rodape = kw.pop("rodape", None)
+        rl_canvas.Canvas.__init__(self, *a, **kw)
+        self._guardadas = []
+
+    def showPage(self):
+        self._guardadas.append(dict(self.__dict__))
+        self._startPage()
+
+    def save(self):
+        total = len(self._guardadas)
+        for estado in self._guardadas:
+            self.__dict__.update(estado)
+            if self._rodape:
+                self._rodape(self, total)
+            rl_canvas.Canvas.showPage(self)
+        self._guardadas = []
+        rl_canvas.Canvas.save(self)
+
+
 def construir(d, destino, timbrado=None):
     """d: dicionario com todos os dados apurados. Escreve o PDF em `destino`."""
-    total_paginas = [10]
 
     def cabecalho(canv, doc):
         canv.saveState()
@@ -221,8 +276,14 @@ def construir(d, destino, timbrado=None):
         canv.drawRightString(A4[0] - MARG_LAT, A4[1] - 44,
                              "Área de Navegação  \u2014  %s \u2194 %s"
                              % (d["partida_curto"], d["chegada_curto"]))
+        canv.restoreState()
+
+    def rodape(canv, total):
+        canv.saveState()
+        canv.setFont(REG, 8.2)
+        canv.setFillColor(CINZA)
         canv.drawRightString(A4[0] - MARG_LAT, A4[1] - 56,
-                             "página %d de %d" % (doc.page, total_paginas[0]))
+                             "página %d de %d" % (canv._pageNumber, total))
         canv.restoreState()
 
     h = []
@@ -249,9 +310,10 @@ def construir(d, destino, timbrado=None):
         ["Distância em linha reta", "%s MN (%s km)"
          % (f(d["reta_mn"]), f(d["reta_mn"] * N.MN_KM, 0, True))],
         ["Rumo médio", "<b>%03.0f\u00b0 verdadeiro</b>%s" % (d["reta_rumo"],
-         (" \u00b7 %03.0f\u00b0 na bússola (declinação %s\u00b0 W)"
-          % ((d["reta_rumo"] + d["declinacao"]) % 360, f(d["declinacao"], 0)))
-         if d["declinacao"] else "")],
+         (" \u00b7 %03.0f\u00b0 na bússola (%s)"
+          % ((d["reta_rumo"] + d["declinacao"]) % 360,
+             rotulo_declinacao(d["declinacao"])))
+         if d["declinacao"] is not None else "")],
         ["Maior afastamento da costa", "%s" % (("cerca de %s MN (%s km)"
          % (f(d["afastamento"]), f(d["afastamento"] * N.MN_KM, 0)))
          if d["afastamento"] is not None
@@ -306,11 +368,7 @@ def construir(d, destino, timbrado=None):
     h.append(P("2. Derrota habitual", "h1"))
     h.append(P("O <b>rumo verdadeiro</b> é o ângulo medido a partir do norte geográfico, "
                "que é o norte da carta. O <b>rumo na bússola</b> (rumo magnético) é o que "
-               "se lê na agulha de bordo: %s" % (
-                   ("some %s graus ao rumo verdadeiro (declinação magnética lida na rosa "
-                    "das cartas)." % f(d["declinacao"], 0)) if d["declinacao"] else
-                   "confira a declinação magnética na rosa impressa na carta e some ao "
-                   "rumo verdadeiro.")))
+               "se lê na agulha de bordo: %s" % frase_declinacao(d["declinacao"])))
     linhas = [["Nº", "Ponto de passagem", "Latitude", "Longitude", "Rumo<br/>verd.",
                "Rumo<br/>bússola", "MN", "Acum.<br/>(MN)"]]
     for i, w in enumerate(d["wps"]):
@@ -331,7 +389,7 @@ def construir(d, destino, timbrado=None):
             else (f(0.0) if primeiro else f(d["pernas"][i - 1]["acumulado"])),
         ])
     h.append(tabela(linhas, [0.8, 4.2, 2.1, 2.3, 1.6, 1.8, 1.1, 1.6],
-                    centro=(0, 2, 3, 4, 5, 6, 7)))
+                    centro=(0, 2, 3, 4, 5, 6, 7), compacto=len(linhas) > 12))
     h.append(P("Datum WGS-84. O rumo e as milhas de cada linha referem-se ao trecho "
                "<i>até o ponto seguinte</i>; a coluna Acum. é a distância já percorrida "
                "desde a partida até aquele ponto. No sentido contrário, percorra os "
@@ -511,10 +569,11 @@ def construir(d, destino, timbrado=None):
                                                    N.sem_acento(d["chegada_curto"])),
             author="Brana Projetos Navais",
             subject="Derrota, clima, mare, corrente e classificacao NORMAM / ISO")
-        doc.build(list(h), onFirstPage=cabecalho, onLaterPages=cabecalho)
+        doc.build(h, onFirstPage=cabecalho, onLaterPages=cabecalho,
+                  canvasmaker=lambda *a, **kw: CanvasNumerado(*a, rodape=rodape,
+                                                              **kw))
         return buf.getvalue()
 
-    total_paginas[0] = len(PdfReader(io.BytesIO(desenhar_pdf())).pages)
     conteudo = PdfReader(io.BytesIO(desenhar_pdf()))
 
     escritor = PdfWriter()
@@ -527,7 +586,7 @@ def construir(d, destino, timbrado=None):
             escritor.add_page(pagina)
     with open(destino, "wb") as fp:
         escritor.write(fp)
-    return total_paginas[0]
+    return len(conteudo.pages)
 
 
 # --------------------------------------------------------------------------
@@ -550,6 +609,12 @@ def apurar(args):
         lat, lon, _r = N.resolver(texto, indice)
         wps.append((lat, lon, rot.strip() or None))
     wps.append(chegada)
+
+    # o proprio script contorna a terra: sem isso alguem precisaria olhar a
+    # imagem da carta, escolher pontos na mao e rodar de novo, varias vezes
+    notas_desvio = []
+    if not args.sem_desvio:
+        wps, notas_desvio, _cf = R.corrigir(wps, indice)
 
     carta_perc = N.carta_do_percurso(wps, indice)
     declinacao = args.declinacao
@@ -658,10 +723,17 @@ def apurar(args):
         "profundidade, perigos isolados, áreas restritas e balizamento. Confira "
         "cada perna na carta antes de adotar.")
 
+    sistemas_rota = []
+    for _s in setores:
+        for _x in _s["sistemas"]:
+            if _x not in sistemas_rota:
+                sistemas_rota.append(_x)
     clima_texto = ("O tempo da região é governado pelos sistemas que o banco "
-                   "de clima náutico lista para os setores da derrota: %s"
-                   % " ".join(x if x.endswith(".") else x + "."
-                              for x in a["sistemas"][:3]))
+                   "de clima náutico lista para %s: %s"
+                   % ("o setor da derrota" if len(setores) == 1
+                      else "os %d setores da derrota" % len(setores),
+                      " ".join(x if x.endswith(".") else x + "."
+                               for x in sistemas_rota[:4])))
     clima_itens = [
         "<b>Vento.</b> A média mensal fica entre %s e %s nós (%s a %s km/h) ao "
         "longo do ano. O maior vento de uma hora já registrado no mar aberto dos "
@@ -821,6 +893,24 @@ def apurar(args):
         "São sistemas diferentes e os dois precisam ser atendidos.")
 
     itens_conferencia = []
+    feitos = [n for n in notas_desvio if not n.get("motivo")]
+    falhas = [n for n in notas_desvio if n.get("motivo")]
+    if feitos:
+        itens_conferencia.append(
+            "<b>Pontos de passagem escolhidos pelo próprio programa</b> para "
+            "contornar a terra, lidos do desenho das cartas: %s. São pontos "
+            "ilustrativos, não um plano de navegação aprovado."
+            % "; ".join("%d ponto%s no trecho %d, pela carta %s (%s)"
+                        % (n["pontos"], "" if n["pontos"] == 1 else "s",
+                           n["perna"], N.carta_oficial(n["carta"], "")[0],
+                           N.escala_br(n["escala"])) for n in feitos))
+    for n in falhas:
+        itens_conferencia.append(
+            "<b>Atenção:</b> %s o programa não conseguiu traçar o contorno da "
+            "terra (%s). Os pontos desse trecho precisam ser escolhidos na "
+            "carta, à mão."
+            % (("no trecho %d" % n["perna"]) if n.get("perna") else "na derrota",
+               esc(n["motivo"])))
     if conferencia.get("afastamento_mn") is not None:
         la, lo = conferencia["afastamento_em"]
         itens_conferencia.append(
@@ -867,6 +957,7 @@ def apurar(args):
         "onda_min": min(ondas), "onda_max": max(ondas),
         "iso": iso, "normam": normam,
         "conferencia_itens": itens_conferencia, "conferencia": conferencia,
+        "notas_desvio": notas_desvio,
         "regiao": regiao, "aviso_rota": aviso_rota,
         "clima_texto": clima_texto, "clima_itens": clima_itens,
         "atencao_saida": at_saida, "atencao_percurso": at_percurso,
@@ -906,6 +997,8 @@ def main(argv=None):
     ap.add_argument("--data", default=None, help="dd/mm/aaaa (padrao: hoje)")
     ap.add_argument("--dados", default=None, help="pasta do acervo raster do CHM")
     ap.add_argument("--saida", default=".", help="pasta de saida")
+    ap.add_argument("--sem-desvio", action="store_true",
+                    help="nao contorna a terra sozinho; deixa a derrota em reta")
     ap.add_argument("--sem-timbrado", action="store_true",
                     help="nao aplica o papel timbrado Brana")
     args = ap.parse_args(argv)
@@ -927,9 +1020,11 @@ def main(argv=None):
     print("Derrota: %s MN em %d pernas | rumo verdadeiro medio %03.0f"
           % (f(d["total_mn"]), len(d["pernas"]), d["reta_rumo"]))
     print("Cartas: saida %s (1:%s) | percurso %s (1:%s) | chegada %s (1:%s)"
-          % (d["carta_saida"]["numero"], d["carta_saida"]["escala"],
-             d["carta_percurso"]["numero"], d["carta_percurso"]["escala"],
-             d["carta_chegada"]["numero"], d["carta_chegada"]["escala"]))
+          % (d["carta_saida"]["numero_oficial"], d["carta_saida"]["escala"],
+             d["carta_percurso"]["numero_oficial"], d["carta_percurso"]["escala"],
+             d["carta_chegada"]["numero_oficial"], d["carta_chegada"]["escala"]))
+    for nota in R.texto_das_notas(d.get("notas_desvio") or []):
+        print("Desvio automatico | " + nota)
     for linha in N.texto_da_conferencia(d["conferencia"]):
         print(linha)
     print("Setores de clima: %s" % ", ".join(s["codigo"] for s in d["setores"]))

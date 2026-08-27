@@ -4474,7 +4474,7 @@ Para altura de maré em data e hora específicas, consulte as **Tábuas das Mar�
 
 #### Sistemas meteorológicos e oceanográficos que governam a região
 
-- Alísios de E a SE dominam o ano; máximo de vento de setembro a janeiro.
+- Alísios de E a SE dominam o ano; máximo de vento de junho a agosto.
 - Estação chuvosa de abril a julho, com chuva significativa também em novembro e dezembro; a Baía de Todos os Santos é chuvosa o ano todo.
 - Brisa marítima forte à tarde: dentro da baía o vento vira e reforça de SE a partir do meio da tarde — fator dominante para vela e travessias.
 - Frentes frias enfraquecidas chegam ocasionalmente no inverno, com vento de S a SE e ondulação de sul.

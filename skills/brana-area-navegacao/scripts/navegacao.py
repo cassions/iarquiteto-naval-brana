@@ -296,16 +296,18 @@ def desenhar(numero, wps, saida, caixa_graus=None, margem_km=9, largura=2000,
         img = img.resize((largura, int(img.size[1] * largura / img.size[0])),
                          Image.LANCZOS)
 
+    numero_of, titulo_of = carta_oficial(crt.numero, crt.titulo)
     img = C._rodape(img, [
         nota or "Derrota aproximada",
-        "Carta %s - %s (1:%s) | DHN/CHM - Marinha do Brasil | %s | ed. %s | "
-        "ultimo aviso %s | derrota ilustrativa - NAO USAR PARA NAVEGACAO"
-        % (crt.numero, crt.titulo, crt.escala or "?", crt.datum,
+        "Carta %s - %s (1:%s) | painel %s | DHN/CHM - Marinha do Brasil | %s | "
+        "ed. %s | ultimo aviso %s | derrota ilustrativa - NAO USAR PARA NAVEGACAO"
+        % (numero_of, titulo_of, crt.escala or "?", crt.numero, crt.datum,
            crt.edicao or "?", crt.aviso or "?"),
     ])
     os.makedirs(os.path.dirname(os.path.abspath(saida)) or ".", exist_ok=True)
     img.save(saida)
     return {"arquivo": saida, "numero": crt.numero, "titulo": crt.titulo,
+            "numero_oficial": numero_of, "titulo_oficial": titulo_of,
             "escala": crt.escala, "edicao": crt.edicao, "aviso": crt.aviso,
             "datum": crt.datum, "residuo_px": round(crt.residuo_px, 2),
             "px": img.size}
@@ -661,7 +663,8 @@ def carta_oficial(numero_painel, titulo_kap=""):
         return oficial, titulo.strip(" _-.")
     if painel in _CATALOGO:
         return painel, _CATALOGO[painel].strip(" _-.")
-    return oficial or painel, titulo_kap or "?"
+    limpo = re.sub(r"[\W\d_]+", "", titulo_kap or "", flags=re.U)
+    return oficial or painel, (titulo_kap if limpo else "?")
 
 
 def escala_br(valor):
@@ -790,7 +793,7 @@ def _varrer(crt, wps, passo_km, so_pernas=None, ignorar_pontas_km=0.6):
 
 
 def conferir_derrota(numero_percurso, wps, passo_km=0.2, alcance_mn=25.0,
-                     indice=None, minimo_km=0.4):
+                     indice=None, minimo_km=0.4, medir_afastamento=True):
     """Confere a derrota lendo o raster das cartas, sem abrir imagem nenhuma.
 
     Cada perna e conferida na carta MAIS DETALHADA que a contem: em carta de
@@ -817,7 +820,7 @@ def conferir_derrota(numero_percurso, wps, passo_km=0.2, alcance_mn=25.0,
 
     pior_mn, pior_em = None, None
     crt = _painel(C.por_numero(indice, numero_percurso)[0])
-    if crt is not None:
+    if crt is not None and medir_afastamento:
         lat_meio = sum(w[0] for w in wps) / len(wps)
         px_por_km = _km_em_pixels(crt, lat_meio, 1.0)
         folga_px = int(alcance_mn * MN_KM * px_por_km) + 8
@@ -873,7 +876,7 @@ def texto_da_conferencia(cf):
     if cf.get("erro"):
         return ["conferencia indisponivel: %s" % cf["erro"]]
     linhas = ["Conferencia no raster das cartas %s:"
-              % ", ".join("%s (1:%s)" % (n, e)
+              % ", ".join("%s (1:%s)" % (carta_oficial(n, "")[0], e)
                           for n, e in sorted(cf["cartas"].items()))]
     if cf["afastamento_mn"] is not None:
         la, lo = cf["afastamento_em"]

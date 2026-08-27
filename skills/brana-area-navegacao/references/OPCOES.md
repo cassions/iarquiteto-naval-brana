@@ -21,6 +21,7 @@ Leia só quando precisar de um detalhe. O `SKILL.md` já cobre o uso normal.
 | `--data` | não | `dd/mm/aaaa`. Padrão: hoje |
 | `--dados` | não | Pasta do acervo raster do CHM. Também lê `CARTAS_NAUTICAS_DIR` |
 | `--saida` | não | Pasta de saída. Padrão: pasta atual |
+| `--sem-desvio` | não | Não contorna a terra sozinho; deixa a derrota em reta |
 | `--sem-timbrado` | não | Gera sem o papel timbrado Brana |
 
 ## As 10 páginas
@@ -39,38 +40,73 @@ Leia só quando precisar de um detalhe. O `SKILL.md` já cobre o uso normal.
 ## De onde vem cada número
 
 - **Distância e rumo**: loxodrômica (rumo constante) sobre datum WGS-84, calculada ponto a ponto.
+- **Pontos de passagem**: os que você passar em `--wp` são mantidos na ordem; os demais
+  saem do desvio automático sobre o raster, e o console diz de qual carta veio cada um.
 - **Cartas**: acervo raster BSB/KAP do CHM. A da saída e a da chegada são as de maior escala em que cabe, inteiro e sem invadir a margem, um recorte de `--zoom-km` centrado no ponto. A do percurso é a de maior escala que contém todos os pontos.
 - **Clima, maré e corrente**: `data/clima_nautico_brasil.md`, que divide o Brasil em 59 setores (33 costeiros e 26 de hidrovia). A skill escolhe os setores mais próximos de cada ponto da derrota.
 - **Categoria ISO**: a **recomendada** usa o p99 de vento e de onda dos setores, ou seja, a condição superada em 1% das horas — o pico absoluto de uma série de reanálise não deve, sozinho, empurrar um barco costeiro para a categoria oceânica. A **mínima** usa o p90 de vento e a onda típica da metade mais calma do ano, e só vale para quem navega na janela boa com previsão confirmada. Se o pico já registrado cair numa categoria acima da recomendada, o relatório diz isso como ressalva. Limites da ISO 12217: A acima de 40 nós e 4 m; B até 40 nós (74 km/h) e 4 m; C até 27 nós (49 km/h) e 2 m; D até 16 nós (28 km/h) e 0,3 m.
 - **Área NORMAM**: NORMAM-211/DPC (esporte e recreio). Interior = águas abrigadas ou parcialmente abrigadas, Arrais-Amador. Costeira = dentro da visibilidade da costa, até 20 milhas, Mestre-Amador. Oceânica = sem restrições, Capitão-Amador. Para uso comercial vale a NORMAM-201/DPC.
 
-## Conferência automática e sondagem
+## Desvio automático, conferência e sondagem
 
-O `gerar_relatorio.py` confere a derrota **pixel a pixel** sobre o raster, sem gerar
-imagem nenhuma. Cada perna é conferida na carta de **maior escala** que a contém — em
-carta de escala pequena um canal estreito some e daria alarme falso. Ele classifica
-cada pixel sob a linha em terra, água rasa (a tinta azul), água funda ou traço da
-carta, e reporta:
+O `gerar_relatorio.py` faz três coisas sozinho, sem gerar imagem nenhuma, e é isso que
+torna uma única invocação suficiente.
 
-- trechos passando por **terra** (a partir de 0,4 km, para não contar símbolo solto);
-- quantos km correm pela faixa de água rasa;
-- o **afastamento máximo da costa** em milhas, que alimenta a classificação NORMAM.
+**1. Contorna a terra.** Quando a reta entre dois pontos cruza terra, o `roteador.py`
+decodifica o recorte da carta mais detalhada que contém a perna, reduz o raster a uma
+grade de células (terra é intransponível, água rasa custa mais que água funda, passar
+perto da costa custa mais que ir ao largo), atravessa essa grade por uma busca de menor
+custo (A\*) e enxuga o caminho: sobra só o mínimo de pontos que ainda se enxergam em
+linha reta pela água. Cada ponto inserido aparece no console como `Desvio automatico |`
+e no relatório, dito como cálculo do programa.
 
-Perto do cais de partida e de chegada os primeiros e últimos 600 m são ignorados —
-ali terra é esperada.
+A busca começa numa grade grossa (260 células no maior lado) e afina até 820 se
+preciso. A grossa decide por qual lado da ilha passar e custa pouco; uma célula grande
+deixa canal estreito aberto de propósito. **Quem arbitra é sempre a grade fina**: um
+caminho só é aceito se estiver limpo nela. Sem essa arbitragem o roteador entregava
+caminho que a conferência depois reprovava — numa célula de 0,8 km uma restinga de
+0,4 km é minoria e simplesmente desaparece.
 
-O que a conferência **não** enxerga: pedra isolada, laje, balizamento, área restrita e
-profundidade em número. Isso continua sendo leitura de carta.
+São até 4 rodadas, e cada uma reconfere a derrota inteira. Se uma rodada não reduzir a
+terra atravessada, insistir no mesmo desvio daria no mesmo: o programa então **parte a
+perna suja**, cercando o trecho reclamado com dois pontos na própria reta, e a rodada
+seguinte roteia o pedaço curto — onde a carta tem escala útil. Numa perna de 100 MN a
+carta é de escala pequena demais para o roteador enxergar a saída do porto; num pedaço
+de 6 km, a mesma carta dá célula de 50 m.
 
-Para achar por onde desviar sem abrir imagem, use o `sondar.py`:
+**2. Confere a derrota** pixel a pixel. Cada perna é conferida na carta de **maior
+escala** que a contém — em escala pequena um canal estreito some e daria alarme falso.
+Reporta trecho por terra (a partir de 0,4 km, para não contar símbolo solto), quantos km
+correm pela faixa de água rasa, e o **afastamento máximo da costa** em milhas, que
+alimenta a classificação NORMAM. Perto do cais os primeiros e últimos 600 m são
+ignorados: ali terra é esperada.
+
+**3. Sonda, quando pedido.** Se o desvio não achar caminho, o `sondar.py` imprime um
+mapa de texto (`#` terra, `-` raso, `.` fundo, `?` traço da carta) centrado num ponto, na
+carta de maior escala que o cobre:
 
 ```
 python scripts/sondar.py -23.90 -45.45 --raio 12
 ```
 
-Ele imprime um mapa de texto (`#` terra, `-` raso, `.` fundo) centrado no ponto, na
-carta de maior escala que o cobre. `--carta` força outra carta e `--colunas` muda a
-largura do mapa.
+`--carta` força outra carta e `--colunas` alarga o mapa. Escolha um ponto em água funda
+e passe `--wp "lat,lon"` na ordem, repetindo até a conferência dizer "derrota limpa".
+
+O `roteador.py` também roda sozinho, para ver só os pontos sem montar o PDF:
+
+```
+python scripts/roteador.py "-23.778,-45.358" "-23.995,-46.297"
+```
+
+O que nada disso enxerga: pedra isolada, laje, balizamento, área restrita e profundidade
+em número. Isso continua sendo leitura de carta.
+
+**Onde o desvio automático não chega.** Em canal urbano estreito o raster fica cheio de
+traço — ponte, cais, píer, cabo — e a ponte desenhada atravessando o canal é lida como
+terra: o barco passa por baixo, o classificador não sabe disso. Foi o que sobrou em dois
+testes de doze, o Estreito de Florianópolis e a Baía de Vitória. Nos dois o `sondar.py`
+mostra o vão e dois `--wp` resolvem; em Vitória, `--wp "-20.3233,-40.3369" --wp
+"-20.3280,-40.3200"` fecha a derrota limpa.
 
 ## Quando algo dá errado
 
@@ -103,6 +139,12 @@ pontos intermediários.
 imagem. Não existe carta de escala maior para aquele ponto: diga isso no lugar de
 ampliar mais.
 
-**"a perna N passa por TERRA"** — a linha reta entre dois pontos corta terra. Sonde a
-região com `sondar.py`, escolha um ponto em água funda e acrescente `--wp "lat,lon"`
-na ordem. Repita até a conferência dizer "derrota limpa".
+**"a perna N passa por TERRA"** — sobrou travessia de terra que o desvio automático não
+resolveu, ou você rodou com `--sem-desvio`. Costuma ser canal sem carta de grande escala
+no acervo, ou ponta que caiu em terra firme. Sonde com `sondar.py`, escolha um ponto em
+água funda e acrescente `--wp "lat,lon"` na ordem, até limpar.
+
+**"nao achei caminho pela agua na carta X"** — na carta que contém as duas pontas não
+existe água ligando uma à outra: em geral porque falta no acervo a carta de detalhe do
+canal, ou porque a ponta está num corpo d'água separado (lagoa, represa). Confira as
+coordenadas e, se o caminho existir de fato, passe os pontos com `--wp`.
