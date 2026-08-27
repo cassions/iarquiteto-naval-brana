@@ -6,9 +6,22 @@ casos de 4 a 7 m com download direto.
 Todas as URLs abaixo foram verificadas em **26/08/2026**: 72 de 72 responderam
 HTTP 200. Ainda assim, **confirme o 200 antes de citar** — sites mudam.
 
+**Como confirmar que uma URL está viva**, em uma linha:
+
+```bash
+curl -sIL -A "Mozilla/5.0" -m 45 "<URL>" | grep -iE "^(HTTP|content-type|content-length)"
+```
+
 > **Cuidado com HEAD.** Lund, Crestliner e o OpenKnowledge da FAO não devolvem
-> `Content-Length`, e a FAO ainda anuncia `application/json`. Nesses hosts valide
-> por GET e pelos primeiros bytes (`%PDF`), não pelo cabeçalho.
+> `Content-Length`, e a FAO ainda anuncia `application/json`. Nesses hosts o HEAD
+> engana: valide por GET e pelos primeiros bytes.
+>
+> ```bash
+> curl -s -A "Mozilla/5.0" -m 90 "<URL>" -o /tmp/x && head -c 4 /tmp/x && wc -c < /tmp/x
+> ```
+>
+> Mais simples ainda: `coletar.py "<URL>" --info` já baixa, identifica o tipo e
+> diz quantas páginas tem. Uma chamada em vez de duas.
 
 ---
 

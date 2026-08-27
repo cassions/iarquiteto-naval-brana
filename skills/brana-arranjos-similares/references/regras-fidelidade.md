@@ -60,8 +60,23 @@ numa seção própria, rotulada "sem planta publicada", com a lista do que você
 procurou e não achou. Nunca misture com as pranchas cotadas — quem lê precisa
 saber o que é desenho e o que é foto.
 
-## 8. Diga onde procurou
+## 8. Diga onde procurou — e só o que você procurou de fato
 
-Para cada similar sem planta, registre os lugares checados: site do fabricante,
-configurador, revendas, bancos de ficha técnica, testes de revista. Isso é o que
-transforma "não achei" em "não existe publicado", que é uma conclusão útil.
+Para cada similar sem planta, registre onde olhou. Isso é o que transforma "não
+achei" em "não existe publicado", que é uma conclusão útil.
+
+**Mas escreva a verdade sobre a sua própria busca.** O orçamento do passo 3 manda
+não pesquisar o que o catálogo já dá como resolvido — então, nesses casos, o
+texto correto **não** é "procurei no site do fabricante, em revendas, no BoatTEST
+e no Boat Trader". É:
+
+> "Levantamento anterior (catálogo da skill, seção 8) registra que a Carolina
+> Skiff não publica planta baixa, arranjo geral nem vista de cima — verificado no
+> site do fabricante, no configurador e em revendas. Não repeti a busca."
+
+Se você **realmente** abriu a página do fabricante nesta execução, aí sim liste
+esse lugar. Nunca herde a lista de lugares do exemplo: ela descreve a busca de
+quem montou o catálogo, não a sua.
+
+Uma frase falsa sobre o método contamina o documento inteiro — é o mesmo defeito
+de inventar um número.

@@ -67,6 +67,16 @@ ou sem acento, maiúsculas indiferentes):
 
 País vem de `pais`, não de `dados`. O que não casar sai como `—`.
 
+O casamento é **por prefixo e sem acento**, e vale o **primeiro** rótulo que
+casar. Duas consequências práticas:
+
+- `Boca máxima`, `Boca externa` e `Boca interna` todos casam com `Boca`. Ponha a
+  boca que deve ir ao índice **antes** das outras na lista `dados`.
+- Um rótulo como `Comprimento do casco` casa com `Comprimento` (coluna LOA). Se
+  quiser que o LOA total vá ao índice, liste `LOA` primeiro.
+
+Quando a ordem não resolver, use `idx` para escrever a linha do índice à mão.
+
 ## Fontes
 
 ```json

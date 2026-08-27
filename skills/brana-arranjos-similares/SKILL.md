@@ -49,12 +49,18 @@ Faltando um deles, **pare** e peça. Não invente o caso de uso a partir de uma
 frase solta. Se o projetista ainda não os tem, aponte as skills
 `brana-caso-de-uso` e `brana-estudo-similar`.
 
-Depois, **pergunte o nome do projetista**:
+Depois, **o nome do projetista**. Se ele já aparece no cabeçalho de um dos dois
+documentos, confirme em vez de perguntar do zero:
+
+> "O Caso de Uso está no nome de Cassio — uso esse no arquivo, ou prefere outro?"
+
+Se não aparecer em lugar nenhum, pergunte:
 
 > "Qual o seu nome? Ele vai no rodapé da capa e no nome do arquivo."
 
-O nome entra no manifesto como `projetista` e o PDF sai como
-`Arranjos Gerais - <Nome>.pdf`.
+Em qualquer dos casos, **espere a resposta**. O nome entra no manifesto como
+`projetista` e o PDF sai como `Arranjos Gerais - <Nome>.pdf`. Sem ele o
+`gerar_pdf.py` recusa gerar.
 
 ## Onde trabalhar
 
