@@ -1,13 +1,22 @@
 # iarquiteto-naval-brana
 
-Ferramenta de apoio ao projeto de embarcações com IA. Skills de arquitetura naval em português.
+Ferramenta de apoio ao projeto de embarcações de esporte e recreio com IA. Skills de arquitetura naval em português.
 
 ## Skills
 
 | Skill | O que faz |
 |---|---|
 | `brana-caso-de-uso` | Entrevista guiada, item a item, para levantar os requisitos de projeto de uma embarcação e gerar o formulário de Caso de Uso preenchido. |
-| `brana-estudo-similar` | Entrevista guiada, para criar estudo de similar com base no caso de uso. |
+| `brana-estudo-similar` | Pesquisa embarcações reais da mesma missão e porte, coleta as dimensões com fonte citada, monta a planilha comparativa e gera o documento "Estudo de Similar". |
+| `brana-arranjos-similares` | Reúne no mínimo 10 arranjos gerais publicados (planta baixa, layout de convés) dos barcos similares e monta a apresentação em PDF. Exige o Caso de Uso e o Estudo de Similar. |
+| `brana-area-navegacao` | Gera o PDF de Área de Navegação (bloco 3 do Caso de Uso) para a derrota entre dois pontos do Brasil: cartas da Marinha, distância, rumo, tempos, clima, maré, calado e classificação NORMAM e ISO. |
+| `brana-rascunho-2d-interativo` | Transforma a foto de um croqui em papel quadriculado — com TOP, SIDE e MIDSHIP — em plano de linhas interativo em HTML, corrigindo a perspectiva e digitalizando as cotas. |
+| `brana-plano-linhas` | Plano de linhas em PDF, duas folhas A3: perfil, topo e plano de balizas com a malha, cotas de LOA, LWL e balanços, e a tabela de cotas. |
+| `brana-casco-3d-interativo` | Visualizador 3D do casco (HTML único, offline) a partir da tabela de cotas, com hidrostática ao vivo, espelho de popa por plano de corte ajustável e curva de áreas. |
+| `brana-casco-planificado` | Abre o casco em chapa plana: relatório HTML interativo e PDF vetorial de corte, com as peças planificadas e os gabaritos das balizas sobre malha quadrada. |
+| `brana-pesos-trim-banda` | Painel de pesos e centros (HTML único, offline): a pessoa leva pesos a bordo e o casco encontra a posição em que flutua — trim, banda, calados, borda livre, GM e curva de braços de endireitamento. |
+| `brana-estimativa-velocidade` | Painel de estimativa de velocidade e potência (HTML único, offline) pelas fórmulas de Dave Gerr, conferidas contra o método de John Teale. Cobre deslocamento, semi-planeio e planeio. |
+| `brana-exportar-delftship-freeship` | Converte a tabela de cotas em arquivo `.part` do FREE!ship, que abre nele e no DELFTship, já com o espelho de popa fechado e as quinas marcadas como crease. |
 
 ## Estrutura
 
@@ -55,18 +64,17 @@ Leem o `plugin.json` da raiz pelo padrão Agent Plugins 1.0. Descobrem as skills
 
 ## Atualizações
 
-Quem instalou recebe a nova versão quando o campo `version` sobe. Fluxo ao editar uma skill:
+### Hermes
 
-1. Edite os arquivos em `skills/<skill>/`.
-2. Suba o `version` em **`plugin.json`**, em **`.claude-plugin/plugin.json`** e na entrada de `marketplace.json` — os três precisam bater.
-3. Commit e push.
-
-Se você omitir `version` num plugin servido por git, o SHA do commit vira a versão e todo push vai para os usuários — inclusive commit pela metade. Por isso os três arquivos declaram versão explícita.
-
-Do lado de quem usa:
+Executar:
 
 ```bash
 hermes plugins update iarquiteto-naval-brana
+```
+
+### Claude
+
+```bash
 claude plugin update iarquiteto-naval-brana
 ```
 
