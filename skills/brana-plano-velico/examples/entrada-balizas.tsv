@@ -1,0 +1,20 @@
+# Exemplo do painel - veleiro tradicional de patilhao, 7,20 m de comprimento total.
+# Casco de bojo redondo em baliza de calice (wineglass): as meias-bocas de baixo sao
+# o madeiramento morto / patilhao, com 72 mm de meia-espessura, e por isso o perfil do
+# patilhao ja esta dentro da area lateral submersa do casco - nada e desenhado por cima.
+# Alturas acima da linha de base (ponto mais baixo do patilhao), meias-bocas a partir da
+# linha de centro, em milimetros. Baliza 1 = espelho de popa, baliza 13 = talha-mar.
+baliza	x	altura_quilha	altura_borda	mb_12pc	mb_25pc	mb_38pc	mb_50pc	mb_62pc	mb_75pc	mb_88pc	meia_boca_borda
+1	0.0	1080.0	1780.0	229.4	310.5	376.2	433.5	485.3	533.1	577.8	620.0
+2	600.0	860.0	1720.0	234.7	360.2	456.1	538.1	611.4	678.6	741.1	800.0
+3	1200.0	560.0	1670.0	64.6	237.8	418.4	549.4	659.7	757.7	847.0	930.0
+4	1800.0	210.0	1635.0	59.2	66.5	225.9	476.8	648.1	790.4	915.9	1030.0
+5	2400.0	20.0	1615.0	58.3	64.8	71.3	440.1	650.4	818.2	963.8	1095.0
+6	3000.0	0.0	1610.0	58.4	64.9	71.5	455.1	667.8	838.3	986.4	1120.0
+7	3600.0	0.0	1620.0	58.3	64.8	71.3	448.8	664.3	836.3	985.5	1120.0
+8	4200.0	10.0	1650.0	58.0	64.2	70.3	402.5	626.2	800.5	950.5	1085.0
+9	4800.0	90.0	1700.0	57.7	63.6	69.5	337.1	558.3	725.5	867.9	995.0
+10	5400.0	330.0	1780.0	57.7	63.6	69.5	298.5	485.4	626.9	747.4	855.0
+11	6000.0	700.0	1885.0	58.5	65.1	71.7	291.7	409.0	503.5	585.7	660.0
+12	6600.0	1180.0	2010.0	61.3	70.9	170.5	227.4	272.7	312.0	347.4	380.0
+13	7200.0	1900.0	2150.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0
