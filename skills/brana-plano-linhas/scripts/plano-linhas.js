@@ -13,7 +13,14 @@ const zlib = require('zlib');
    para o selo sair com as mesmas informacoes do modelo mesmo quando quem chama nao as sabe. */
 const A = {};
 process.argv.slice(2).forEach(a => { const m = a.match(/^--([^=]+)=([\s\S]*)$/); if (m) A[m[1]] = m[2]; });
-if (!A.tabela) { console.error('uso: node plano-linhas.js --tabela=<arq> --saida=<pdf> [--titulo=] [--sub=] [--autor=] [--escala=]'); process.exit(2); }
+if (require.main === module && !A.tabela) { console.error('uso: node plano-linhas.js --tabela=<arq> --saida=<pdf> [--titulo=] [--sub=] [--autor=] [--escala=]'); process.exit(2); }
+
+/* Dois modos, um so programa: script (node plano-linhas.js --tabela=...) ou modulo, com
+   gerar(A) devolvendo o resumo e a superficie ja montada para quem for conferir.
+
+   O corpo abaixo NAO foi reindentado de proposito: ele carrega textos de varias linhas, e
+   mexer na indentacao mexeria no que sai impresso. */
+function gerar(A) {
 const S = require(path.join(__dirname, 'superficie.js')).montar(A.tabela);
 const L = require(path.join(__dirname, 'layout.js')).calcular(S.R, +A.escala || null);
 const { R, C, parsed } = S;
@@ -427,9 +434,10 @@ const balTxt = (balPopa > 2 || balProa > 2)
     ' e ' + (balProa > 2 ? mm(balProa) + ' mm da baliza ' + ultBal.n + ' ao extremo de proa' : 'nulo a proa') + '.'
   : 'Balanços nulos: a baliza ' + b0.n + ' coincide com o extremo de popa e a baliza ' + ultBal.n + ' com a roda de proa.';
 [
-  'Linha de base tangente ao ponto mais baixo da quilha; CL divide os bordos; DWL a 300 mm da base.',
+  'Linha de base tangente ao ponto mais baixo da quilha; CL divide os bordos; DWL (calado de projeto) a ' +
+    mm(R.DWL) + ' mm da base' + (R.dwlDeclarado ? '.' : ', valor arbitrado - a tabela não o declara.'),
   "Balizas a " + mm(R.espBal) + " mm (LWL/10 = " + mm(R.espBal_exato) + "); linhas d'água a " + mm(R.espWL) +
-    ' mm (300/3); planos do alto a ' + mm(R.espBut) + ' mm (BOA/6 = ' + mm(R.espBut_exato) + ').',
+    ' mm (' + mm(R.DWL) + '/3); planos do alto a ' + mm(R.espBut) + ' mm (BOA/6 = ' + mm(R.espBut_exato) + ').',
   'Baliza ' + b0.n + ' em x = ' + mm(R.xBaliza0) + ', onde a DWL encontra o fundo do casco no CL a popa. LWL medido dela até x = ' + mm(R.xProaDWL) + '.',
   balTxt,
   R.inclinado
@@ -455,8 +463,8 @@ R.wls.slice().reverse().forEach(z => linhasT.push({
 linhasT.push({ sep: true });
 linhasT.push({ rot: 'Altura da quilha', vals: cotas.map(c => c.zk === null ? '-' : mm(c.zk)) });
 if (CHINE) {
-  linhasT.push({ rot: 'Altura do chine', vals: cotas.map(c => mm(c.zc)) });
-  linhasT.push({ rot: 'Meia-boca no chine', vals: cotas.map(c => mm(c.yc)) });
+  linhasT.push({ rot: 'Altura do chine', vals: cotas.map(c => c.zc === null ? '-' : mm(c.zc)) });
+  linhasT.push({ rot: 'Meia-boca no chine', vals: cotas.map(c => c.yc === null ? '-' : mm(c.yc)) });
 }
 linhasT.push({ rot: 'Altura da borda', vals: cotas.map(c => mm(c.zs)) });
 linhasT.push({ rot: 'Meia-boca na borda', vals: cotas.map(c => mm(c.ys)) });
@@ -486,12 +494,23 @@ if (vazias.length) notas2.push('Linhas d\'água sem nenhum valor: ' + vazias.map
 if (degeneradas.length) notas2.push('Baliza ' + degeneradas.join(', ') +
   ': coincide com a roda de proa, onde a meia-boca é zero. Sem seção no plano de balizas.');
 if (cotas.some(c => c.truncada)) notas2.push('Onde a altura da quilha sai vazia, o plano do espelho trunca a baliza: o fundo dela é o próprio espelho.');
+if (CHINE && cotas.some(c => c.zc === null)) notas2.push('Onde as linhas do chine saem vazias, a baliza começa acima do chine: o plano do espelho a trunca antes dele.');
 
 const LB = 50, cw = (420 - 2 * MG - LB) / bal.length, c0 = MG + LB;
 const ty = 297 - MG - 42;
 const nData = linhasT.filter(l => !l.sep).length;
 /* altura de linha: o que couber entre o cabecalho e o bloco de notas */
-const rh = Math.max(5.6, Math.min(8.8, (ty - 18 - (30 + 7 + notas2.length * 5.3)) / nData));
+/* Uma DWL pequena em relacao ao pontal gera uma malha fina demais: a tabela de cotas
+   passa do rodape da folha e o desenho sai truncado. Melhor recusar com diagnostico do
+   que entregar uma folha estragada. */
+const rhLivre = (ty - 18 - (30 + 7 + notas2.length * 5.3)) / nData;
+if (rhLivre < 5.6)
+  throw new Error('a malha de linhas d agua nao cabe na folha A3: com DWL de ' + mm(R.DWL) +
+    ' mm o espacamento fica em ' + mm(R.espWL) + ' mm (DWL/3 arredondado a 50), o que da ' +
+    R.wls.length + ' linhas d agua ate a borda, a ' + mm(R.zBordaMax) + ' mm. A tabela de cotas ' +
+    'precisaria de ' + nData + ' linhas. Informe a DWL de projeto correta: uma DWL pequena ' +
+    'demais em relacao ao pontal do casco produz malha fina demais para a folha.');
+const rh = Math.max(5.6, Math.min(8.8, rhLivre));
 
 P.fill(pg2, ...VERM); P.retF(pg2, MG, ty - rh + 2, 420 - 2 * MG, rh);
 P.txt(pg2, MG + 2.5, ty - rh + 5, 'BALIZA', FT.tabHdr, true, null, 1, 1, 1);
@@ -519,7 +538,7 @@ notas2.forEach(t => { P.txt(pg2, MG + 2.5, ny, t, FT.nota); ny -= 5.3; });
 const saida = A.saida || 'plano-de-linhas.pdf';
 fs.writeFileSync(saida, render(doc));
 /* Linha estruturada para quem chama este script: mais confiavel que raspar a prosa. */
-console.log('RESUMO=' + JSON.stringify({
+const RESUMO = {
   arquivo: saida, kb: +(fs.statSync(saida).size / 1024).toFixed(0), escala: ESC,
   folhas: doc.pages.length, modo: R.modo, chine: !!CHINE, nBalTab: parsed.rows.length,
   inclinado: R.inclinado, rake: R.inclinado ? +Math.abs(R.rakeGraus).toFixed(1) : 0,
@@ -527,11 +546,13 @@ console.log('RESUMO=' + JSON.stringify({
   LOA: Math.round(LOA), LWL: Math.round(R.Lwl), BOA: Math.round(R.BOA), BWL: Math.round(R.BWL),
   bal0: b0.n, balN: ultBal.n, espBal: R.espBal, espBalExato: Math.round(R.espBal_exato),
   espWL: R.espWL, espBut: R.espBut, espButExato: Math.round(R.espBut_exato), buts: R.buts,
+  dwl: R.DWL, dwlDeclarado: R.dwlDeclarado,
   balPopa: Math.round(balPopa), balProa: Math.round(balProa),
   nBalizas: bal.length, nLinhasTab: nData, degeneradas: degeneradas, avisos: R.avisos || [],
   sub: SUB, titulo: TITULO,
   wlVazias: vazias.map(z => Math.round(z)), truncadas: cotas.filter(c => c.truncada).length
-}));
+};
+console.log('RESUMO=' + JSON.stringify(RESUMO));
 console.log(saida + '  ' + (fs.statSync(saida).size / 1024).toFixed(1) + ' KB, 2 folhas A3, escala 1:' + ESC);
 console.log('  casco ' + R.modo + ', ' + parsed.rows.length + ' balizas na tabela; espelho ' +
   (R.inclinado ? gr(Math.abs(R.rakeGraus)) + '° da vertical' : 'vertical em x = ' + mm(R.espBaixo.x)));
@@ -543,3 +564,9 @@ console.log('  balancos: popa ' + mm(balPopa) + ' mm, proa ' + mm(balProa) + ' m
 console.log('  layout: PZb ' + PZb + '  AY0 ' + AY0 + '  BY0 ' + BY0 + '  cotas em ' + D1 + '/' + D2 + '/' + D3);
 console.log('  tabela ' + nData + ' linhas x ' + bal.length + ' balizas, rh ' + rh.toFixed(2) +
   ' mm; ultima nota em y = ' + (ny + 5.3).toFixed(1) + ' mm (margem ' + MG + ')');
+
+return { resumo: RESUMO, saida: saida, S: S, L: L };
+}
+module.exports = { gerar };
+
+if (require.main === module) gerar(A);

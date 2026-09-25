@@ -51,6 +51,23 @@ Se a última baliza a vante tiver meia-boca zero em todos os níveis, ela é a r
 o plano fecha o contorno ali e essa baliza não ganha seção no plano de balizas. Isso é
 normal e o resumo avisa.
 
+## Declarar a linha d'água de projeto na tabela
+
+A DWL é o calado de projeto, em milímetros acima da linha de base. Qualquer uma destas
+linhas de comentário serve:
+
+```
+# dwl: 400
+# calado de projeto: 400 mm
+# linha d'agua de projeto: 400 mm acima da linha de base
+```
+
+`--dwl=<mm>` na linha de comando sobrepõe a declaração da tabela. Sem nenhum dos dois o
+desenho sai com 300 mm e avisa que o valor foi arbitrado.
+
+A DWL tem de ser positiva, ficar abaixo da borda mais baixa do casco e valer pelo menos
+75 mm (abaixo disso, DWL/3 arredondado a múltiplo de 50 daria espaçamento zero).
+
 ## Declarar o espelho na própria tabela
 
 Três formas, todas em linha de comentário. A primeira que aparecer vale:

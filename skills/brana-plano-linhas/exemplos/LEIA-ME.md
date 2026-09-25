@@ -43,6 +43,19 @@ Sai `Casco-Redondo-6m-Espelho-5g-Plano-de-Linhas-Cassio-Brana.pdf`, 1:25.
 LOA 6.000 · LWL 4.626 · BOA 2.073 · BWL 1.614 · balizas 0..13 a 450 mm ·
 treze linhas d'água (0 a 1.200) · balanços de 52 e 98 mm.
 
+## Trocando o calado de projeto
+
+As três tabelas não declaram DWL, então saem com os 300 mm arbitrados e o resumo avisa.
+Para desenhar com o calado real:
+
+```bash
+node ../scripts/gerar-plano-linhas.js --tabela=casco-redondo-6m-espelho5.txt --nome="Ana Ribeiro" --dwl=400
+```
+
+Com 400 mm em vez de 300, neste casco: linhas d'água a 150 mm (era 100), baliza 0 em x = 43
+(era 52), LWL 4.881 (era 4.626), balizas 0..11 a 500 mm (eram 0..13 a 450) e BWL 1.767
+(era 1.614). A malha inteira depende da DWL.
+
 ## Como o nome do arquivo se forma
 
 `<Tabela>-Plano-de-Linhas-<Nome>.pdf`, com o nome da tabela capitalizado. Qualquer

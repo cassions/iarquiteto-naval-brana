@@ -4,7 +4,7 @@ description: Gera o plano de linhas de um casco em PDF, duas folhas A3 na identi
 license: Proprietário — Brana · Projetos Navais
 metadata:
   category: brana
-  version: 1.1.0
+  version: 1.3.0
   requisitos: Node.js 18+ no PATH. Sem dependências externas.
 ---
 
@@ -13,7 +13,7 @@ metadata:
 Um comando gera as duas folhas e já se confere. **Não leia os arquivos de `scripts/`** —
 o resumo impresso traz tudo o que você precisa saber.
 
-## Três coisas antes de rodar
+## Quatro coisas antes de rodar
 
 **1. A tabela de cotas — obrigatória.** Se o usuário colou a tabela na conversa, salve-a
 como `.txt` **antes** de rodar, preservando as linhas de comentário que começam com `#`.
@@ -43,6 +43,15 @@ O ângulo é medido **da vertical**, positivo quando o topo cai para ré (o usua
 espelho fica ancorado na abscissa da última baliza a ré, o que preserva o comprimento total
 que a tabela declara.
 
+**4. A DWL — a linha d'água de projeto, ou seja o calado.** É dado do projeto, não constante
+do desenho: **pergunte**. Informe com `--dwl=<mm>` acima da linha de base, ou deixe a tabela
+declarar (`# dwl: <mm>`). Sem nenhum dos dois o desenho sai com 300 mm, o resumo avisa em
+maiúsculas que o valor foi arbitrado, e o próprio desenho registra isso em nota — não entregue
+sem confirmar.
+
+Mover a DWL não desloca só uma linha: dela saem o espaçamento das linhas d'água (DWL/3), a
+posição da baliza 0, o LWL, o espaçamento das balizas (LWL/10) e a BWL. A malha inteira muda.
+
 ## Rodar
 
 ```bash
@@ -51,6 +60,12 @@ node scripts/gerar-plano-linhas.js --tabela=casco.txt --nome="Nome Sobrenome" --
 
 ```bash
 node scripts/gerar-plano-linhas.js --tabela=casco.txt --nome="Nome Sobrenome" --espelho-reto
+```
+
+Com o calado de projeto:
+
+```bash
+node scripts/gerar-plano-linhas.js --tabela=casco.txt --nome="Nome Sobrenome" --espelho=12 --dwl=400
 ```
 
 Opcionais: `--saida=arq.pdf`, `--titulo="..."`, `--sub="..."`, `--escala=25`. Sem `--escala`,
@@ -68,6 +83,8 @@ número de checagens. Repasse isso ao usuário e entregue o PDF.
   linha d'água fora do casco): mencione-as.
 - `ATENÇÃO a tabela é suspeita` indica provável troca de colunas: pare e confira com o
   usuário antes de entregar.
+- `ATENÇÃO a DWL não foi informada` significa que o calado de projeto foi arbitrado em
+  300 mm: confirme com o usuário e refaça com `--dwl=<mm>` se for outro.
 - Se o resumo disser `REPROVADO NA CONFERENCIA`, **não entregue o PDF** (ele fica salvo como
   `.INVALIDO.pdf`): as causas estão em `references/solucao-de-problemas.md`.
 
@@ -81,8 +98,8 @@ A malha sai destas regras, sempre:
 | | |
 |---|---|
 | Linha de base | tangente ao ponto mais baixo da quilha |
-| DWL | 300 mm acima da base |
-| Linhas d'água | 300/3 = 100 mm, múltiplo de 50, contadas a partir da DWL |
+| DWL | o calado de projeto, informado (na falta, arbitrado em 300 mm) |
+| Linhas d'água | DWL/3, múltiplo de 50, contadas a partir da DWL |
 | Baliza 0 | onde a DWL encontra o fundo do casco no CL, a ré |
 | Balizas | LWL/10, múltiplo de 50 mm, positivas para vante |
 | Planos do alto | BOA/6, múltiplo de 100 mm, a partir do CL |

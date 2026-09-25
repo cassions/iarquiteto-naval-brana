@@ -86,6 +86,22 @@ function lerEspelho(tsv, T0, zk0, zs0) {
   };
 }
 
+/* Linha d agua de projeto declarada na tabela. A DWL e o CALADO DE PROJETO do barco: e
+   dado de entrada, nao regra. Formas aceitas, em linha de comentario:
+
+     # dwl: 400
+     # calado de projeto: 400 mm
+     # linha d'agua de projeto: 400 mm acima da linha de base
+
+   Sem declaracao, o desenho sai com 300 mm e o resumo avisa que foi arbitrado. */
+function lerDWL(tsv) {
+  const m = String(tsv).match(
+    /(?:^|\n)\s*#?\s*(?:dwl|calado(?:\s+de\s+projeto)?|linha\s*d['’]?\s*agua\s+de\s+projeto)\s*[:=]\s*(-?[\d.,]+)/i);
+  if (!m) return null;
+  const v = C.paraNumero(m[1], null);
+  return isFinite(v) ? v : null;
+}
+
 function montar(arquivo) {
   const tsv = lerFonte(arquivo);
   const parsed = C.parseOffsets(tsv);
@@ -100,7 +116,11 @@ function montar(arquivo) {
     let p = cache.get(key);
     if (!p) {
       const s = hull.section(key / 100);
-      p = { s: s, poly: C.halfPoly(s, NP), zk: s.zk, zs: s.zs, ys: s.ys };
+      /* NAO montar a polilinha aqui: desde que a meia-boca passou a ser avaliada na FORMA
+         da secao (yNaForma/uDeY), ninguem le esta polilinha - e ela custava 600 pontos em
+         cada uma das milhares de entradas do cache, 80% do tempo de execucao. Quem precisa
+         de polilinha monta a sua (secao(), contornoEspelho()). */
+      p = { s: s, zk: s.zk, zs: s.zs, ys: s.ys };
       cache.set(key, p);
     }
     return p;
@@ -396,7 +416,16 @@ function montar(arquivo) {
      dela: caminho direto, sem reamostragem em altura. Dentro do vao a leitura da tabela
      desliza com a altura: sobe em z e fecha as pontas por bisseccao - a de baixo cai na
      quilha (y = 0) ou no plano do espelho (y > 0, quando o espelho trunca a baliza). */
+  const cacheSecao = new Map();
   function secao(X, n) {
+    const chave = Math.round(X * 100) + ':' + (n || 0);
+    const guardada = cacheSecao.get(chave);
+    if (guardada) return guardada;
+    const feita = secaoCrua(X, n);
+    cacheSecao.set(chave, feita);
+    return feita;
+  }
+  function secaoCrua(X, n) {
     if (!inclinado || X >= T1) {
       const p = sec(Math.max(T0, Math.min(TMAX, X)));
       /* Casco quinado: os paineis sao retos e a polilinha do nucleo ja preserva o vertice
@@ -413,9 +442,10 @@ function montar(arquivo) {
          4 mm e a conferencia, com razao, reprovava. */
       const f = z => yNaForma(p, z);
       const span = p.zs - p.zk;
+      const ref = polyForma(p, 1600);          /* nao muda entre as tentativas */
       let poly = null;
       for (let N = n || 320; N <= 2560; N *= 2) {
-        poly = porArco(polyForma(p, 1600), N);
+        poly = porArco(ref, N);
         let pior = 0;
         for (let i = 1; i < 240; i++) {
           const z = p.zk + span * i / 240, y = C.yAtZ(poly, z);
@@ -472,10 +502,18 @@ function montar(arquivo) {
     if (zs > zBordaMax) zBordaMax = zs;
   }
 
-  /* 2. DWL 300 mm acima da base.  3. Duas linhas d agua a mais entre a base e a DWL, em
-     multiplos de 50 mm, sempre contadas a partir da DWL. */
-  const DWL = 300;
+  /* 2. DWL: o calado de projeto, declarado na tabela ou arbitrado em 300 mm.
+     3. Espacamento das linhas d agua: o que poe mais DUAS entre a base e a DWL, ou seja
+     DWL/3, arredondado a multiplo de 50 mm. Depois do arredondamento podem sobrar duas ou
+     tres, conforme o valor - o que manda e o espacamento, contado sempre a partir da DWL. */
+  const dwlDeclarado = lerDWL(tsv);
+  const DWL = dwlDeclarado === null ? 300 : dwlDeclarado;
+  if (!(DWL > 0)) throw new Error('a DWL tem de ser positiva; recebi ' + DWL);
+  if (DWL >= zBordaMax) throw new Error('a DWL de ' + DWL + ' mm fica na borda ou acima dela (borda mais alta ' +
+    zBordaMax.toFixed(1) + ' mm): o casco afundaria por completo');
   const espWL_exato = DWL / 3, espWL = arred(espWL_exato, 50);
+  if (!(espWL > 0)) throw new Error('a DWL de ' + DWL + ' mm da espacamento de linha d agua zero ' +
+    '(DWL/3 = ' + espWL_exato.toFixed(1) + ' arredonda para 0). Use DWL de pelo menos 75 mm.');
   const wls = [];
   for (let j = Math.floor((0 - DWL) / espWL); DWL + j * espWL <= zBordaMax + 1e-9; j++) {
     const z = DWL + j * espWL;
@@ -522,7 +560,14 @@ function montar(arquivo) {
     o.zk = o.truncada ? null : fundo[1];
     o.zFundo = fundo[1]; o.yFundo = fundo[0];
     o.zs = topo[1]; o.ys = topo[0];
-    if (temChine) { const cp = chineEm(X) || chinePonto(Math.max(T0, Math.min(TMAX, X))); if (cp) { o.zc = cp.z; o.yc = cp.y; } }
+    /* O chine so existe nesta baliza se a secao dela alcancar aquela altura: quando o plano
+       do espelho trunca a baliza ACIMA do chine (DWL alta e espelho inclinado), a baliza nao
+       tem chine, e declarar um na tabela faria a tabela discordar do desenho. */
+    o.zc = null; o.yc = null;
+    if (temChine) {
+      const cp = chineEm(X) || chinePonto(Math.max(T0, Math.min(TMAX, X)));
+      if (cp && cp.z >= o.zFundo - 1e-6 && cp.z <= o.zs + 1e-6) { o.zc = cp.z; o.yc = cp.y; }
+    }
     wls.forEach(z => { o.wl[z] = yEm(X, z); });
     return o;
   }
@@ -535,7 +580,7 @@ function montar(arquivo) {
     espBaixo: espBaixo, espAlto: espAlto, inclin: inclin, rakeGraus: rakeGraus,
     xPopa: xPopa, xProa: xProa, LOA: xProa - xPopa,
     minQuilha: minQuilha, xMinQuilha: xMinQuilha, zBordaMax: zBordaMax,
-    DWL: DWL, espWL_exato: espWL_exato, espWL: espWL, wls: wls,
+    DWL: DWL, dwlDeclarado: dwlDeclarado !== null, espWL_exato: espWL_exato, espWL: espWL, wls: wls,
     xBaliza0: xBaliza0, xProaDWL: xProaDWL, Lwl: Lwl, dwlNoEspelho: dwlNoEspelho,
     mbMax: mbMax, xMbMax: xMbMax, BOA: BOA, mbWL: mbWL, xMbWL: xMbWL, BWL: BWL,
     espBal_exato: espBal_exato, espBal: espBal, balizas: balizas,
@@ -565,7 +610,8 @@ if (require.main === module) {
       '  (a tabela nao declara plano inclinado)'));
   console.log('EXTREMOS x de ' + f1(R.xPopa) + ' a ' + f1(R.xProa) + '  ->  LOA ' + f1(R.LOA));
   console.log('BASE     z = 0   (quilha reconstruida: minimo ' + f1(R.minQuilha) + ' em x = ' + f1(R.xMinQuilha) + ')');
-  console.log('DWL      z = ' + R.DWL + '   borda mais alta ' + f1(R.zBordaMax));
+  console.log('DWL      z = ' + R.DWL + (R.dwlDeclarado ? ' (declarada na tabela)' : ' (ARBITRADA: a tabela nao declara)') +
+    '   borda mais alta ' + f1(R.zBordaMax));
   console.log('LA       ' + R.espWL + ' mm: ' + R.wls.map(z => {
     const tr = S.linhaAgua(z, 400);
     return z + (tr.length === 1 ? '' : '[' + tr.length + ' trechos]');
@@ -609,4 +655,4 @@ if (require.main === module) {
   console.log('  tabela  x  linha d agua do TOPO      : ' + pL.toFixed(3) + ' mm');
   console.log('  secao   x  plano do alto do PERFIL   : ' + pA.toFixed(3) + ' mm');
 }
-module.exports = { montar: montar, C: C, lerEspelho: lerEspelho };
+module.exports = { montar: montar, C: C, lerEspelho: lerEspelho, lerDWL: lerDWL };

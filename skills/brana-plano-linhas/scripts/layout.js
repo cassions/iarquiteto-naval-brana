@@ -21,6 +21,16 @@ function escolherEscala(R) {
 }
 
 function calcular(R, escFixa) {
+  /* Uma escala forcada que nao cabe nao quebra o desenho: produz um que transborda a folha,
+     e so a conferencia reprova, depois de todo o trabalho feito. Melhor dizer na entrada
+     qual e a maior que cabe. */
+  if (escFixa) {
+    const larg = (R.LOA + 2 * R.mbMax) / escFixa, alt = (R.zBordaMax + R.mbMax) / escFixa;
+    if (larg > FOLGA_H || alt > FOLGA_V)
+      throw new Error('a escala 1:' + escFixa + ' nao cabe na folha A3: o desenho pediria ' +
+        larg.toFixed(0) + ' x ' + alt.toFixed(0) + ' mm de papel, e cabem ' + FOLGA_H + ' x ' +
+        FOLGA_V + ' mm. A maior escala que cabe neste casco e 1:' + escolherEscala(R) + '.');
+  }
   const ESC = escFixa || escolherEscala(R), k = 1 / ESC, MG = 14;
   const w = R.mbMax * k;                                   // meia-largura do plano de balizas
   const BY0 = Math.round(420 - MG - 6 - w);                // CL do plano de balizas

@@ -13,9 +13,31 @@ informou o ângulo medido da horizontal (um espelho a 78° da horizontal é 12°
 **`nao achei brana-logo.txt`** — a skill foi desmembrada. `assets/brana-logo.txt` tem de
 estar ao lado de `scripts/`, ou dentro de `scripts/`.
 
-**`a DWL de 300 mm nao corta o casco`** — a tabela tem alturas em outra unidade (metros, ou
-polegadas), ou a linha de base não é o ponto mais baixo da quilha. Converta para milímetros
-acima da base antes de gerar.
+**`a DWL de N mm nao corta o casco`** — a tabela tem alturas em outra unidade (metros, ou
+polegadas), a linha de base não é o ponto mais baixo da quilha, ou a DWL informada está fora
+do casco. Converta para milímetros acima da base, ou corrija o `--dwl`.
+
+**`a DWL de N mm fica na borda ou acima dela`** — o calado informado afundaria o barco por
+completo. Confira se o valor está em milímetros acima da **linha de base**, e não medido de
+outra referência.
+
+**`--dwl=N mm daria espacamento de linha d agua zero`** — abaixo de 75 mm, DWL/3 arredondado
+a múltiplo de 50 vira zero. Para cascos tão rasos, desenhe numa unidade de malha menor ou
+informe uma DWL maior.
+
+**`a escala 1:N nao cabe na folha A3`** — `--escala` foi forçada num valor grande demais
+para o casco. A mensagem diz quanto papel o desenho pediria e qual é a maior escala que cabe.
+Sem `--escala`, o script escolhe sozinho a maior que serve.
+
+**`a malha de linhas d agua nao cabe na folha A3`** — a DWL ficou pequena demais em relação
+ao pontal do casco. O espaçamento é DWL/3 arredondado a 50 mm, então uma DWL baixa num
+casco alto gera dezenas de linhas d'água e a tabela de cotas passa do rodapé. A mensagem
+diz quantas linhas dariam. Confira se a DWL informada é mesmo o calado de projeto, em
+milímetros acima da linha de base.
+
+**O resumo diz `ATENÇÃO a DWL não foi informada`** — não é erro, é aviso: o calado de projeto
+foi arbitrado em 300 mm. Pergunte o valor e refaça com `--dwl=<mm>`. A nota do desenho
+também registra que o valor foi arbitrado.
 
 **`a tabela menciona o espelho, mas a declaracao nao foi reconhecida`** — a linha existe mas
 está fora da forma aceita (falta `da vertical`, por exemplo). Corrija a linha para

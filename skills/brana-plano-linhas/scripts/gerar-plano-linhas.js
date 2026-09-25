@@ -8,7 +8,6 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { execFileSync } = require('child_process');
 
 /* ------------------------------------------------------------------ flags --- */
 const F = {};
@@ -37,6 +36,9 @@ if (F.ajuda || F.help || !F.tabela || !F.nome) {
     '                  Dispensavel se a tabela ja traz "# espelho: N graus da vertical".',
     '  --espelho-reto  gera com o espelho RETO na ultima baliza a re, como a tabela da.',
     '                  Use somente depois de confirmar isso com o usuario.',
+    '  --dwl           linha d agua de projeto (calado), em mm acima da linha de base.',
+    '                  Dispensavel se a tabela ja traz "# dwl: <mm>". Sem nenhum dos dois,',
+    '                  o desenho sai com 300 mm e o resumo avisa que o valor foi arbitrado.',
     '  --saida         nome do PDF. Se omitido, sai de <tabela> + "Plano-de-Linhas" + <nome>.',
     '  --titulo        titulo do selo. Padrao: o nome da tabela, em maiusculas.',
     '  --sub           subtitulo do selo. Padrao: tipo de casco, comprimento, espelho,',
@@ -67,6 +69,16 @@ if (F.espelho !== undefined) {
   if (Math.abs(ang) > 60) erro('--espelho=' + ang + ' graus e implausivel para um espelho de popa.',
     'Confira se o angulo nao foi medido da HORIZONTAL (78 graus da horizontal = 12 da vertical).');
 }
+let dwl = null;
+if (F.dwl !== undefined) {
+  if (F.dwl === true || String(F.dwl).trim() === '')
+    erro('--dwl precisa de um valor em milimetros acima da linha de base (ex.: --dwl=400).');
+  dwl = Number(String(F.dwl).replace(',', '.'));
+  if (!isFinite(dwl) || dwl <= 0)
+    erro('--dwl precisa ser um numero positivo em milimetros, recebi "' + F.dwl + '"');
+  if (dwl < 75) erro('--dwl=' + dwl + ' mm daria espacamento de linha d agua zero ' +
+    '(DWL/3 arredondado a multiplo de 50). Use pelo menos 75 mm.');
+}
 const DICA = ['',
   'O angulo do espelho de popa e obrigatorio nesta skill. Tres saidas:',
   '  1. informe o angulo:  --espelho=<graus>',
@@ -93,47 +105,73 @@ function reescreve(texto) {
   tabela = path.join(tmp, nomeTab);                 /* mesmo basename: as notas o citam */
   fs.writeFileSync(tabela, texto, 'utf8');
 }
-const semDeclaracao = t => t.split(/\r?\n/)
+/* A tabela e a fonte unica: o que vem por flag e ESCRITO nela, numa copia temporaria, para
+   o motor de desenho e a conferencia lerem exatamente a mesma coisa. */
+const semEspelho = t => t.split(/\r?\n/)
   .filter(l => !/espelho\s*:/i.test(l) &&
                !/^\s*#?\s*(X de|Z de|x_tabela\s*=|altura_tabela\s*=)/i.test(l))
   .join('\n');
+const semDWL = t => t.split(/\r?\n/)
+  .filter(l => !/^\s*#?\s*(dwl|calado(\s+de\s+projeto)?|linha\s*d['’]?\s*agua\s+de\s+projeto)\s*[:=]/i.test(l))
+  .join('\n');
+const insere = (t, linha) => {
+  const ls = t.split(/\r?\n/);
+  let i = ls.findIndex(l => l.trim() && !l.trim().startsWith('#'));
+  if (i < 0) i = ls.length;
+  ls.splice(i, 0, linha);
+  return ls.join('\n');
+};
+let texto = bruto, mudou = false;
 if (ang !== null) {
-  const linhas = semDeclaracao(bruto).split(/\r?\n/);
-  let i = linhas.findIndex(l => l.trim() && !l.trim().startsWith('#'));
-  if (i < 0) i = linhas.length;
-  linhas.splice(i, 0, '# espelho: ' + String(ang).replace('.', ',') + ' graus da vertical');
-  reescreve(linhas.join('\n'));
+  texto = insere(semEspelho(texto), '# espelho: ' + String(ang).replace('.', ',') + ' graus da vertical');
+  mudou = true;
 } else if (F['espelho-reto'] && mencionaEspelho) {
-  reescreve(semDeclaracao(bruto));
+  texto = semEspelho(texto); mudou = true;
 }
+if (dwl !== null) {
+  texto = insere(semDWL(texto), '# dwl: ' + String(dwl).replace('.', ','));
+  mudou = true;
+}
+if (mudou) reescreve(texto);
 
 /* --------------------------------------------------------------- gera -------- */
 if (!tmp) tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'branaplano-'));
 const provisorio = path.join(tmp, 'plano.pdf');
-const roda = (script, args, aceita) => {
+/* Um processo so. Arrancar o node custa ~170 ms e montar a superficie outros ~220 ms, e
+   antes pagavamos os dois tres vezes: este, o desenho e a conferencia. Os dois motores
+   agora rodam aqui dentro e dividem a MESMA superficie ja montada. O que eles imprimem
+   continua sendo capturado, como era com o processo filho, e nao vai para a tela. */
+const desenho = require(path.join(__dirname, 'plano-linhas.js'));
+const conferencia = require(path.join(__dirname, 'confere-plano.js'));
+const roda = fn => {
+  const linhas = [];
+  const orig = console.log;
+  console.log = function () { linhas.push(Array.prototype.join.call(arguments, ' ')); };
   try {
-    return execFileSync(process.execPath, [path.join(__dirname, script)].concat(args),
-      { encoding: 'utf8', maxBuffer: 1 << 26, stdio: ['ignore', 'pipe', 'pipe'] });
+    const r = fn();
+    console.log = orig;
+    return { r: r, txt: linhas.join('\n') };
   } catch (e) {
-    if (aceita && aceita.indexOf(e.status) >= 0) return e.stdout || '';
-    const txt = ((e.stdout || '') + '\n' + (e.stderr || '')).trim();
+    console.log = orig;
+    const txt = (linhas.join('\n') + '\n' + 'Error: ' + ((e && e.message) || e)).trim();
     const achado = txt.match(/^(?:Error|ERRO)[:\s].*$/m);
     console.error('ERRO ao gerar o plano de linhas:');
     console.error('  ' + (achado ? achado[0] : txt.split('\n').pop()).replace(/^Error:\s*/, ''));
-    console.error(/baliza|colunas|numerica|separador|decimal|DWL de|espelho/.test(txt)
+    console.error(/nao cabe na folha|fica na borda|espacamento de linha d agua zero/.test(txt)
+      ? '\nCausas conhecidas em references/solucao-de-problemas.md'
+      : /baliza|colunas|numerica|separador|decimal|DWL de|espelho/.test(txt)
       ? '\nO formato aceito esta em references/formato-da-tabela.md'
       : '\nCausas conhecidas em references/solucao-de-problemas.md');
     process.exit(3);
   }
 };
-const argsDesenho = ['--tabela=' + tabela, '--saida=' + provisorio, '--autor=' + F.nome];
-if (F.titulo) argsDesenho.push('--titulo=' + F.titulo);
-if (F.sub) argsDesenho.push('--sub=' + F.sub);
-if (F.escala) argsDesenho.push('--escala=' + F.escala);
-const outDesenho = roda('plano-linhas.js', argsDesenho);
-const mR = outDesenho.match(/^RESUMO=(.*)$/m);
-if (!mR) erro('o motor de desenho nao devolveu o resumo', outDesenho.slice(-400));
-const D = JSON.parse(mR[1]);
+const argsDesenho = { tabela: tabela, saida: provisorio, autor: F.nome };
+if (F.titulo) argsDesenho.titulo = F.titulo;
+if (F.sub) argsDesenho.sub = F.sub;
+if (F.escala) argsDesenho.escala = F.escala;
+const feito = roda(() => desenho.gerar(argsDesenho)).r;
+const D = feito && feito.resumo;
+if (!D) erro('o motor de desenho nao devolveu o resumo');
 
 /* ------------------------------------- nome do arquivo, com o angulo EFETIVO -- */
 /* O sufixo sai do que foi DESENHADO, nao do nome da tabela: rodar --espelho=12 sobre uma
@@ -158,9 +196,11 @@ if (!F.saida && fs.existsSync(saida)) {
 fs.copyFileSync(provisorio, saida);
 
 /* ------------------------------------------------------------- confere ------- */
-/* confere-plano.js sai com 1 quando reprova: isso e RESULTADO, nao falha de execucao.
-   Antes o catch engolia a saida e as linhas FALHA nunca apareciam. */
-const outConf = roda('confere-plano.js', [tabela, saida], [1]);
+/* Reprovar e RESULTADO, nao falha de execucao: conferir() devolve o numero de falhas e as
+   linhas FALHA saem no texto capturado, que e lido logo abaixo.
+   A superficie e o layout vem do desenho - alem de poupar a remontagem, isso garante que a
+   conferencia mede o MESMO layout desenhado (recalculado, --escala dava outro). */
+const outConf = roda(() => conferencia.conferir(tabela, saida, feito.S, feito.L)).txt;
 const nOK = (outConf.match(/^ {2}OK/gm) || []).length;
 const falhas = (outConf.match(/^ {2}FALHA.*$/gm) || []);
 if (falhas.length) {
@@ -178,6 +218,8 @@ console.log('  espelho    ' + (D.inclinado
   ? D.rake.toLocaleString('pt-BR', { minimumFractionDigits: 1 }) + '° da vertical, pé em x = ' +
     n(D.espPe) + ', topo em x = ' + n(D.espTopo)
   : 'RETO na última baliza a ré, em x = ' + n(D.espPe) + ' (como a tabela dá)'));
+console.log('  DWL        ' + n(D.dwl) + ' mm acima da linha de base' +
+  (D.dwlDeclarado ? '' : '   <- ARBITRADA'));
 console.log('  dimensões  LOA ' + n(D.LOA) + '   LWL ' + n(D.LWL) + '   BOA ' + n(D.BOA) + '   BWL ' + n(D.BWL) + ' mm');
 console.log('  malha      balizas ' + D.bal0 + '..' + D.balN + ' a ' + n(D.espBal) +
             ' mm (LWL/10 = ' + n(D.espBalExato) + ')');
@@ -186,6 +228,8 @@ console.log("             linhas d'água a " + n(D.espWL) + ' mm   planos do alt
 console.log('  balanços   popa ' + n(D.balPopa) + ' mm   proa ' + n(D.balProa) + ' mm' +
             (D.balPopa === 0 && D.balProa === 0 ? '   (as balizas caem nos dois extremos)' : ''));
 console.log('  tabela     ' + D.nLinhasTab + ' linhas x ' + D.nBalizas + ' balizas, na folha 2');
+if (!D.dwlDeclarado) console.log('  ATENÇÃO    a DWL (calado de projeto) não foi informada: o desenho saiu com ' +
+  n(D.dwl) + ' mm, valor arbitrado. Confirme o calado com o usuário e refaça com --dwl=<mm> se for outro.');
 (D.avisos || []).forEach(a => console.log('  ATENÇÃO    a tabela é suspeita: ' + a));
 if (D.degeneradas.length) console.log('  atenção    baliza ' + D.degeneradas.join(', ') +
   ' coincide com a roda de proa: sem seção no plano de balizas');

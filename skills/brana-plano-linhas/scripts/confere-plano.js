@@ -5,12 +5,20 @@
 const fs = require('fs');
 const path = require('path');
 const zlib = require('zlib');
-const S = require(path.join(__dirname, 'superficie.js')).montar(process.argv[2]);
-const L = require(path.join(__dirname, 'layout.js')).calcular(S.R);
+/* Dois modos, um so programa. Em modo modulo quem chama passa a superficie e o layout ja
+   prontos - montar a superficie custa uns 220 ms e o desenho acabou de fazer exatamente
+   isso - e a conferencia passa a medir o MESMO layout que foi desenhado. Em modo script
+   (node confere-plano.js <tabela> <pdf>) monta aqui, como sempre.
+
+   O corpo abaixo NAO foi reindentado de proposito: ele carrega textos de varias linhas, e
+   mexer na indentacao mexeria no que sai impresso. */
+function conferir(tabela, pdf, Sp, Lp) {
+const S = Sp || require(path.join(__dirname, 'superficie.js')).montar(tabela);
+const L = Lp || require(path.join(__dirname, 'layout.js')).calcular(S.R);
 const { R, C, parsed, hull } = S;
 const { ESC, k, MG, PXo, PZb, BY0, AY0, D1, D2, D3, PX, PZ, AY, BZ, BY, FT } = L;
 
-const buf = fs.readFileSync(process.argv[3]);
+const buf = fs.readFileSync(pdf);
 const s = buf.toString('latin1');
 let bad = 0;
 const ok = (n, c, x) => { console.log((c ? '  OK    ' : '  FALHA ') + n + (x ? '   ' + x : '')); if (!c) bad++; };
@@ -21,7 +29,7 @@ const xPopa = R.xPopa, xProa = R.xProa, LOA = R.LOA;
 const ultBal = R.balizas[R.balizas.length - 1], b0 = R.balizas[0];
 const balPopa = R.xBaliza0 - xPopa, balProa = xProa - ultBal.x;
 
-console.log('== ' + path.basename(process.argv[3]) + '  (casco ' + R.modo +
+console.log('== ' + path.basename(pdf) + '  (casco ' + R.modo +
   ', espelho ' + (R.inclinado ? f1(Math.abs(R.rakeGraus)) + '°' : 'vertical') + ', escala 1:' + ESC + ') ==');
 
 console.log('\n-- estrutura --');
@@ -61,11 +69,18 @@ ok('polilinhas do casco presentes', polis.length >= 15, polis.length + ' curvas'
 console.log('\n-- regras da malha --');
 ok('linha de base tangente ao ponto mais baixo da quilha', R.minQuilha >= -1e-9 && R.minQuilha < 1e-9 + 40,
    'minimo da quilha ' + f1(R.minQuilha) + ' mm em x = ' + mm(R.xMinQuilha));
-ok('DWL a 300 mm da base', R.DWL === 300 && temH(PZ(R.DWL), PX(xPopa) - 1, PX(xProa) + 8));
-ok('linhas d agua: 300/3 = ' + f1(R.espWL_exato) + ' -> ' + R.espWL + ' mm, multiplo de 50, a partir da DWL',
+/* A DWL e o calado de PROJETO: entra como dado, nao como regra. O que se confere e que ela
+   esta desenhada onde diz estar, e que o espacamento das linhas d agua saiu dela. */
+ok('DWL a ' + mm(R.DWL) + ' mm da base, desenhada na altura certa',
+   R.DWL > 0 && R.DWL < R.zBordaMax && temH(PZ(R.DWL), PX(xPopa) - 1, PX(xProa) + 8),
+   R.dwlDeclarado ? 'declarada na tabela' : 'arbitrada (a tabela nao declara)');
+ok('linhas d agua: DWL/3 = ' + f1(R.espWL_exato) + ' -> ' + R.espWL + ' mm, multiplo de 50, a partir da DWL',
    R.espWL === 50 * Math.round(R.espWL_exato / 50) && R.espWL % 50 === 0 &&
    R.wls.every(z => Math.abs((z - R.DWL) % R.espWL) < 1e-9), R.wls.join(' '));
-ok('duas linhas d agua entre a base e a DWL', R.wls.filter(z => z > 0 && z < R.DWL).length === 2);
+/* Depois de arredondar a multiplo de 50, o numero de linhas d agua entre a base e a DWL
+   pode ser 2 ou 3: o que a regra fixa e o espacamento, nao a contagem. */
+ok('linhas d agua entre a base e a DWL', [2, 3].indexOf(R.wls.filter(z => z > 0 && z < R.DWL).length) >= 0,
+   R.wls.filter(z => z > 0 && z < R.DWL).length + ' (espacamento ' + R.espWL + ' mm)');
 ok('baliza 0 na ponta de re da DWL (fundo do casco no CL a popa)',
    Math.abs(R.xBaliza0 - Math.min.apply(null, [].concat.apply([], S.linhaAgua(R.DWL, 800)).map(q => q[0]))) < 1e-6,
    'x = ' + mm(R.xBaliza0) + (R.dwlNoEspelho ? ' (a DWL termina no espelho)' : ' (a DWL corta a quilha)'));
@@ -155,8 +170,10 @@ const naCurva = (trs, x) => {
   }
   return null;
 };
-const las = {}; R.wls.forEach(z => { las[z] = S.linhaAgua(z, 800); });
-const altos = {}; R.buts.forEach(yb => { altos[yb] = S.planoAlto(yb, 800); });
+/* Mesma densidade que o desenho usa: a conferencia tem de validar a curva DESENHADA, nao
+   uma reamostragem mais fina dela. */
+const las = {}; R.wls.forEach(z => { las[z] = S.linhaAgua(z, 300); });
+const altos = {}; R.buts.forEach(yb => { altos[yb] = S.planoAlto(yb, 300); });
 let pS = 0, pL = 0, pA = 0;
 R.balizas.forEach(b => {
   const X = Math.min(b.x, xProa), c = S.cotasEm(X), sc = S.secao(X);
@@ -234,12 +251,15 @@ if (R.temChine) {
   const cht = S.chineTopo(300).map(q => [PX(q[0]), AY(q[1])]);
   ok('TOPO: curva do chine', polis.some(p => p.length === cht.length && perto(p[0][0], cht[0][0], 0.05) && perto(p[0][1], cht[0][1], 0.05)),
      'meia-boca de ' + mm(S.chinePonto(R.T0).y) + ' a ' + mm(S.chinePonto(R.TMAX).y));
+  /* Balizas truncadas acima do chine nao tem vertice a preservar: a tabela declara "-" para
+     elas, e a checagem so vale onde o chine existe. */
+  const comChine = R.balizas.slice(0, -1).filter(b => S.cotasEm(Math.min(b.x, xProa)).zc !== null);
   ok('as secoes preservam o vertice do chine',
-     R.balizas.slice(0, -1).every(b => {
+     comChine.every(b => {
        const c = S.cotasEm(Math.min(b.x, xProa)), sc = S.secao(Math.min(b.x, xProa));
        const y = C.yAtZ(sc, c.zc);
        return y !== null && Math.abs(y - c.yc) < 0.5;
-     }));
+     }), comChine.length + ' de ' + (R.balizas.length - 1) + ' balizas tem chine');
 }
 const esp = S.contornoEspelho(100);
 ok('TOPO: contorno do espelho',
@@ -346,10 +366,11 @@ ok('as ' + (nLinhas * R.balizas.length) + ' celulas preenchidas (' + nLinhas + '
    nums + dash >= nLinhas * R.balizas.length, nums + ' numeros + ' + dash + ' tracos');
 const cot = R.balizas.map(b => S.cotasEm(Math.min(b.x, xProa)));
 ok('altura e meia-boca na borda completas', cot.every(o => t2.indexOf(mm(o.zs)) >= 0 && t2.indexOf(mm(o.ys)) >= 0));
-if (R.temChine) ok('altura e meia-boca no chine completas',
-  cot.every(o => t2.indexOf(mm(o.zc)) >= 0 && t2.indexOf(mm(o.yc)) >= 0));
+if (R.temChine) ok('altura e meia-boca no chine na tabela',
+  cot.every(o => o.zc === null ? true : (t2.indexOf(mm(o.zc)) >= 0 && t2.indexOf(mm(o.yc)) >= 0)),
+  cot.filter(o => o.zc === null).length + ' baliza(s) sem chine (truncada pelo espelho)');
 ok('numeros de baliza no cabecalho', R.balizas.every(b => t2.indexOf(String(b.n)) >= 0));
-ok('linha da DWL destacada', t2.some(t => /^DWL 300$/.test(t)));
+ok('linha da DWL destacada na tabela', t2.indexOf('DWL ' + mm(R.DWL)) >= 0);
 ok('notas: fonte, arredondamento, espelho, regras e coerencia',
    t2.some(t => /Fonte única/.test(t)) && t2.some(t => /milímetros inteiros/.test(t)) &&
    t2.some(t => /^ESPELHO/.test(t)) && t2.some(t => /LWL\/10/.test(t)) &&
@@ -360,4 +381,8 @@ if (vazias.length) ok('nota sobre as linhas d agua vazias', t2.some(t => /sem ne
   vazias.map(z => 'LA ' + mm(z)).join(', '));
 
 console.log('\n' + (bad ? 'FALHAS: ' + bad : 'conferido: malha, cotas, coerencia, desenho, layout e tabela'));
-process.exit(bad ? 1 : 0);
+return bad;
+}
+module.exports = { conferir };
+
+if (require.main === module) process.exit(conferir(process.argv[2], process.argv[3]) ? 1 : 0);
