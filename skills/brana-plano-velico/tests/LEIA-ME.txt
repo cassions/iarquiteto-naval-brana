@@ -1,0 +1,12 @@
+Prova do motor do painel, para quem for MEXER no assets/painel-modelo.html.
+Nao faz parte do fluxo da skill: o agente nunca precisa abrir esta pasta.
+
+  python -I tests/prova-motor.py <painel-gerado.html>
+
+Extrai os blocos <script> do painel pronto, roda em node sem DOM e afirma 555
+proposicoes por casco: area do patilhao monotonica na profundidade, poligono
+igual a integral do perfil, fundo nunca acima da linha de quilha nem da linha
+d'agua, tangencia na proa, fechamento no espelho, plano lateral igual a soma
+das partes, leme nunca mais fundo que a quilha, pa sempre dentro d'agua, area
+do leme invariante a razao de aspecto, e ida e volta entre as quatro familias
+de quilha. Sai com codigo 1 e lista as falhas quando alguma cai.

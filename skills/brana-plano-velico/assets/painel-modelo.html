@@ -971,7 +971,7 @@
   <div class="block" id="recTsv_p">
     <div class="block-head"><span class="block-title">Tabela de cotas do casco</span></div>
     <div class="rec-body">
-      <p>Cole a tabela em qualquer um dos dois formatos, <strong>em milímetros</strong>, como sai do plano de linhas. <strong>Redondo:</strong> <code>baliza, x, altura_quilha, altura_borda, meias-bocas intermediárias…, meia_boca_borda</code> — qualquer número de níveis intermediários, igualmente espaçados no pontal. <strong>Quinado:</strong> <code>stn, x, sheer_hb, chine_hb, sheer_ht, chine_ht, keel_ht</code>. Alturas acima da linha de base (ponto mais baixo da quilha), meias-bocas a partir da linha de centro, comentários com <code>#</code>, separador de milhar e linha de cabeçalho são ignorados. Uma linha de comentário <code># linha_dagua 500</code> fixa a flutuação de projeto que veio com o casco; sem ela, o painel procura sozinho o calado da esbeltez típica do programa. Casco de patilhão entra como casco redondo com o madeiramento morto nas meias-bocas de baixo — é assim que o patilhão fica embutido no plano lateral.</p>
+      <p>Cole a tabela em qualquer um dos dois formatos, <strong>em milímetros</strong>, como sai do plano de linhas. <strong>Redondo:</strong> <code>baliza, x, altura_quilha, altura_borda, meias-bocas intermediárias…, meia_boca_borda</code> — qualquer número de níveis intermediários, igualmente espaçados no pontal. <strong>Quinado:</strong> <code>stn, x, sheer_hb, chine_hb, sheer_ht, chine_ht, keel_ht</code>. Alturas acima da linha de base (ponto mais baixo da quilha), meias-bocas a partir da linha de centro, comentários com <code>#</code>, separador de milhar e linha de cabeçalho são ignorados. Uma linha de comentário <code># linha_dagua 500</code> fixa a flutuação de projeto que veio com o casco; sem ela, o painel procura sozinho o calado da esbeltez típica do programa. Casco de patilhão entra como casco redondo com o madeiramento morto nas meias-bocas de baixo, e assim o perfil dele já vem medido no plano lateral. Quando a tabela não traz esse madeiramento, a quilha <strong>patilhão</strong> o desenha: o perfil desce da linha de quilha até a profundidade do cursor, contada da linha de base para baixo.</p>
       <textarea class="data" id="tsv_p" spellcheck="false"></textarea>
       <div class="pfoot">
         <button class="btn pri" id="apply_p" type="button">Reconstruir casco</button>
@@ -1011,7 +1011,7 @@
         <ul class="tight">
           <li><strong>Quilha fixa (barbatana):</strong> Larsson &amp; Eliasson, Fig 6.38, dão a área projetada da quilha como percentagem da área vélica — linha mediana de <strong>3,0% em LWL 6 m caindo a 1,9% em LWL 15 m</strong> (a região de 95% da frota é essa linha ±0,45 ponto). O painel calcula <code>A<sub>q</sub> = %(LWL) · SA</code> e depois divide pela área lateral do casco para lhe entregar o <code>c<sub>q</sub></code> equivalente. A barbatana lisa leva fator 1,15 sobre a mediana, porque a mediana moderna já embute o bulbo — que carrega sustentação e permite pá menor; a edição anterior do mesmo livro recomendava 3,5% sem depender do comprimento.</li>
           <li><strong>Bolina (pivotante ou guilhotina):</strong> Teale, Fig 16, dá a área da bolina contra o LWL. A reta dele, em métrico, é <code>A = 0,200·LWL − 0,358</code> (m², LWL em m), válida de 1,5 a 7,6 m de LWL — no exemplo do livro, 17 pés de LWL pedem 0,68 m² de chapa. Fora dessa faixa o painel extrapola mantendo <code>A/LWL²</code> constante e avisa. A guilhotina leva 0,90 da bolina pivotante: corda constante e razão de aspecto maior fazem mais força com menos área.</li>
-          <li><strong>Patilhão:</strong> nada é somado e nada é desenhado. O perfil do patilhão já está na tabela de cotas, então ele já está dentro da área lateral submersa do casco — somar uma quilha por cima seria contar a mesma área duas vezes. O painel deixa isso escrito no lugar da área.</li>
+          <li><strong>Patilhão:</strong> não há coeficiente de área — o perfil é geometria. O painel traça o fundo saindo <strong>tangente à linha de quilha na proa</strong>, descendo pela curva do talha-mar até a profundidade pedida — medida da <strong>linha de base para baixo</strong>, com zero no mínimo — e correndo reto até o <strong>final do espelho</strong>. Soma ao plano lateral apenas o que ficou <strong>abaixo da linha de quilha do casco e dentro d’água</strong>: o que está acima dessa linha já veio medido na tabela de cotas, e somá-lo de novo seria contar a mesma área duas vezes.</li>
         </ul>
         <p id="docKeel_p" class="pnote"></p>
       </div>
@@ -1024,7 +1024,7 @@
           <li><strong>Larsson &amp; Eliasson, Fig 6.39</strong> — área do leme como percentagem da área vélica: linha mediana de <strong>1,6% em LWL 6 m caindo a 0,8% em LWL 15 m</strong>, 1,2% no meio da faixa (±0,2 ponto para 95% da frota). A edição anterior recomendava 1,4% fixo.</li>
         </ul>
         <p>Qual dos dois vira o padrão depende da família de quilha: com <strong>patilhão</strong> — casco de plano lateral grande, barco tradicional — o padrão é Teale, que é a regra escrita para esse tipo de casco; com <strong>quilha fixa moderna ou bolina</strong> o padrão é a mediana de Larsson, medida em frota contemporânea. Os dois números aparecem sempre lado a lado, e o cursor é seu.</p>
-        <p><span class="flag">regra dura</span> <strong>O leme nunca fica mais profundo que a quilha.</strong> A envergadura ideal do leme sai da razão de aspecto pretendida, <code>b = √(A·AR)</code>, mas se a ponta passar da profundidade da quilha — no patilhão, da profundidade máxima do próprio casco — a envergadura é cortada nesse limite e as cordas engordam para manter a área. O painel então mostra as duas razões de aspecto, a pretendida e a real, e avisa quando cortou. É penalidade hidrodinâmica assumida em troca de nunca ser o leme a tocar o fundo primeiro.</p>
+        <p><span class="flag">regra dura</span> <strong>O leme nunca fica mais profundo que a quilha.</strong> A envergadura ideal do leme sai da razão de aspecto pretendida, <code>b = √(A·AR)</code>, mas se a ponta passar da profundidade da quilha — no patilhão, do fundo do perfil desenhado — a envergadura é cortada nesse limite e as cordas engordam para manter a área. O painel então mostra as duas razões de aspecto, a pretendida e a real, e avisa quando cortou. É penalidade hidrodinâmica assumida em troca de nunca ser o leme a tocar o fundo primeiro. No outro extremo, a raiz: a pá nasce no fundo do casco, mas quando esse fundo já está <strong>acima da linha d’água</strong> no lugar do leme — popa levantada — ela nasce na própria linha d’água, porque o que fica fora da água não governa.</p>
         <p id="docRud_p" class="pnote"></p>
       </div>
 
@@ -1095,7 +1095,8 @@ var DEMO_FULL = [
   '# Exemplo do painel - veleiro tradicional de patilhao, 7,20 m de comprimento total.',
   '# Casco de bojo redondo em baliza de calice (wineglass): as meias-bocas de baixo sao',
   '# o madeiramento morto / patilhao, com 72 mm de meia-espessura, e por isso o perfil do',
-  '# patilhao ja esta dentro da area lateral submersa do casco - nada e desenhado por cima.',
+  '# patilhao ja esta dentro da area lateral submersa do casco. Com patilhao escolhido, o',
+  '# painel so desenha o que passar ABAIXO dessa linha, conforme o cursor de profundidade.',
   '# Alturas acima da linha de base (ponto mais baixo do patilhao), meias-bocas a partir da',
   '# linha de centro, em milimetros. Baliza 1 = espelho de popa, baliza 13 = talha-mar.',
   'baliza\tx\taltura_quilha\taltura_borda\tmb_12pc\tmb_25pc\tmb_38pc\tmb_50pc\tmb_62pc\tmb_75pc\tmb_88pc\tmeia_boca_borda',
@@ -1977,6 +1978,7 @@ var ST = {
   keel:'fin', rud:'spade',
   ck:null, cr:null,               /* frações da área lateral submersa do casco */
   keelXf:0.50, keelDraftF:null, keelSweep:5, keelTaper:0.45, boardRake:20,
+  patDepth:0,                     /* patilhao: profundidade abaixo da linha de base, m */
   rudXf:0.05, rudAR:null, rudTaper:0.50, rudRake:5, skegF:0.55,
   ballast:false, br:0.35, fRest:0.60,
   prog:'trad', SA:null, mShare:null, zShare:null, fSplit:0.55,
@@ -2037,6 +2039,51 @@ function zSheer(x){ return zSheerMM(x*1000)/1000; }
    para fechar exatamente a área pedida, porque a corda de raiz assenta na
    linha do fundo do casco, que é curva.
    ========================================================================== */
+/* --------------------------------------------------------------------------
+   PATILHAO - o casco prolongado para baixo, nao uma pa pendurada nele.
+   O fundo sai TANGENTE a linha de quilha na proa, desce pela curva do
+   talha-mar ate a profundidade pedida e corre reto ate o FINAL DO ESPELHO.
+   A profundidade e medida da LINHA DE BASE para baixo e o minimo e zero, que
+   deixa o fundo na propria linha de base. So entra no plano lateral o que
+   esta ABAIXO da linha de quilha do casco: o que esta acima ja foi medido na
+   tabela de cotas, e somar de novo seria contar a mesma area duas vezes.
+   -------------------------------------------------------------------------- */
+function patilhaoPoly(dep, zw){
+  var xa = HC.x0/1000, xb = HC.x1/1000, L = xb - xa;
+  var zBase = HC.zMin/1000;
+  var zFloor = zBase - Math.max(0, dep || 0);
+  var zStem = zKeel(xb);
+  var drop = Math.max(1e-4, zStem - zFloor);
+  var Lb = clamp(1.3*drop, 0.18*L, 0.72*L);            /* carenote de proa */
+  var xF = Math.max(xa + 0.04*L, xb - Lb);             /* dali a re o fundo e reto */
+  Lb = xb - xF;
+  var d = 1e-3*L;
+  var s0 = (zKeel(xb) - zKeel(xb - d))/d;              /* inclinacao da quilha na proa */
+  if(!isFinite(s0) || s0 < 0) s0 = 0;
+  s0 = Math.min(s0, 3*drop/Lb);                        /* o que mantem a curva monotona */
+  var m0 = -s0*Lb;
+  function fundo(x){
+    if(x <= xF) return zFloor;
+    var u = (xb - x)/Lb, u2 = u*u, u3 = u2*u;          /* Hermite: tangente na proa, plano no fim */
+    var z = (2*u3 - 3*u2 + 1)*zStem + (u3 - 2*u2 + u)*m0 + (-2*u3 + 3*u2)*zFloor;
+    return clamp(z, zFloor, zStem);
+  }
+  var N = 96, i, top = [], bot = [], curva = [];
+  for(i=0;i<=N;i++){
+    var x = xa + L*i/N, zk = zKeel(x), zf = fundo(x);
+    curva.push([x, zf]);
+    /* o que conta e o que esta DENTRO D'AGUA, como a area lateral do casco:
+       teto na linha de quilha, ou na linha d'agua onde a quilha ja esta seca */
+    var zt = Math.min(zk, zw);
+    top.push([x, zt]);
+    bot.push([x, Math.min(zt, zf)]);                   /* nunca sobe acima do teto */
+  }
+  var poly = top.concat(bot.reverse());
+  var A = polyArea(poly), c = polyCentroid(poly);
+  return { poly:poly, curva:curva, area:A, cx:c[0], cz:c[1], zFloor:zFloor, zBase:zBase,
+           dep:Math.max(0, dep || 0), len:L, hMed: L > 1e-6 ? A/L : 0 };
+}
+
 function appendages(H){
   var out = { keel:null, rudder:null, skeg:null, latItems:[], warn:[] };
   var Alat = H.Alat;
@@ -2045,9 +2092,13 @@ function appendages(H){
   var kt = ST.keel, K = KEEL[kt];
   var Ak = 0, keelTipZ = HC.zMin/1000;           /* profundidade máxima do conjunto */
   if(kt === 'full'){
-    out.keel = { type:'full', area:0, poly:null, cx:H.xLat, cz:H.zLat, span:0,
-                 tipZ: HC.zMin/1000, embedded:true };
-    keelTipZ = HC.zMin/1000;
+    var pat = patilhaoPoly(ST.patDepth, H.zw);
+    out.keel = { type:'full', patilhao:true, embedded:false,
+                 area:pat.area, poly:pat.poly, cx:pat.cx, cz:pat.cz,
+                 span:0, cRoot:0, cTip:0, taper:0, sweep:0, ar:0,
+                 dep:pat.dep, len:pat.len, hMed:pat.hMed, zFloor:pat.zFloor, fundo:pat.curva,
+                 tipZ:pat.zFloor, draft:H.zw - pat.zFloor };
+    keelTipZ = Math.min(pat.zFloor, HC.zMin/1000);
   } else {
     Ak = Math.max(1e-4, ST.ck*Alat);
     var xm = H.xLwlF - ST.keelXf*H.Lwl;
@@ -2074,7 +2125,7 @@ function appendages(H){
     out.keel = { type:kt, area:polyArea(poly), poly:poly, cx:c[0], cz:c[1],
                  span:span, cRoot:cRoot, cTip:lam*cRoot, taper:lam, sweep:sw,
                  tipZ:zLow, xm:xm, ar:span*span/Math.max(1e-6, polyArea(poly)),
-                 draft:H.zw - zLow, embedded:false };
+                 draft:H.zw - zLow, embedded:false, patilhao:false };
     keelTipZ = Math.min(zLow, HC.zMin/1000);
   }
 
@@ -2089,7 +2140,9 @@ function appendages(H){
     zRootR = H.zw;                                     /* topo da pá na linha d'água */
   } else {
     xr = clamp(H.xLwlA + ST.rudXf*H.Lwl, HC.x0/1000, HC.x1/1000 - 0.2*H.Lwl);
-    zRootR = zKeel(xr);
+    /* a pa so trabalha dentro d'agua: quando o fundo do casco no lugar do leme
+       ja saiu da agua - popa levantada -, quem define o topo e a linha d'agua */
+    zRootR = Math.min(zKeel(xr), H.zw);
   }
   /* REGRA DURA: a ponta do leme nunca passa da profundidade da quilha. */
   spanMax = (zRootR - keelTipZ)/Math.cos(rake);
@@ -2555,7 +2608,7 @@ function ceTotal(R){
    linha d'água ao ponto a 25% da corda na ponta e toma 45% do calado. */
 function clrExtended(H, App){
   var K = App.keel;
-  if(!K || K.embedded || !K.poly) return null;
+  if(!K || K.embedded || K.patilhao || !K.poly) return null;
   var p = K.poly, i;
   /* bordos de ataque e de fuga da pá, dos dois pontos de raiz e de ponta */
   var le0 = p[0], te0 = p[1], teT = p[2], leT = p[3];
@@ -2587,7 +2640,7 @@ function ballast(H, App){
   } else {
     var br = clamp(ST.br, 0.05, 0.60);
     var zBal;
-    if(App.keel && !App.keel.embedded && App.keel.area > 1e-6){
+    if(App.keel && !App.keel.embedded && !App.keel.patilhao && App.keel.area > 1e-6){
       zBal = App.keel.cz;
     } else {
       zBal = zBase + 0.25*(H.zw - zBase);      /* lastro interno no fundo da caverna */
@@ -2643,7 +2696,7 @@ function estimate(H, SA){
   e.AkTeale = boardAreaTeale(H.Lwl)*K.fator;
   if(kt === 'full'){
     e.AkSug = 0; e.ckSug = 0;
-    e.keelSrc = 'patilhão: o perfil já está na área lateral do casco, nada é somado';
+    e.keelSrc = 'patilhão: a área não vem de coeficiente — é o perfil desenhado abaixo da linha de quilha';
   } else if(kt === 'center' || kt === 'dagger'){
     e.AkSug = e.AkTeale;
     e.keelSrc = 'Teale Fig 16 (área de bolina x LWL)' + (K.fator !== 1 ? ' x ' + fmt(K.fator,2) + ' (guilhotina)' : '');
@@ -2655,7 +2708,7 @@ function estimate(H, SA){
   e.ckSug = H.Alat > 1e-6 ? e.AkSug/H.Alat : 0;
 
   /* ---- leme ---- */
-  var Ak = (kt === 'full') ? 0 : ST.ck*H.Alat;
+  var Ak = (kt === 'full') ? patilhaoPoly(ST.patDepth, H.zw).area : ST.ck*H.Alat;
   e.rudPct = rudPctSA(H.Lwl);
   e.ArLars = e.rudPct/100*SA;
   e.ArTeale = rudAreaTeale(H.Alat + Ak);
@@ -2852,7 +2905,13 @@ function summaryText(){
   p('  Área lateral submersa     ' + fmt(H.Alat,3) + ' m²  (centro a ' + fmt(H.xLat-xA,3) + ' m da popa, ' + fmt(H.zw-H.zLat,3) + ' m abaixo da DWL)');
   p('');
   p('APÊNDICES');
-  if(APP.keel.embedded) p('  Quilha                    patilhão — perfil embutido no casco, área não somada');
+  if(APP.keel.patilhao){
+    p('  Quilha (patilhão)');
+    p('    área lateral            ' + fmt(APP.keel.area,3) + ' m²  (só o que está abaixo da linha de quilha do casco)');
+    p('    profundidade            ' + fmt(APP.keel.dep,3) + ' m abaixo da linha de base   altura média ' + fmt(APP.keel.hMed,3) + ' m');
+    p('    perfil                  tangente à quilha na proa, fundo reto até o final do espelho');
+    p('    calado total            ' + fmt(APP.keel.draft,3) + ' m');
+  }
   else {
     p('  Quilha (' + KEEL[ST.keel].label + ')');
     p('    área lateral            ' + fmt(APP.keel.area,3) + ' m²  = ' + fmt(100*ST.ck,1) + '% da área lateral do casco');
@@ -2941,13 +3000,16 @@ function deadwoodRatio(){
 function checks(){
   var A = [], LOA = (HC.x1 - HC.x0)/1000;
   var dw = deadwoodRatio();
-  if(ST.keel === 'full' && dw > 0.35)
-    A.push({ lvl:'bad', t:'<b>Esta tabela de cotas não traz madeiramento morto.</b> A ' +
-      fmt(15,0) + '% do pontal as balizas já têm ' + fmt(100*dw,0) +
-      '% da meia-boca máxima, ou seja o fundo é cheio: não há perfil de patilhão embutido no casco. ' +
-      'Com <b>patilhão</b> escolhido, o plano lateral é só o corpo canoa e o leme fica preso ao calado do casco — ' +
-      'foi o que aconteceu aqui. Se o barco tem quilha, escolha <b>barbatana ou bolina</b> nos botões de quilha, ' +
-      'que o painel a dimensiona e desenha; se tem patilhão de verdade, inclua o perfil dele na tabela (as meias-bocas de baixo passam a ser a espessura do madeiramento morto).' });
+  if(ST.keel === 'full' && dw < 0.12 && APP.keel.area > 0.05*H.Alat)
+    A.push({ lvl:'warn', t:'Esta tabela de cotas já traz o madeiramento morto (a 15% do pontal as balizas têm só ' +
+      fmt(100*dw,0) + '% da meia-boca máxima), e mesmo assim o perfil desenhado acrescentou <b>' + fmt(APP.keel.area,3) +
+      ' m²</b> — ' + fmt(100*APP.keel.area/Math.max(1e-6,H.Alat),0) + '% da área lateral do casco. Não há área contada duas vezes: ' +
+      'isso é o vão entre a linha de quilha da tabela, que sobe nas pontas, e a profundidade pedida. É quilha <b>nova</b>, ' +
+      'e não a que a tabela já descreve — se o casco da tabela já é o barco que você quer, isto aqui o está mudando.' });
+  else if(ST.keel === 'full' && dw > 0.35)
+    A.push({ lvl:'ok', t:'Esta tabela de cotas não traz madeiramento morto: a 15% do pontal as balizas já têm ' +
+      fmt(100*dw,0) + '% da meia-boca máxima, o fundo é cheio. Por isso o patilhão é inteiramente desenhado abaixo da linha de quilha — <b>' +
+      fmt(APP.keel.area,3) + ' m²</b> somados ao plano lateral.' });
   if(ST.keel !== 'full' && dw < 0.12)
     A.push({ lvl:'warn', t:'A tabela parece já trazer madeiramento morto (a 15% do pontal as balizas têm só ' +
       fmt(100*dw,0) + '% da meia-boca máxima). Somar uma quilha por cima pode contar a mesma área lateral duas vezes — confira se o perfil da quilha não está já no casco.' });
@@ -2957,7 +3019,7 @@ function checks(){
   else if(saSw > 3.4) A.push({ lvl:'warn', t:'<b>SA/superfície molhada = ' + fmt(saSw,2) + '</b> — muito acima da mediana 2,4 da frota ORC. Confira se o deslocamento da flutuação escolhida não está baixo demais.' });
   if(EST.kReal < 12) A.push({ lvl:'warn', t:'<b>SA/∇^(2/3) = ' + fmt(EST.kReal,1) + '</b> — abaixo de 15, que o livro dá como o limite de desempenho razoável.' });
   if(APP.rudder.cortado) A.push({ lvl: APP.rudder.ar < 0.8 ? 'warn' : 'ok', t:'<b>Leme limitado pela quilha</b>, como mandado: a ponta parou no calado de ' + fmt(APP.draftTotal,2) + ' m. A razão de aspecto caiu de ' + fmt(APP.rudder.arIdeal,2) + ' para ' + fmt(APP.rudder.ar,2) + ' e as cordas engordaram para segurar a área.' });
-  if(APP.keel && !APP.keel.embedded){
+  if(APP.keel && !APP.keel.embedded && !APP.keel.patilhao){
     if(APP.keel.ar < 0.55) A.push({ lvl:'warn', t:'<b>Quilha de razão de aspecto ' + fmt(APP.keel.ar,2) + '</b> — muito baixa. Ou o calado é pequeno para a área pedida, ou a área pedida é grande: aumente o calado da quilha ou baixe o coeficiente de área.' });
     if(APP.keel.cRoot > 0.42*H.Lwl) A.push({ lvl:'warn', t:'A corda de raiz da quilha (' + fmt(APP.keel.cRoot,2) + ' m) passa de 42% do LWL — a pá virou quase uma quilha longa.' });
   }
@@ -3950,8 +4012,13 @@ function memoriaLinhas(){
 
   h1('3  QUILHA E LEME — FRACAO DA AREA LATERAL SUBMERSA DO CASCO');
   h2('3.1  Quilha (' + KEEL[ST.keel].label + ')');
-  if(APP.keel.embedded){
-    p('Patilhao: o perfil da quilha ja esta dentro da area lateral submersa do casco, entao nada e somado e nada e desenhado por cima. Somar seria contar a mesma area duas vezes.');
+  if(APP.keel.patilhao){
+    p('Patilhao: o perfil sai tangente a linha de quilha na proa, desce ate a profundidade pedida e corre reto ate o final do espelho. Entra no plano lateral so a parte ABAIXO da linha de quilha do casco - o que esta acima dela ja foi medido na tabela de cotas.');
+    kv('Profundidade abaixo da base', fmt(APP.keel.dep,3) + ' m');
+    kv('Area do patilhao', fmt(APP.keel.area,3) + ' m\xB2');
+    kv('Altura media do perfil', fmt(APP.keel.hMed,3) + ' m  (comprimento do perfil ' + fmt(APP.keel.len,3) + ' m)');
+    kv('Calado total', fmt(APP.keel.draft,3) + ' m');
+    kv('Centro de area', fmt(APP.keel.cx-xA,3) + ' m da popa, ' + fmt(H.zw-APP.keel.cz,3) + ' m abaixo da DWL');
   } else {
     kv('Fonte da estimativa', EST.keelSrc);
     kv('Area sugerida', fmt(EST.AkSug,3) + ' m\xB2 = ' + fmt(100*EST.ckSug,1) + '% da area lateral do casco');
@@ -4447,6 +4514,13 @@ function buildParams(){
       function(){ return 'T/LWL = <b>' + fmt(ST.keelDraftF,3) + '</b> · envergadura ' + fmt(APP.keel.span,2) + ' m · AR ' + fmt(APP.keel.ar,2); },
       function(){ return [H.T*1.02, Math.max(0.45*H.Lwl, H.T*1.6)]; }, function(){ return ST.keel !== 'full'; }, 0.01),
 
+    P('patDepth','appRows','Profundidade do patilhão','da linha de base para baixo; zero deixa o fundo na própria linha de base','m',2,
+      function(){ return ST.patDepth; },
+      function(v){ ST.patDepth = v; ST.touched.patDepth = 1; },
+      function(){ return 'área do patilhão <b>' + fmt(APP.keel.area,3) + ' m²</b> · altura média ' + fmt(APP.keel.hMed,2) +
+        ' m em ' + fmt(APP.keel.len,2) + ' m de perfil · calado total ' + fmt(APP.draftTotal,2) + ' m'; },
+      function(){ return [0, Math.max(0.30*H.Lwl, 0.40)]; }, function(){ return ST.keel === 'full'; }, 0.01),
+
     P('keelXf','appRows','Posição da quilha','% do LWL a ré da PP de vante','%',1,
       function(){ return 100*ST.keelXf; },
       function(v){ ST.keelXf = v/100; ST.touched.keelXf = 1; },
@@ -4755,16 +4829,16 @@ function renderReadouts(){
     ' · plano lateral total ' + fmt(APP.latTotal,3) + ' m²';
   var K = APP.keel;
   el('appGrid').innerHTML =
-    ro('Área da quilha', K.embedded ? 'embutida' : fmt(K.area,3) + ' <small>m²</small>', K.embedded ? '' : 'hi',
-       K.embedded ? 'patilhão: o perfil já está na área lateral do casco' :
+    ro('Área da quilha', fmt(K.area,3) + ' <small>m²</small>', 'hi',
+       K.patilhao ? 'patilhão desenhado abaixo da linha de quilha · ' + fmt(K.dep,2) + ' m abaixo da linha de base' :
        fmt(100*ST.ck,1) + '% da área lateral do casco · ' + fmt(100*K.area/Math.max(1e-6,RIG.SAnom),2) + '% da área vélica') +
     ro('Área do leme', fmt(APP.rudder.area,3) + ' <small>m²</small>', 'hi',
        fmt(100*ST.cr,1) + '% da área lateral do casco · ' + fmt(100*APP.rudder.area/Math.max(1e-6,RIG.SAnom),2) + '% da área vélica · ' +
        fmt(100*APP.rudder.area/Math.max(1e-6,APP.latTotal),1) + '% do plano lateral') +
     ro('Calado total', fmt(APP.draftTotal,3) + ' <small>m</small>', '',
        'T/LWL = ' + fmt(APP.draftTotal/Math.max(0.5,H.Lwl),3)) +
-    ro('AR da quilha', K.embedded ? '—' : fmt(K.ar,2), '',
-       K.embedded ? '' : 'efetiva no fundo do casco ≈ ' + fmt(2*K.ar,2)) +
+    ro('AR da quilha', K.patilhao ? '—' : fmt(K.ar,2), '',
+       K.patilhao ? 'altura média ' + fmt(K.hMed,2) + ' m em ' + fmt(K.len,2) + ' m de perfil' : 'efetiva no fundo do casco ≈ ' + fmt(2*K.ar,2)) +
     ro('AR do leme', fmt(APP.rudder.ar,2), APP.rudder.cortado ? 'bad' : '',
        APP.rudder.cortado ? 'cortada pela regra do calado: pretendida ' + fmt(APP.rudder.arIdeal,2) : 'livre, sem corte') +
     ro('Plano lateral total', fmt(APP.latTotal,3) + ' <small>m²</small>', '',
@@ -4884,7 +4958,7 @@ function renderReadouts(){
     '<b>' + RIGS[ST.rig].label + '</b>: ' + (RIGS[ST.rig].masts === 1 ? 'um mastro' : 'dois mastros') + ', ' +
     (RIGS[ST.rig].heads === 0 ? 'sem vela de proa — todo o pano nominal é vela principal' :
      (RIGS[ST.rig].heads === 1 ? 'uma vela de proa' : 'duas velas de proa, a de estai sempre menor')) + '. ' +
-    (ST.keel === 'full' ? 'Com <b>patilhão</b> nenhuma quilha é desenhada: o perfil já é o do casco, e o leme fica preso ao calado dele. '
+    (ST.keel === 'full' ? 'Com <b>patilhão</b> o perfil é o próprio casco prolongado para baixo: a profundidade está no cursor da aba Apêndices, medida da linha de base para baixo. '
                         : 'Quilha <b>' + KEEL[ST.keel].label.toLowerCase() + '</b>: área, calado e afilamento nos cursores da aba Apêndices. ') +
     'Leme <b>' + RUD[ST.rud].label.toLowerCase() + '</b>' +
     (APP.rudder.cortado ? ', com a envergadura cortada no calado da quilha — a regra dura' : '') + '.';
@@ -4917,8 +4991,8 @@ function renderReadouts(){
   /* notas dos blocos */
   el('appNote').innerHTML =
     'A área lateral submersa do casco, medida na tabela de cotas, é <b>' + fmt(H.Alat,3) + ' m²</b>. ' +
-    (K.embedded
-      ? 'Com <b>patilhão</b> nada é somado e nada é desenhado por cima: o perfil da quilha já está nessa área. '
+    (K.patilhao
+      ? 'Com <b>patilhão</b>, o perfil desenhado abaixo da linha de quilha acrescenta <b>' + fmt(K.area,3) + ' m²</b> (profundidade de ' + fmt(K.dep,2) + ' m abaixo da linha de base); o que está acima dessa linha já vinha medido da tabela. '
       : 'A quilha pedida é <b>' + fmt(100*ST.ck,1) + '%</b> dela = <b>' + fmt(K.area,3) + ' m²</b>; o valor sugerido veio de ' + EST.keelSrc + '. ') +
     'O leme pedido é <b>' + fmt(100*ST.cr,1) + '%</b> dela = <b>' + fmt(APP.rudder.area,3) + ' m²</b>; sugerido por ' + EST.rudSrc + '. ' +
     '<b>O leme não passa do calado da quilha</b>: ' + (APP.rudder.cortado
@@ -4929,7 +5003,7 @@ function renderReadouts(){
     ? 'Peso de lastro estimado pela razão de lastro (Larsson Fig 5.33, frota entre 0,25 e 0,50; YD-41 em 0,39): <b>' +
       fmt(BAL.bal.br,3) + ' × ' + fmt(H.disp,0) + ' kg = ' + fmt(BAL.bal.mass,0) + ' kg</b>, posto a ' +
       fmt(BAL.bal.zBal - HC.zMin/1000,2) + ' m da linha de base (' +
-      (APP.keel.embedded ? 'lastro interno no fundo da caverna, a 25% do calado' : 'centro de área da quilha desenhada') + '). ' +
+      (APP.keel.patilhao ? 'lastro interno no fundo da caverna, a 25% do calado' : 'centro de área da quilha desenhada') + '). ' +
       'O resto do peso entra a ' + fmt(100*ST.fRest,0) + '% do pontal. Daí saem KG, GM e o ângulo de Dellenbaugh.'
     : 'Sem lastro fixo: todo o peso entra na hipótese de altura do CG abaixo — <b>' + fmt(100*ST.fRest,0) +
       '% do pontal</b>, ou seja KG = ' + fmt(BAL.bal.KG,3) + ' m. É a hipótese que manda no GM e, por consequência, no ângulo de Dellenbaugh. Ligue o lastro para ver a diferença.';
@@ -4944,8 +5018,8 @@ function renderReadouts(){
   if(el('docSA')) el('docSA').innerHTML = 'Neste projeto: ∇ = ' + fmt(H.V,3) + ' m³, ∇<sup>2/3</sup> = ' + fmt(EST.V23,3) +
     ', alvo ' + fmt(EST.kAlvo,1) + ' → <b>' + fmt(EST.SAsug,2) + ' m²</b>. Em uso: <b>' + fmt(RIG.SA,2) +
     ' m²</b>, que dá SA/∇<sup>2/3</sup> = ' + fmt(EST.kReal,1) + ' e SA/S<sub>molhada</sub> = ' + fmt(saSw,2) + '.';
-  if(el('docKeel')) el('docKeel').innerHTML = K.embedded
-    ? 'Neste projeto: <b>patilhão</b>. Área somada = 0, desenho por cima = nenhum; o plano lateral é o próprio perfil submerso do casco, ' + fmt(H.Alat,3) + ' m².'
+  if(el('docKeel')) el('docKeel').innerHTML = K.patilhao
+    ? 'Neste projeto: <b>patilhão</b> de ' + fmt(K.dep,2) + ' m abaixo da linha de base, perfil tangente à quilha na proa e fundo reto até o final do espelho. Somados ao plano lateral: <b>' + fmt(K.area,3) + ' m²</b>, sobre os ' + fmt(H.Alat,3) + ' m² do casco.'
     : 'Neste projeto: ' + EST.keelSrc + ' → <b>' + fmt(EST.AkSug,3) + ' m²</b>, que sobre a área lateral do casco (' +
       fmt(H.Alat,3) + ' m²) é <b>' + fmt(100*EST.ckSug,1) + '%</b>. Em uso: ' + fmt(100*ST.ck,1) + '% = ' + fmt(K.area,3) +
       ' m², envergadura ' + fmt(K.span,2) + ' m, corda de raiz ' + fmt(K.cRoot,2) + ' m, afilamento ' + fmt(K.taper,2) +
@@ -5251,6 +5325,21 @@ function montarParams(){
       function(){ return [Math.max(H.T*1.02, 0.02), Math.max(0.42*H.Lwl, H.T*1.6)]; },
       function(){ return ST.keel !== 'full'; }, 0.01),
 
+    P('patDepth', 'Profundidade do patilhão', 'medida da linha de base para baixo — zero deixa o fundo na própria linha de base', 2,
+      function(){ return ST.patDepth; },
+      function(v){ ST.patDepth = v; ST.touched.patDepth = 1; },
+      function(){ return 'patilhão de <b>' + fmt(APP.keel.area,3) + ' m²</b> abaixo da linha de quilha · calado total <b>' +
+        fmt(APP.draftTotal,2) + ' m</b> <s>· mais fundo segura melhor, arrasta mais e encalha antes</s>'; },
+      function(){ return [0, Math.max(0.30*H.Lwl, 0.40)]; }, function(){ return ST.keel === 'full'; }, 0.01),
+
+    P('rudAR', 'Razão de aspecto do leme', 'envergadura² / área — funda e estreita, ou rasa e larga', 2,
+      function(){ return ST.rudAR; },
+      function(v){ ST.rudAR = v; ST.touched.rudAR = 1; },
+      function(){ return 'pá de <b>' + fmt(APP.rudder.span,2) + ' m</b> de envergadura por ' + fmt(APP.rudder.cRoot,2) +
+        ' m de corda na raiz · real <b>' + fmt(APP.rudder.ar,2) + '</b>' +
+        (APP.rudder.cortado ? ' <s>· cortada no calado da quilha</s>' : ' <s>· coube inteira dentro do calado</s>'); },
+      function(){ return [0.8, 4.5]; }, null, 0.05),
+
     P('cr', 'Área do leme', 'em % da área lateral submersa do casco', 1,
       function(){ return 100*ST.cr; },
       function(v){ ST.cr = v/100; ST.touched.cr = 1; },
@@ -5433,7 +5522,7 @@ var PASSOS = [
   leg:'∇ é o volume submerso em m³ e ρ a massa específica da água — 1025 kg/m³ na salgada, 1000 na doce. Δ é o deslocamento em kg, o peso do barco pronto para navegar. A<sub>mestra</sub> é a área submersa da baliza mais cheia. O painel mede ∇, a superfície molhada, a área lateral e a baliza mestra direto da tabela de cotas, baliza por baliza.',
   escolhas:[
     grupo('Casco', function(){ return [
-        { key:'user', label:'Do projeto · 12 m raso' },
+        { key:'user', label:'Do projeto' + (LOA_PROJETO ? ' · ' + fmt(LOA_PROJETO,2) + ' m' : '') },
         { key:'full', label:'Tradicional · patilhão 7,2 m' },
         { key:'fin',  label:'Moderno · barbatana 9 m' }]; },
       function(k){ return (ST.casco || 'user') === k; },
@@ -5492,7 +5581,7 @@ var PASSOS = [
         '<p><strong>Coeficiente prismático.</strong> O valor ótimo do C<sub>p</sub> não é um número só: ele <strong>cresce com a razão velocidade/comprimento</strong>. John Teale, <i>How to Design a Boat</i> (2ª ed.), traz essa relação na <strong>Fig 48</strong>, de V/√L 0,60 a 2,00 — casco lento pede prismático baixo, casco rápido pede prismático alto. Um veleiro de deslocamento passa a vida entre V/√L 0,9 e 1,3, e é daí que sai a faixa usual de <code>0,50 a 0,58</code> que este painel usa como régua.</p>' +
         '<p>O melhor argumento de sala está na <strong>Tabela 13</strong> do mesmo capítulo: quatro traineiras de 65 pés, <strong>mesmo peso e mesma velocidade</strong>, mudando só o prismático. A de C<sub>p</sub> 0,537 pediu <strong>75 BHP</strong>; a de C<sub>p</sub> 0,645 pediu <strong>123 BHP</strong> — 64% mais potência para o mesmo barco andar igual, só porque o volume estava distribuído de outro jeito. Num veleiro, essa diferença sai em área de pano e em quanto ele aguenta ser forçado.</p>' +
         '<p>Uma armadilha de leitura: quando o <strong>patilhão está dentro da tabela de cotas</strong>, a baliza mestra inclui o madeiramento morto. O C<sub>m</sub> cai (a baliza fica magra dentro do retângulo boca × calado total) e o C<sub>p</sub> sobe na mesma proporção, porque o C<sub>b</sub> é o produto dos dois. Não é o casco que mudou de forma — é a régua que mudou. Compare os três cascos dos botões acima e veja isso acontecer.</p>' +
-        '<p>A linha d’água de abertura não é chutada. Quando a tabela de cotas traz escrita a <strong>flutuação de projeto</strong> — é o caso do casco deste painel, que veio com 0,500 m acima da linha de base —, é ela que abre. Quando não traz, o painel procura o calado que dá a esbeltez típica do programa escolhido no passo seguinte. Daí para a frente, quem manda no calado é você.</p>'
+        '<p>A linha d’água de abertura não é chutada. Quando a tabela de cotas traz escrita a <strong>flutuação de projeto</strong> — numa linha de comentário <code># linha_dagua</code> —, é ela que abre. Quando não traz, o painel procura o calado que dá a esbeltez típica do programa escolhido no passo seguinte. Daí para a frente, quem manda no calado é você.</p>'
 },
 
 /* ------------------------------------------------------------------ 2 --- */
@@ -5505,10 +5594,10 @@ var PASSOS = [
   ideia:
     '<p>A pergunta parece ser “quanta vela cabe?”. A boa pergunta é outra: <b>quanta vela este deslocamento pede?</b> Barco pesado precisa de mais pano para navegar; barco leve, de menos. A frota inteira cabe numa razão só.</p>' +
     '<p>Por que ∇ elevado a 2/3? Porque área cresce com o quadrado do comprimento e volume com o cubo. Elevar o volume a 2/3 o converte em área, e a razão fica <b>adimensional</b> — o barco de 6 m e o de 15 m passam a ser comparáveis no mesmo gráfico.</p>' +
-    '<p>Esse <b>k</b> tem nome: é a <b>razão área vélica/deslocamento</b> — em inglês <i>Sail Area/Displacement Ratio</i>, escrita SA/D. É com ela que a frota inteira é comparada, e é ela que o painel usa para propor a área vélica.</p>' +
+    '<p>Esse <b>k</b> tem nome: é a <b>razão área vélica/deslocamento</b> — em inglês <i>Sail Area/Displacement Ratio</i>. Você vai encontrá-la escrita de três jeitos, e os três são a mesma coisa: <b>k</b>, <b>SA/D</b> ou <b>SDR</b>. É com ela que a frota inteira é comparada, e é ela que o painel usa para propor a área vélica.</p>' +
     '<p>Escolha o <b>programa</b> do barco. Essa é a decisão de projeto; o número vem atrás dela, não antes.</p>',
   eq:'<b>SA = k · ∇<sup>2/3</sup></b> &nbsp;·&nbsp; k ≈ 14,5 trabalho · 17,5 cruzeiro · 20 cruzeiro-regata · 25 regata',
-  leg:'SA é a área vélica nominal em m² e ∇ o volume submerso em m³. O k é a razão área vélica/deslocamento (Sail Area/Displacement Ratio): a mediana da frota ORC fica em 20, e abaixo de 15 o livro considera o desempenho pobre.',
+  leg:'SA é a área vélica nominal em m² e ∇ o volume submerso em m³. O k é a razão área vélica/deslocamento — <i>Sail Area/Displacement Ratio</i>, abreviada <b>SA/D</b> ou <b>SDR</b>: a mediana da frota ORC fica em 20, e abaixo de 15 o livro considera o desempenho pobre.',
   escolhas:[
     grupo('Programa', function(){ return Object.keys(PROG).map(function(k){
         return { key:k, label:PROG[k].label + ' (k ' + fmt(PROG[k].k,1) + ')' }; }); },
@@ -5546,7 +5635,7 @@ var PASSOS = [
   termos:[
     ['Área vélica nominal', 'soma das velas próprias com o triângulo de proa (não com a genoa inteira). É assim que a estatística foi levantada, e por isso é assim que se compara.'],
     ['Triângulo de proa', 'o triângulo entre o mastro, o convés e o topo do estai. É geometria pura: sai do mastro e da amura, não de escolha.'],
-    ['k = SA/∇²ᐟ³', 'a razão área vélica/deslocamento — <i>Sail Area/Displacement Ratio</i>. O número que diz se o barco tem pano para o peso que tem.'],
+    ['k = SA/∇²ᐟ³', 'a razão área vélica/deslocamento — <i>Sail Area/Displacement Ratio</i>, que a literatura escreve <b>SA/D</b> ou <b>SDR</b>. Os três nomes são o mesmo número: o que diz se o barco tem pano para o peso que tem.'],
     ['Programa', 'para que serve o barco: trabalho, cruzeiro, cruzeiro-regata, regata. É a decisão que ancora todas as outras.']
   ],
   fonte:'<p>Larsson &amp; Eliasson, <i>Principles of Yacht Design</i>: a razão área vélica/deslocamento da frota ORC tem <strong>mediana 20</strong>, com a nuvem entre 15 e 25 — abaixo de 15 o desempenho é pobre. O painel usa 14,5 para o barco tradicional de trabalho, 17,5 para cruzeiro, 20 para cruzeiro-regata e 25 para regata.</p>' +
@@ -5557,8 +5646,8 @@ var PASSOS = [
 /* ------------------------------------------------------------------ 3 --- */
 {
   id:'quilha', nome:'Quilha',
-  zerar:function(){ ST.keel = ST0.keel;
-                    ['ck','keelDraftF','keelTaper','keelSweep'].forEach(function(k){ delete ST.touched[k]; });
+  zerar:function(){ ST.keel = ST0.keel; ST.patDepth = ST0.patDepth;
+                    ['ck','keelDraftF','keelTaper','keelSweep','patDepth'].forEach(function(k){ delete ST.touched[k]; });
                     ST.ck = null; ST.keelDraftF = null;
                     ST.keelTaper = KEEL[ST.keel].taper || 0.45;
                     ST.keelSweep = KEEL[ST.keel].sweep || 0; },
@@ -5568,9 +5657,10 @@ var PASSOS = [
   ideia:
     '<p>A vela não empurra só para a frente: boa parte da força é <b>para o lado</b>. Se nada segurasse, o barco derivaria para o lado e não manteria rumo contra o vento — é o que se chama <i class="term">abatimento</i>. Quem segura é o plano lateral submerso: o casco e, principalmente, a quilha.</p>' +
     '<p>A quilha é uma <b>asa vertical</b>. Só faz força se estiver com um pequeno ângulo em relação à água que passa, exatamente como a asa do avião. E, como toda asa, rende mais quando é <b>funda e estreita</b>: é a <i class="term">razão de aspecto</i>. Por isso a barbatana é mais eficiente que o patilhão — que, em troca, dá rumo firme, protege o leme e aguenta encalhar.</p>' +
-    '<p>Repare no que acontece com <b>patilhão</b>: o painel não desenha quilha nenhuma. É proposital. No patilhão o perfil já está dentro do casco da tabela de cotas, e desenhar por cima contaria a mesma área duas vezes.</p>',
+    '<p>O <b>patilhão</b> é outro bicho: não é uma pá pendurada no fundo, é o próprio casco prolongado para baixo. Por isso o painel o desenha de outro jeito — o perfil sai <b>tangente à linha de quilha na proa</b>, desce pela curva do talha-mar e corre reto até o <b>final do espelho</b>. Daí sai a área que entra no plano lateral.</p>' +
+    '<p>Mas só entra o que está <b>abaixo da linha de quilha do casco</b>: o que está acima dela já veio medido da tabela de cotas, e somá-lo de novo seria contar a mesma área duas vezes. A profundidade é contada da <b>linha de base para baixo</b>, e o mínimo é a própria linha de base: aí o patilhão só preenche o vão que sobra entre a quilha do casco e essa linha — o <i class="term">madeiramento morto</i> do barco tradicional. Daí para baixo, cada centímetro é calado a mais, e o leme ganha espaço para descer junto.</p>',
   eq:'A<sub>quilha</sub> ≈ <b>3,0% da SA</b> em LWL 6 m &nbsp;→&nbsp; <b>1,9% da SA</b> em LWL 15 m',
-  leg:'Larsson &amp; Eliasson, Fig 6.38. O painel converte esse valor em fração da área lateral submersa do casco, que é o que o cursor mostra — assim a conta continua valendo se você trocar de casco.',
+  leg:'Larsson &amp; Eliasson, Fig 6.38. O painel converte esse valor em fração da área lateral submersa do casco, que é o que o cursor mostra — assim a conta continua valendo se você trocar de casco. No <b>patilhão</b> não há coeficiente nenhum: a área é consequência do perfil, e o perfil é consequência da profundidade que você escolher.',
   escolhas:[
     grupo('Tipo de quilha', function(){ return Object.keys(KEEL).map(function(k){
         return { key:k, label:KEEL[k].label }; }); },
@@ -5582,33 +5672,52 @@ var PASSOS = [
         if(!tocado('br')) ST.br = KEEL[k].br;
         defaultsForHull(); structural(); })
   ],
-  params:['ck','keelDraft','keelTaper'],
-  dica:'A bolina também é um trapézio: larga em cima, junto ao fundo do casco, e estreita na ponta, que é quem define o calado. O cursor de afilamento controla essa relação.',
+  params:['patDepth','ck','keelDraft','keelTaper'],
+  dica:'Com <b>patilhão</b>, o cursor que manda é a profundidade: zero deixa o fundo na linha de base e cada centímetro além disso é quilha nova. Com bolina, lembre que ela também é um trapézio: larga em cima, junto ao fundo do casco, e estreita na ponta, que é quem define o calado.',
   leituras:function(){
-    var emb = !APP.keel || APP.keel.embedded;
-    return ro('Área da quilha', emb ? '—' : fmt(APP.keel.area,3) + ' <small>m²</small>', emb ? '' : 'hi',
-              emb ? 'patilhão: o perfil já está na área lateral do casco' : 'sugerido ' + fmt(EST.AkSug,3) + ' m²') +
+    var K = APP.keel, pat = !!(K && K.patilhao);
+    var comum =
       ro('Plano lateral total', fmt(APP.latTotal,3) + ' <small>m²</small>', '',
          'casco ' + fmt(H.Alat,2) + ' m² + apêndices — é ele que resiste ao abatimento') +
       ro('Calado total', fmt(APP.draftTotal,2) + ' <small>m</small>', '',
-         'da linha d’água ao ponto mais fundo do barco') +
-      ro('Razão de aspecto', emb ? '—' : fmt(APP.keel.ar,2), (!emb && APP.keel.ar < 0.6) ? 'bad' : '',
-         emb ? 'sem quilha desenhada' : 'envergadura² / área · quanto maior, mais sustentação por arrasto') +
-      ro('Corda na raiz', emb ? '—' : fmt(APP.keel.cRoot,2) + ' <small>m</small>', '',
-         emb ? '' : 'na ponta ' + fmt(APP.keel.cTip,2) + ' m') +
-      ro('Quilha / plano lateral', emb ? '—' : fmt(100*APP.keel.area/Math.max(1e-6,APP.latTotal),1) + ' <small>%</small>', '',
+         'da linha d’água ao ponto mais fundo do barco');
+    if(pat)
+      return ro('Área do patilhão', fmt(K.area,3) + ' <small>m²</small>', 'hi',
+                'só o que está abaixo da linha de quilha e dentro d’água — o que está acima já é área do casco') +
+        comum +
+        ro('Profundidade', fmt(K.dep,2) + ' <small>m</small>', '',
+           'da linha de base para baixo · zero deixa o fundo na própria linha de base') +
+        ro('Altura média do perfil', fmt(K.hMed,2) + ' <small>m</small>', '',
+           'área dividida pelo comprimento do perfil, ' + fmt(K.len,2) + ' m') +
+        ro('Patilhão / plano lateral', fmt(100*K.area/Math.max(1e-6,APP.latTotal),1) + ' <small>%</small>', '',
+           'quanto do trabalho de segurar é do perfil desenhado');
+    return ro('Área da quilha', fmt(K.area,3) + ' <small>m²</small>', 'hi',
+              'sugerido ' + fmt(EST.AkSug,3) + ' m²') +
+      comum +
+      ro('Razão de aspecto', fmt(K.ar,2), (K.ar < 0.6) ? 'bad' : '',
+         'envergadura² / área · quanto maior, mais sustentação por arrasto') +
+      ro('Corda na raiz', fmt(K.cRoot,2) + ' <small>m</small>', '',
+         'na ponta ' + fmt(K.cTip,2) + ' m') +
+      ro('Quilha / plano lateral', fmt(100*K.area/Math.max(1e-6,APP.latTotal),1) + ' <small>%</small>', '',
          'quanto do trabalho de segurar é da quilha');
   },
   veredito:function(){
-    var A = [], dw = deadwoodRatio();
-    if(ST.keel === 'full' && dw > 0.35)
-      A.push({ lvl:'bad', t:'<b>Esta tabela de cotas não tem madeiramento morto.</b> A 15% do pontal as balizas já têm ' +
-        fmt(100*dw,0) + '% da meia-boca máxima: o fundo é cheio, não há perfil de patilhão embutido. Com patilhão escolhido, o plano lateral fica só o corpo canoa e o leme fica preso ao calado do casco. Para este casco, escolha <b>barbatana</b> ou <b>bolina</b>.' });
-    else if(ST.keel !== 'full' && dw < 0.12)
+    var A = [], dw = deadwoodRatio(), K = APP.keel, pat = !!(K && K.patilhao);
+    if(pat && dw < 0.12 && K.area > 0.05*H.Alat)
+      A.push({ lvl:'warn', t:'Esta tabela <b>já traz</b> o madeiramento morto, e ainda assim o perfil desenhado acrescentou ' +
+        fmt(K.area,3) + ' m². Não há área contada duas vezes — o painel só soma o que está abaixo da linha de quilha da tabela. ' +
+        'O que ele somou foi o vão que sobra porque essa linha sobe nas pontas: é quilha <b>nova</b>, e não a que o casco já tinha. ' +
+        'Para ficar só com o casco da tabela, há que escolher outra família de quilha.' });
+    else if(pat && dw > 0.35)
+      A.push({ lvl:'ok', t:'O fundo das balizas é cheio: esta tabela não traz madeiramento morto. Por isso o patilhão é todo desenhado abaixo da linha de quilha — ' + fmt(K.area,3) + ' m² somados ao plano lateral.' });
+    else if(!pat && dw < 0.12)
       A.push({ lvl:'warn', t:'Esta tabela parece já trazer o madeiramento morto. Somar uma quilha por cima pode contar a mesma área duas vezes.' });
-    if(APP.keel && !APP.keel.embedded){
-      if(APP.keel.ar < 0.55) A.push({ lvl:'warn', t:'<b>Razão de aspecto ' + fmt(APP.keel.ar,2) + '</b> — muito baixa para uma quilha de asa. Aprofunde a quilha ou reduza a área.' });
-      else A.push({ lvl:'ok', t:'Quilha de ' + fmt(APP.keel.area,3) + ' m² e razão de aspecto ' + fmt(APP.keel.ar,2) + ', com calado total de ' + fmt(APP.draftTotal,2) + ' m.' });
+    if(pat)
+      A.push({ lvl:'ok', t:'Patilhão de ' + fmt(K.area,3) + ' m², com o fundo ' + fmt(K.dep,2) +
+        ' m abaixo da linha de base e calado total de ' + fmt(APP.draftTotal,2) + ' m. É até essa profundidade que o leme pode descer, e não além dela.' });
+    else if(K){
+      if(K.ar < 0.55) A.push({ lvl:'warn', t:'<b>Razão de aspecto ' + fmt(K.ar,2) + '</b> — muito baixa para uma quilha de asa. Aprofunde a quilha ou reduza a área.' });
+      else A.push({ lvl:'ok', t:'Quilha de ' + fmt(K.area,3) + ' m² e razão de aspecto ' + fmt(K.ar,2) + ', com calado total de ' + fmt(APP.draftTotal,2) + ' m.' });
     }
     return A;
   },
@@ -5617,12 +5726,15 @@ var PASSOS = [
     ['Razão de aspecto', 'envergadura² / área. Asa funda e estreita tem razão alta e rende mais sustentação por arrasto.'],
     ['Plano lateral', 'a soma das áreas que resistem ao abatimento: casco submerso, quilha, skeg e leme.'],
     ['Patilhão', 'quilha corrida de proa a popa, integrada ao casco. Rumo firme, muita superfície molhada.'],
+    ['Linha de base', 'a linha horizontal de referência do desenho do casco, no ponto mais baixo da quilha. É dela que se mede a profundidade do patilhão, para baixo.'],
+    ['Madeiramento morto', 'a madeira macia entre o fundo do casco e a quilha, que fecha o vão e dá perfil ao patilhão. Não carrega esforço, daí o nome.'],
     ['Bolina', 'quilha retrátil — a pivotante gira no poço, a guilhotina sobe e desce reta. Permite calado pequeno com o barco na praia.'],
     ['Corda', 'a largura do perfil no sentido do escoamento. Raiz é em cima, ponta é embaixo.']
   ],
   fonte:'<p><strong>Quilha fixa:</strong> Larsson &amp; Eliasson, Fig 6.38, dá a área projetada da quilha como percentagem da área vélica — a mediana cai de <code>3,0%</code> em LWL 6 m para <code>1,9%</code> em LWL 15 m. A barbatana lisa leva fator 1,15 sobre essa mediana, porque a mediana moderna já embute bulbo, que carrega sustentação e permite pá menor.</p>' +
         '<p><strong>Bolina:</strong> Teale, Fig 16, dá a área da bolina diretamente em função do comprimento de linha d’água: <code>A = 0,1999·LWL − 0,3577</code> m².</p>' +
-        '<p><strong>Patilhão:</strong> nada é somado, por construção. O perfil do patilhão pertence à tabela de cotas — se as meias-bocas de baixo forem a espessura do madeiramento morto, ele já está na área lateral submersa. O painel mede quão cheia é a baliza junto da quilha e avisa quando a escolha não bate com a tabela.</p>'
+        '<p><strong>Patilhão:</strong> aqui não há estatística que valha — o perfil é geometria, e a geometria é sua. O painel traça o fundo saindo <strong>tangente à linha de quilha na proa</strong>, descendo pela curva do talha-mar até a profundidade pedida e correndo reto até o <strong>final do espelho</strong>; depois mede a área que ficou <strong>abaixo da linha de quilha do casco</strong>, que é a única parte ainda não contada na tabela de cotas. A profundidade é medida da <strong>linha de base para baixo</strong>, com zero no mínimo.</p>' +
+        '<p>O painel continua medindo quão cheia é a baliza junto da quilha, agora para outro fim: avisar quando a tabela <strong>já traz</strong> o madeiramento morto, caso em que o perfil desenhado é acréscimo de quilha nova — e não repetição do que já existe.</p>'
 },
 
 /* ------------------------------------------------------------------ 4 --- */
@@ -5633,11 +5745,13 @@ var PASSOS = [
                     ST.cr = null; ST.rudAR = null; },
   titulo:'O leme: governar sem perder o barco',
   show:{ sails:false, spars:false, plane:true, ce:false, clr:true, lead:false, dims:true, grid:true, stations:false , keel:true, rud:true},
-  nota:'o leme aparece à popa e também soma ao plano lateral — repare se a ponta dele parou na mesma profundidade da ponta da quilha. O ponto <b style="color:var(--green)">verde</b> à ré é o centro de área do leme.',
+  nota:'o leme aparece à popa, abaixo da linha d’água, e também soma ao plano lateral — repare se a ponta dele parou na mesma profundidade da ponta da quilha. O ponto <b style="color:var(--green)">verde</b> à ré é o centro de área do leme.',
   ideia:
     '<p>O leme faz duas coisas ao mesmo tempo: <b>governa</b> e <b>segura</b> — a área dele entra no plano lateral como a da quilha. Área de menos e o barco não obedece na hora de cambar; área demais e o leme fica pesado na mão e freia o barco.</p>' +
     '<p>Há uma regra que este painel obedece sempre, mesmo quando ela custa caro: <b>o leme nunca é mais fundo que a quilha</b>. Se fosse, encontraria o fundo antes dela e seria o primeiro a quebrar — e sem leme não há barco. Quando o corte acontece, a envergadura é aparada no calado da quilha, a razão de aspecto real cai e a corda engorda para manter a área pedida. O painel mostra as duas razões, a pretendida e a real.</p>' +
-    '<p>Uma sutileza que vale a aula: um leme pendurado sob o casco tem razão de aspecto <b>efetiva do dobro</b> da geométrica, porque o fundo do casco funciona como espelho e impede a fuga da água pela raiz. O leme de espelho de popa não tem esse espelho — por isso precisa ser proporcionalmente maior.</p>',
+    '<p>Uma sutileza que vale a aula: um leme pendurado sob o casco tem razão de aspecto <b>efetiva do dobro</b> da geométrica, porque o fundo do casco funciona como espelho e impede a fuga da água pela raiz. O leme de espelho de popa não tem esse espelho — por isso precisa ser proporcionalmente maior.</p>' +
+    '<p>A pá começa no fundo do casco e desce: ela fica <b>abaixo da linha d’água</b> e passa bem abaixo do calado do casco, até o limite da ponta da quilha. Quando o fundo do casco no lugar do leme já está <b>acima</b> da linha d’água — a popa levantada de um barco pequeno —, o painel começa a pá na própria linha d’água: o que fica fora da água não governa.</p>' +
+    '<p>Você tem dois cursores aqui, e eles dizem coisas diferentes. A <b>área</b> diz <i>quanto</i> leme o barco tem; a <b>razão de aspecto</b> diz <i>que forma</i> essa área tem — alta é funda e estreita, que rende mais por arrasto; baixa é rasa e larga, que encalha menos e perdoa mais. A quilha é quem dá a última palavra: se a envergadura pedida não couber no calado dela, o painel corta e avisa.</p>',
   eq:'A<sub>leme</sub> ≈ <b>1,6% da SA</b> em LWL 6 m → <b>0,8%</b> em LWL 15 m &nbsp;·&nbsp; ou ≈ <b>10% do plano lateral</b>',
   leg:'A primeira é Larsson, Fig 6.39, escrita para casco moderno; a segunda é Teale, Fig 17, escrita para casco de plano lateral grande. O painel usa uma ou outra conforme a quilha que você escolheu, e mostra as duas.',
   escolhas:[
@@ -5647,8 +5761,8 @@ var PASSOS = [
       function(k){ ST.rud = k; delete ST.touched.rudAR; delete ST.touched.cr;
                    defaultsForHull(); structural(); })
   ],
-  params:['cr'],
-  dica:'Escolha “no espelho de popa” e veja a área saltar: sem o espelho do fundo do casco, o leme perde metade da razão de aspecto efetiva e precisa compensar em tamanho.',
+  params:['cr','rudAR'],
+  dica:'Puxe a razão de aspecto para cima e veja a pá afinar e aprofundar com a mesma área — até a quilha não deixar mais. Depois escolha “no espelho de popa” e veja a área saltar: sem o espelho do fundo do casco, o leme perde metade da razão de aspecto efetiva e precisa compensar em tamanho.',
   leituras:function(){
     var R = APP.rudder;
     return ro('Área do leme', fmt(R.area,3) + ' <small>m²</small>', 'hi',
@@ -6033,7 +6147,9 @@ function linhasResumo(){
   ln('Área lateral submersa', fmt(H.Alat,3) + ' m²');
   ln('Programa', PROG[ST.prog].label + ' · k alvo ' + fmt(EST.kAlvo,1));
   ln('Área vélica nominal', fmt(RIG.SAnom,1) + ' m² · k real ' + fmt(EST.kReal,1) + ' · SA/Sw ' + fmt(RIG.SAnom/Math.max(1e-6,H.Sw),2));
-  ln('Quilha', KEEL[ST.keel].label + (APP.keel && !APP.keel.embedded ? ' · ' + fmt(APP.keel.area,3) + ' m² · AR ' + fmt(APP.keel.ar,2) : ' · sem apêndice desenhado'));
+  ln('Quilha', KEEL[ST.keel].label + (APP.keel && APP.keel.patilhao
+     ? ' · ' + fmt(APP.keel.area,3) + ' m² abaixo da linha de quilha · ' + fmt(APP.keel.dep,2) + ' m abaixo da linha de base'
+     : (APP.keel && !APP.keel.embedded ? ' · ' + fmt(APP.keel.area,3) + ' m² · AR ' + fmt(APP.keel.ar,2) : ' · sem apêndice desenhado')));
   ln('Leme', RUD[ST.rud].label + ' · ' + fmt(APP.rudder.area,3) + ' m² · AR ' + fmt(APP.rudder.ar,2) +
      (APP.rudder.cortado ? ' (cortado pela quilha)' : ''));
   ln('Calado total', fmt(APP.draftTotal,2) + ' m');
@@ -6274,6 +6390,9 @@ function rolarAoTopo(){
    outro, e o desenho é o mesmo.
    ========================================================================== */
 var VISTA = 'edu';
+/* comprimento do casco que veio com o painel: serve para o botao do passo 1
+   dizer de que barco ele e, sem depender de qual casco esta carregado agora */
+var LOA_PROJETO = 0;
 function elG(id){ return document.getElementById(id); }
 
 /* --------------------------------------------------------------------------
@@ -6281,8 +6400,9 @@ function elG(id){ return document.getElementById(id); }
    fixo: a tabela de cotas já diz muito sobre o que ela é.
 
    - Se a baliza junto da quilha é magra, o madeiramento morto está desenhado na
-     tabela: o casco é de patilhão, e não se soma quilha por cima. Leme com skeg,
-     que é o que se usa nessa forma.
+     tabela: o casco é de patilhão, e o perfil dele já está medido — o patilhão abre
+     com profundidade zero, sem acrescentar nada. Leme com skeg, que é o que se
+     usa nessa forma.
    - Senão o corpo é canoa puro e a quilha é apêndice. Corpo fundo aceita
      barbatana; corpo raso pede bolina, que é como se tem calado pequeno.
    - O programa só é sugerido quando a tabela TRAZ a linha d'água de projeto:
@@ -6337,6 +6457,7 @@ function partida(){
     buildCache(HULL, 200, 26);
     ST.casco = 'user';
     TSV_ATUAL = USER_TSV;
+    LOA_PROJETO = (HC.x1 - HC.x0)/1000;
     ST.ballast = false;
     ST.prog = 'cruise';
     ST.keel = 'center'; ST.rud = 'spade';

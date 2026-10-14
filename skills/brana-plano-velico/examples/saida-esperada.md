@@ -24,16 +24,19 @@ saida         <pasta de trabalho>\Plano Velico - Ana Ribeiro.html
 
 o painel abre assim (numeros do motor do proprio painel):
   casco        Delta 2306 kg | calado do casco 1.145 m | Cp 0.588 | Cb 0.190
-  apendices    Patilhão (full keel) | quilha 0.000 m2 | leme 0.602 m2 | calado total 1.14 m
+  apendices    Patilhão (full keel) | quilha 1.572 m2 | leme 0.763 m2 | calado total 1.14 m
   pano         29.2 m2 nominais (k 17.5, SA/Sw 2.11) | Sloop, Triangular (bermudiana)
-  equilibrio   lead 10.5% (faixa 8 a 13) | Dellenbaugh 48.0 graus | GM 0.33 m | AVS 136 graus
+  equilibrio   lead 10.5% (faixa 8 a 13) | Dellenbaugh 46.6 graus | GM 0.33 m | AVS 136 graus
 ```
 
-Repare que ele **abre em patilhão, com quilha de área zero** — não é falha: a baliza
-junto da quilha é magra (razão de madeiramento morto 0,057), sinal de que o perfil do
-patilhão está desenhado na própria tabela de cotas. Somar uma quilha por cima
-contaria a mesma área lateral duas vezes. O leme vem com skeg, que é o que se usa
-nessa forma.
+Repare que ele **abre em patilhão** — a baliza junto da quilha é magra (razão de
+madeiramento morto 0,057), sinal de que o perfil do patilhão está desenhado na
+própria tabela de cotas. O painel abre com a **profundidade do patilhão em zero**, ou
+seja o fundo na linha de base, e soma ao plano lateral apenas o que fica abaixo da
+linha de quilha da tabela: aqui 1,572 m², que é o vão que sobra porque essa linha
+sobe nas pontas. Nada é contado duas vezes, e o passo 3 avisa, nesta tabela, que esse
+vão preenchido é quilha nova e não a que o casco já tinha. O leme vem com skeg, que
+é o que se usa nessa forma.
 
 O Dellenbaugh de 48° é honesto e é a lição do passo 5: o casco abre **sem lastro**, e
 sem lastro este barco adernaria muito para o pano que tem. Ligar o lastro na trilha

@@ -33,9 +33,10 @@ altura entre a quilha e a borda daquela baliza. O painel ajusta uma superelipse 
 esses nós, então 3 níveis já dão um casco decente e 7 dão um casco fiel.
 
 Casco de **patilhão** entra aqui: as meias-bocas de baixo são a meia-espessura do
-madeiramento morto. É assim que o perfil do patilhão fica dentro da área lateral
-submersa do casco — e é por isso que o painel não desenha quilha por cima quando
-reconhece esse caso.
+madeiramento morto, e assim o perfil do patilhão já fica dentro da área lateral
+submersa do casco. Quando reconhece esse caso, o painel abre em patilhão com a
+profundidade em zero — o fundo na linha de base — e só soma o que ficar abaixo da
+linha de quilha da tabela, de modo que a mesma área nunca é contada duas vezes.
 
 ## 2. Balizas, casco quinado
 

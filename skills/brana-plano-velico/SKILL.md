@@ -16,7 +16,7 @@ license: Proprietário — Brana Arquitetura Naval. Uso interno e nos cursos da 
 compatibility: Python 3.8 ou mais novo, só biblioteca padrão. Não usa rede, nem instala nada. Se houver node no caminho, o relatório sai com os números do barco. O painel gerado é um HTML único que roda offline no navegador e no celular.
 metadata:
   category: brana
-  version: "1.1"
+  version: "1.2"
   author: Brana Arquitetura Naval
 ---
 
@@ -140,7 +140,7 @@ saida         <pasta de trabalho>\Plano Velico - Ana Ribeiro.html (~394 KB)
 
 o painel abre assim (numeros do motor do proprio painel):
   casco        Delta 2306 kg | calado do casco 1.145 m | Cp 0.588 | Cb 0.190
-  apendices    Patilhao (full keel) | quilha 0.000 m2 | leme 0.602 m2 | calado total 1.14 m
+  apendices    Patilhao (full keel) | quilha 1.572 m2 | leme 0.763 m2 | calado total 1.14 m
   ...
 ```
 
@@ -171,5 +171,9 @@ Vale saber para descrever ao usuário:
   compartilham o estado — trocar de vista não muda o barco.
 - **PDF em escala**: prancha A3 do plano vélico cotado, folha da curva de braços de
   endireitamento e a memória de cálculo com a fonte de cada estimativa.
+- **Patilhão desenhado**: o perfil sai tangente à linha de quilha na proa e corre reto
+  até o final do espelho, com a profundidade num cursor, medida da linha de base para
+  baixo. Entra no plano lateral só o que fica abaixo da linha de quilha e dentro
+  d’água, de modo que nada é contado duas vezes.
 - Fontes: Larsson & Eliasson, *Principles of Yacht Design* (4ª ed.); John Teale,
   *How to Design a Boat* (2ª ed.); ISSC 2009, Comitê V.8.
