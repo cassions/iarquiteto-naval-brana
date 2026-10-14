@@ -3,10 +3,20 @@ Nao faz parte do fluxo da skill: o agente nunca precisa abrir esta pasta.
 
   python -I tests/prova-motor.py <painel-gerado.html>
 
-Extrai os blocos <script> do painel pronto, roda em node sem DOM e afirma 555
-proposicoes por casco: area do patilhao monotonica na profundidade, poligono
-igual a integral do perfil, fundo nunca acima da linha de quilha nem da linha
-d'agua, tangencia na proa, fechamento no espelho, plano lateral igual a soma
-das partes, leme nunca mais fundo que a quilha, pa sempre dentro d'agua, area
-do leme invariante a razao de aspecto, e ida e volta entre as quatro familias
-de quilha. Sai com codigo 1 e lista as falhas quando alguma cai.
+Extrai os blocos <script> do painel pronto, roda em node sem DOM e afirma mais de
+4400 proposicoes por casco. As principais:
+
+  patilhao  - area monotonica na profundidade; poligono igual a integral do perfil;
+              fundo nunca acima da linha de quilha nem da linha d'agua; tangencia na
+              proa; fechamento no final do espelho; plano lateral igual a soma das
+              partes MENOS a area comum com os apendices.
+  leme      - a area nao muda com a razao de aspecto; a envergadura cresce com ela em
+              TODA quilha, inclusive patilhao raso (foi onde o clamp antigo matava o
+              cursor); o poligono desenhado acompanha; a proposta do painel so passa
+              do calado da quilha quando nem AR 0,80 cabe; passou/excesso batem com a
+              geometria; o nariz do skeg nao passa da ponta da quilha.
+  casco     - calado total e o mais fundo entre quilha e leme; equilibrio e curva de
+              GZ fecham em todas as combinacoes; ida e volta entre as quatro familias
+              de quilha nao deixa estado invalido.
+
+Sai com codigo 1 e lista as falhas quando alguma cai.

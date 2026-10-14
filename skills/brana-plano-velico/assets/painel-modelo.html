@@ -1024,7 +1024,7 @@
           <li><strong>Larsson &amp; Eliasson, Fig 6.39</strong> — área do leme como percentagem da área vélica: linha mediana de <strong>1,6% em LWL 6 m caindo a 0,8% em LWL 15 m</strong>, 1,2% no meio da faixa (±0,2 ponto para 95% da frota). A edição anterior recomendava 1,4% fixo.</li>
         </ul>
         <p>Qual dos dois vira o padrão depende da família de quilha: com <strong>patilhão</strong> — casco de plano lateral grande, barco tradicional — o padrão é Teale, que é a regra escrita para esse tipo de casco; com <strong>quilha fixa moderna ou bolina</strong> o padrão é a mediana de Larsson, medida em frota contemporânea. Os dois números aparecem sempre lado a lado, e o cursor é seu.</p>
-        <p><span class="flag">regra dura</span> <strong>O leme nunca fica mais profundo que a quilha.</strong> A envergadura ideal do leme sai da razão de aspecto pretendida, <code>b = √(A·AR)</code>, mas se a ponta passar da profundidade da quilha — no patilhão, do fundo do perfil desenhado — a envergadura é cortada nesse limite e as cordas engordam para manter a área. O painel então mostra as duas razões de aspecto, a pretendida e a real, e avisa quando cortou. É penalidade hidrodinâmica assumida em troca de nunca ser o leme a tocar o fundo primeiro. No outro extremo, a raiz: a pá nasce no fundo do casco, mas quando esse fundo já está <strong>acima da linha d’água</strong> no lugar do leme — popa levantada — ela nasce na própria linha d’água, porque o que fica fora da água não governa.</p>
+        <p><span class="flag">regra de oficina</span> <strong>O leme não deve ficar mais profundo que a quilha.</strong> A envergadura sai da razão de aspecto, <code>b = √(A·AR)</code>, e é por isso que a <strong>proposta</strong> do painel nunca passa da profundidade da quilha — no patilhão, do fundo do perfil desenhado: quando a AR típica do tipo de leme não cabe, ele abre na maior que cabe e põe esse valor no cursor. Dali em diante quem manda é você: o cursor desenha o que pedir, inclusive abaixo da linha de base e abaixo da ponta da quilha, e o painel diz quantos centímetros a ponta passou e de quem passou a ser o calado total. Cortar em silêncio deixaria o cursor sem efeito nenhum — a área é fixa, e o que a envergadura não toma vai todo para a corda. É penalidade hidrodinâmica assumida em troca de nunca ser o leme a tocar o fundo primeiro. No outro extremo, a raiz: a pá nasce no fundo do casco, mas quando esse fundo já está <strong>acima da linha d’água</strong> no lugar do leme — popa levantada — ela nasce na própria linha d’água, porque o que fica fora da água não governa.</p>
         <p id="docRud_p" class="pnote"></p>
       </div>
 
@@ -2084,6 +2084,56 @@ function patilhaoPoly(dep, zw){
            dep:Math.max(0, dep || 0), len:L, hMed: L > 1e-6 ? A/L : 0 };
 }
 
+/* A faixa vertical que um poligono convexo ocupa num dado x: o leme e o skeg sao
+   trapezio e triangulo, entao basta cortar as arestas pela vertical. */
+function faixaVertical(poly, x){
+  var lo = 1e9, hi = -1e9, n = poly.length, i, achou = false;
+  for(i=0;i<n;i++){
+    var a = poly[i], b = poly[(i+1)%n];
+    if((a[0] - x)*(b[0] - x) > 0) continue;              /* aresta nao cruza a vertical */
+    if(Math.abs(b[0] - a[0]) < 1e-12){
+      lo = Math.min(lo, a[1], b[1]); hi = Math.max(hi, a[1], b[1]); achou = true; continue;
+    }
+    var t = (x - a[0])/(b[0] - a[0]);
+    if(t < -1e-9 || t > 1 + 1e-9) continue;
+    var z = a[1] + (b[1] - a[1])*t;
+    lo = Math.min(lo, z); hi = Math.max(hi, z); achou = true;
+  }
+  return achou ? [lo, hi] : null;
+}
+function alturaCurva(c, x){
+  var n = c.length;
+  if(x <= c[0][0]) return c[0][1];
+  if(x >= c[n-1][0]) return c[n-1][1];
+  var k = Math.floor((x - c[0][0])/Math.max(1e-12, c[n-1][0] - c[0][0])*(n-1));
+  k = Math.max(0, Math.min(n - 2, k));
+  while(k > 0 && c[k][0] > x) k--;
+  while(k < n - 2 && c[k+1][0] < x) k++;
+  var t = (x - c[k][0])/Math.max(1e-12, c[k+1][0] - c[k][0]);
+  return c[k][1] + (c[k+1][1] - c[k][1])*t;
+}
+/* Quanto de um apendice cai DENTRO do perfil do patilhao. As duas formas sao
+   faixas verticais em x, entao a intersecao sai de uma varredura simples. Sem
+   isso a mesma area lateral entraria duas vezes na soma e puxaria o CLR a re. */
+function dentroDoPatilhao(poly, K, zw){
+  if(!poly || !K || !K.patilhao || !K.fundo) return { area:0, cx:0, cz:0 };
+  var x0 = 1e9, x1 = -1e9, i;
+  for(i=0;i<poly.length;i++){
+    if(poly[i][0] < x0) x0 = poly[i][0];
+    if(poly[i][0] > x1) x1 = poly[i][0];
+  }
+  var N = 96, dx = (x1 - x0)/N, A = 0, Mx = 0, Mz = 0;
+  for(i=0;i<N;i++){
+    var x = x0 + dx*(i + 0.5);
+    var r = faixaVertical(poly, x); if(!r) continue;
+    var pt = Math.min(zKeel(x), zw);                      /* teto do patilhao desenhado */
+    var pb = Math.min(pt, alturaCurva(K.fundo, x));       /* fundo do patilhao desenhado */
+    var lo = Math.max(r[0], pb), hi = Math.min(r[1], pt);
+    if(hi > lo){ var h = hi - lo; A += h*dx; Mx += x*h*dx; Mz += 0.5*(lo + hi)*h*dx; }
+  }
+  return { area:A, cx: A > 1e-9 ? Mx/A : 0, cz: A > 1e-9 ? Mz/A : 0 };
+}
+
 function appendages(H){
   var out = { keel:null, rudder:null, skeg:null, latItems:[], warn:[] };
   var Alat = H.Alat;
@@ -2119,7 +2169,7 @@ function appendages(H){
     poly = keelPoly(kt, xm, cRoot, lam, sw, zTip, span);
     var c = polyCentroid(poly);
     /* a ponta inclinada da bolina desce um pouco além do zTip nominal: o calado
-       e a regra dura do leme olham o ponto mais baixo do polígono desenhado */
+       e a referência do leme olham o ponto mais baixo do polígono desenhado */
     var zLow = zTip;
     poly.forEach(function(p){ if(p[1] < zLow) zLow = p[1]; });
     out.keel = { type:kt, area:polyArea(poly), poly:poly, cx:c[0], cz:c[1],
@@ -2144,27 +2194,46 @@ function appendages(H){
        ja saiu da agua - popa levantada -, quem define o topo e a linha d'agua */
     zRootR = Math.min(zKeel(xr), H.zw);
   }
-  /* REGRA DURA: a ponta do leme nunca passa da profundidade da quilha. */
-  spanMax = (zRootR - keelTipZ)/Math.cos(rake);
-  var spanIdeal = Math.sqrt(Ar*arIdeal);
-  var span = spanIdeal, cortado = false;
-  if(spanMax < 0.05){ spanMax = 0.05; }
-  if(span > spanMax){ span = spanMax; cortado = true; }
+  /* REGRA DE OFICINA: o leme não deve ser mais fundo que a quilha — ele é a peça
+     que não pode faltar, e um leme mais fundo encontra a pedra primeiro. Ela manda
+     na PROPOSTA do painel: quando a razão de aspecto típica do tipo de leme não cabe
+     no calado da quilha, o painel abre na maior que cabe e mostra esse valor no
+     cursor. Dali em diante quem manda é o projetista: o cursor desenha o que pedir,
+     inclusive abaixo da linha de base e abaixo da ponta da quilha, e o painel mede
+     quanto a ponta passou e avisa. Cortar calado em silêncio deixaria o cursor sem
+     efeito nenhum — a área é fixa, então o que a envergadura não toma vai todo
+     para a corda, e o desenho ficaria idêntico de AR 1,0 a AR 4,5. */
+  spanMax = Math.max(0.01, (zRootR - keelTipZ)/Math.cos(rake));   /* a ponta pararia no calado da quilha */
+  var arMax = spanMax*spanMax/Ar;                        /* a maior AR que cabe nesse calado */
+  var ajustada = false;
+  if(!tocado('rudAR') && arIdeal > arMax){
+    /* AR_MIN: abaixo disto a pá deixa de ser leme e vira tábua horizontal — quando
+       nem isso cabe, a quilha não tem o que proteger, e a proposta sai do tamanho
+       certo com o aviso de que a ponta passou dela */
+    arIdeal = Math.max(0.80, arMax); ST.rudAR = arIdeal; ajustada = true;
+  }
+  var span = Math.sqrt(Ar*arIdeal);
+  var excesso = (span - spanMax)*Math.cos(rake);         /* quanto a ponta passa da quilha, em m */
+  var passou = excesso > 0.005;
   var cRootR = 2*Ar/(span*Math.cos(rake)*(1 + lamR));
   var polyR = rudderPoly(rt, xr, cRootR, lamR, rake, zRootR, span);
   var cR = polyCentroid(polyR);
   out.rudder = { type:rt, area:polyArea(polyR), poly:polyR, cx:cR[0], cz:cR[1],
-                 span:span, spanIdeal:spanIdeal, cRoot:cRootR, cTip:lamR*cRootR,
-                 ar:span*span/Ar, arIdeal:arIdeal, cortado:cortado, xr:xr,
+                 span:span, spanMax:spanMax, cRoot:cRootR, cTip:lamR*cRootR,
+                 ar:span*span/Ar, arMax:arMax, ajustada:ajustada,
+                 passou:passou, excesso:passou ? excesso : 0, xr:xr,
                  tipZ:zRootR - span*Math.cos(rake), draft:H.zw - (zRootR - span*Math.cos(rake)) };
-  if(cortado) out.warn.push('envergadura do leme cortada no calado da quilha: razão de aspecto real ' +
-      fmt(out.rudder.ar,2) + ' contra ' + fmt(arIdeal,2) + ' pretendida');
+  if(passou) out.warn.push('a ponta do leme passou ' + fmt(excesso,2) +
+      ' m do calado da quilha: o calado total do barco passou a ser o do leme');
+  else if(ajustada) out.warn.push('a quilha não deixa a razão de aspecto típica deste leme: ' +
+      'o painel abriu na maior que cabe no calado dela, ' + fmt(arMax,2) + ' contra ' + fmt(RUD[rt].ar,2));
 
   /* --------------------------------------------------------------- skeg --- */
   if(rt === 'skeg'){
     var xLe = xr + cRootR/2, sk = ST.skegF;
     var xSk = xLe + Math.max(0.25*cRootR, 0.6*cRootR);
-    var zNoseTip = zRootR - sk*span*Math.cos(rake);
+    /* o skeg é barbatana estrutural, não pá: o nariz dele não passa da ponta da quilha */
+    var zNoseTip = Math.max(zRootR - sk*span*Math.cos(rake), keelTipZ);
     var pk = [[xSk, zKeel(xSk)], [xLe, zRootR], [xLe - 0.02, zNoseTip]];
     var cS = polyCentroid(pk);
     out.skeg = { area:polyArea(pk), poly:pk, cx:cS[0], cz:cS[1] };
@@ -2178,6 +2247,22 @@ function appendages(H){
     out.latItems.push({ key:'skeg', label:'skeg', area:out.skeg.area, cx:out.skeg.cx, cz:out.skeg.cz });
   out.latItems.push({ key:'leme', label:'leme', area:out.rudder.area, cx:out.rudder.cx, cz:out.rudder.cz });
 
+  /* Com patilhão, leme e skeg são desenhados DENTRO do perfil dele. A parte comum
+     é medida e entra como item NEGATIVO: assim a soma dá a área da união e o centro
+     de área fica no lugar, em vez de contar a mesma área duas vezes e puxar o CLR. */
+  out.sobreposto = 0;
+  if(out.keel && out.keel.patilhao){
+    [out.rudder, out.skeg].forEach(function(ap){
+      if(!ap || !ap.poly) return;
+      var s = dentroDoPatilhao(ap.poly, out.keel, H.zw);
+      if(s.area > 1e-6){
+        out.sobreposto += s.area;
+        out.latItems.push({ key:'comum', label:'área comum com o patilhão',
+                            area:-s.area, cx:s.cx, cz:s.cz });
+      }
+    });
+  }
+
   var A = 0, Mx = 0, Mz = 0;
   out.latItems.forEach(function(it){ A += it.area; Mx += it.area*it.cx; Mz += it.area*it.cz; });
   out.latTotal = A;
@@ -2185,6 +2270,8 @@ function appendages(H){
   out.clrZ = A > 1e-9 ? Mz/A : H.zLat;
   out.tipZ = Math.min(keelTipZ, out.rudder.tipZ);
   out.draftTotal = H.zw - out.tipZ;
+  out.draftKeel = H.zw - keelTipZ;          /* calado governado pela quilha, sem o leme */
+  out.lemeManda = out.rudder.tipZ < keelTipZ - 1e-9;
   return out;
 }
 
@@ -2921,7 +3008,8 @@ function summaryText(){
   p('  Leme (' + RUD[ST.rud].label + ')');
   p('    área lateral            ' + fmt(APP.rudder.area,3) + ' m²  = ' + fmt(100*ST.cr,1) + '% da área lateral do casco');
   p('    envergadura / AR        ' + fmt(APP.rudder.span,3) + ' m / ' + fmt(APP.rudder.ar,2) +
-    (APP.rudder.cortado ? '  (cortado no calado da quilha; AR pretendida ' + fmt(APP.rudder.arIdeal,2) + ')' : ''));
+    (APP.rudder.passou ? '  (ponta ' + fmt(APP.rudder.excesso,2) + ' m abaixo do calado da quilha)' :
+     (APP.rudder.ajustada ? '  (AR aberta na maior que cabe no calado da quilha)' : '')));
   p('    calado do leme          ' + fmt(APP.rudder.draft,3) + ' m');
   if(APP.skeg) p('  Skeg                      ' + fmt(APP.skeg.area,3) + ' m²');
   p('  Plano lateral total       ' + fmt(APP.latTotal,3) + ' m²');
@@ -3018,7 +3106,14 @@ function checks(){
   if(saSw < 2.0) A.push({ lvl:'warn', t:'<b>SA/superfície molhada = ' + fmt(saSw,2) + '</b> — abaixo de 2,0, o piso que Larsson & Eliasson dão para o barco não ficar lento em ar leve. Em casco tradicional pesado isso é esperado; se não for o caso, há pano de menos ou casco molhado demais.' });
   else if(saSw > 3.4) A.push({ lvl:'warn', t:'<b>SA/superfície molhada = ' + fmt(saSw,2) + '</b> — muito acima da mediana 2,4 da frota ORC. Confira se o deslocamento da flutuação escolhida não está baixo demais.' });
   if(EST.kReal < 12) A.push({ lvl:'warn', t:'<b>SA/∇^(2/3) = ' + fmt(EST.kReal,1) + '</b> — abaixo de 15, que o livro dá como o limite de desempenho razoável.' });
-  if(APP.rudder.cortado) A.push({ lvl: APP.rudder.ar < 0.8 ? 'warn' : 'ok', t:'<b>Leme limitado pela quilha</b>, como mandado: a ponta parou no calado de ' + fmt(APP.draftTotal,2) + ' m. A razão de aspecto caiu de ' + fmt(APP.rudder.arIdeal,2) + ' para ' + fmt(APP.rudder.ar,2) + ' e as cordas engordaram para segurar a área.' });
+  if(APP.rudder.passou) A.push({ lvl: APP.rudder.excesso > 0.10 ? 'bad' : 'warn',
+    t:'<b>A ponta do leme passou ' + fmt(APP.rudder.excesso,2) + ' m do calado da quilha</b> (' + fmt(APP.draftKeel,2) +
+      ' m). O calado total de ' + fmt(APP.draftTotal,2) + ' m é do leme, e é ele que encontra o fundo primeiro. ' +
+      'Baixe a razão de aspecto, reduza a área ou aprofunde a quilha — ou assuma a pá sacrificável de propósito, que é o que se faz em barco de praia com leme de levantar.' });
+  else if(APP.rudder.ajustada) A.push({ lvl:'warn',
+    t:'<b>A quilha não deixa a razão de aspecto típica deste leme.</b> O painel abriu em <b>' + fmt(APP.rudder.ar,2) +
+      '</b>, que é a maior que cabe no calado da quilha (' + fmt(APP.draftKeel,2) + ' m); a típica do tipo escolhido é ' +
+      fmt(RUD[ST.rud].ar,2) + '. Pá rasa e larga governa pouco para a área que arrasta: ou a quilha desce, ou o cursor de razão de aspecto passa da quilha de propósito.' });
   if(APP.keel && !APP.keel.embedded && !APP.keel.patilhao){
     if(APP.keel.ar < 0.55) A.push({ lvl:'warn', t:'<b>Quilha de razão de aspecto ' + fmt(APP.keel.ar,2) + '</b> — muito baixa. Ou o calado é pequeno para a área pedida, ou a área pedida é grande: aumente o calado da quilha ou baixe o coeficiente de área.' });
     if(APP.keel.cRoot > 0.42*H.Lwl) A.push({ lvl:'warn', t:'A corda de raiz da quilha (' + fmt(APP.keel.cRoot,2) + ' m) passa de 42% do LWL — a pá virou quase uma quilha longa.' });
@@ -3068,7 +3163,7 @@ function checks(){
       A.push({ lvl:'bad', t:'<b>GZ máximo de apenas ' + fmt(GZC.stats.gzMax,3) + ' m</b> — o casco não tem braço para segurar pano nenhum com este KG.' });
   }
   RIG.warn.forEach(function(w){ A.push({ lvl:'warn', t:w }); });
-  APP.warn.forEach(function(w){ if(!APP.rudder.cortado || w.indexOf('leme') < 0) A.push({ lvl:'warn', t:w }); });
+  APP.warn.forEach(function(w){ if(w.indexOf('leme') < 0) A.push({ lvl:'warn', t:w }); });
   return A;
 }
 
@@ -3227,6 +3322,10 @@ function tick(g, x, z0, z1, color, dash){
 function drawPlan(){
   var g = prepPlan(); if(!g || !H) return;
   if(!VIEW.ready) fitView();
+  /* a ponta do leme desce quando a razão de aspecto sobe: o quadro acompanha, em
+     vez de cortar justamente a peça que o aluno está mexendo */
+  if(APP && APP.tipZ !== undefined && (UI.show.keel !== false || UI.show.rud !== false)
+     && PY(APP.tipZ) > PLAN.h - 6) fitView();
   var w = PLAN.w, h = PLAN.h, i;
   var xa = HC.x0/1000, xb = HC.x1/1000, zw = H.zw;
   var show = UI.show;
@@ -3313,7 +3412,10 @@ function drawPlan(){
      os apêndices passo a passo; sem eles, desenha tudo como sempre */
   if(APP.skeg && show.rud !== false) fillPoly(APP.skeg.poly, 'rgba(154,50,49,.42)', 'rgba(232,232,232,.55)');
   if(APP.keel && APP.keel.poly && show.keel !== false) fillPoly(APP.keel.poly, 'rgba(154,50,49,.62)', css('--light'));
-  if(APP.rudder && show.rud !== false) fillPoly(APP.rudder.poly, 'rgba(154,50,49,.62)', css('--light'));
+  /* o leme vai num tom mais claro que a quilha, e não no mesmo: com patilhão a
+     pá é desenhada POR DENTRO do perfil, e na mesma cor ela sumia — o aluno
+     mexia na razão de aspecto e não via a forma mudar */
+  if(APP.rudder && show.rud !== false) fillPoly(APP.rudder.poly, 'rgba(238,154,152,.55)', css('--light'));
 
   /* Centro de gravidade: a altura é o KG calculado; a posição ao longo do
      barco é a do centro de carena, porque é onde ela tem de estar para o
@@ -4042,13 +4144,18 @@ function memoriaLinhas(){
   kv('Envergadura', fmt(APP.rudder.span,3) + ' m');
   kv('Corda raiz / ponta', fmt(APP.rudder.cRoot,3) + ' / ' + fmt(APP.rudder.cTip,3) + ' m');
   kv('Afilamento / inclinacao', fmt(ST.rudTaper,2) + ' / ' + fmt(ST.rudRake,1) + '\xB0');
-  kv('AR pretendida / real', fmt(APP.rudder.arIdeal,2) + ' / ' + fmt(APP.rudder.ar,2));
+  kv('Razao de aspecto', fmt(APP.rudder.ar,2) + '   (cabe ate ' + fmt(APP.rudder.arMax,2) + ' dentro do calado da quilha)');
   kv('Calado do leme', fmt(APP.rudder.draft,3) + ' m');
   kv('Centro de area', fmt(APP.rudder.cx-xA,3) + ' m da popa, ' + fmt(H.zw-APP.rudder.cz,3) + ' m abaixo da DWL');
   if(APP.skeg) kv('Area do skeg', fmt(APP.skeg.area,3) + ' m\xB2');
+  if(APP.sobreposto > 1e-6) kv('Area comum com o patilhao', '-' + fmt(APP.sobreposto,3) + ' m²  (descontada do plano lateral)');
   kv('PLANO LATERAL TOTAL', fmt(APP.latTotal,3) + ' m\xB2');
-  p('Regra dura: o leme nunca passa da profundidade da quilha. A envergadura ideal sai de b = raiz(A x AR); se a ponta passasse do calado da quilha, a envergadura e cortada nesse limite e as cordas engordam para manter a area — com perda de razao de aspecto assumida.' +
-    (APP.rudder.cortado ? ' NESTE PROJETO A ENVERGADURA FOI CORTADA.' : ' Neste projeto a envergadura ideal coube.'));
+  p('Regra de oficina: o leme nao deve ser mais fundo que a quilha, porque sem leme nao ha barco e um leme mais fundo encontra a pedra primeiro. A envergadura sai de b = raiz(A x AR), e a razao de aspecto proposta pelo painel nunca passa do calado da quilha; o cursor, porem, e do projetista.' +
+    (APP.rudder.passou
+      ? ' NESTE PROJETO A PONTA DO LEME ESTA ' + fmt(APP.rudder.excesso,3) + ' m ABAIXO DO CALADO DA QUILHA (' + fmt(APP.draftKeel,3) + ' m): O CALADO TOTAL E DO LEME.'
+      : (APP.rudder.ajustada
+          ? ' Neste projeto a quilha nao deixa a AR tipica do tipo escolhido: o painel abriu em ' + fmt(APP.rudder.ar,2) + ', a maior que cabe no calado de ' + fmt(APP.draftKeel,3) + ' m.'
+          : ' Neste projeto a razao de aspecto pedida coube dentro do calado da quilha.')));
 
   h1('4  LASTRO, KG E GM');
   if(ST.ballast){
@@ -4546,11 +4653,13 @@ function buildParams(){
       function(){ return 'A<sub>l</sub> = <b>' + fmt(APP.rudder.area,3) + ' m²</b> · Larsson ' + fmt(EST.ArLars,3) + ' m² · Teale ' + fmt(EST.ArTeale,3) + ' m² · sugerido ' + fmt(100*EST.crSug,1) + '%'; },
       function(){ return [1, 60]; }, null, 0.2),
 
-    P('rudAR','appRows','Razão de aspecto do leme','pretendida; a quilha pode cortá-la','',2,
+    P('rudAR','appRows','Razão de aspecto do leme','envergadura² / área; cabe até o calado da quilha, e passa dele se você mandar','',2,
       function(){ return ST.rudAR; },
       function(v){ ST.rudAR = v; ST.touched.rudAR = 1; },
-      function(){ return 'real <b>' + fmt(APP.rudder.ar,2) + '</b>' + (APP.rudder.cortado ? ' · <s>cortada no calado da quilha</s>' : ' · livre') + ' · efetiva no fundo ≈ ' + fmt(2*APP.rudder.ar,2); },
-      function(){ return [0.8, 4.5]; }, null, 0.05),
+      function(){ return 'envergadura <b>' + fmt(APP.rudder.span,2) + ' m</b> · corda ' + fmt(APP.rudder.cRoot,2) +
+        ' m · efetiva no fundo ≈ ' + fmt(2*APP.rudder.ar,2) + ' · cabe até ' + fmt(APP.rudder.arMax,2) + ' no calado da quilha' +
+        (APP.rudder.passou ? ' · <s>a ponta passou ' + fmt(APP.rudder.excesso,2) + ' m dela</s>' : ''); },
+      function(){ return [0.3, 6.0]; }, null, 0.05),
 
     P('rudXf','appRows','Posição do leme','% do LWL a vante da PP de ré','%',1,
       function(){ return 100*ST.rudXf; },
@@ -4839,10 +4948,12 @@ function renderReadouts(){
        'T/LWL = ' + fmt(APP.draftTotal/Math.max(0.5,H.Lwl),3)) +
     ro('AR da quilha', K.patilhao ? '—' : fmt(K.ar,2), '',
        K.patilhao ? 'altura média ' + fmt(K.hMed,2) + ' m em ' + fmt(K.len,2) + ' m de perfil' : 'efetiva no fundo do casco ≈ ' + fmt(2*K.ar,2)) +
-    ro('AR do leme', fmt(APP.rudder.ar,2), APP.rudder.cortado ? 'bad' : '',
-       APP.rudder.cortado ? 'cortada pela regra do calado: pretendida ' + fmt(APP.rudder.arIdeal,2) : 'livre, sem corte') +
+    ro('AR do leme', fmt(APP.rudder.ar,2), APP.rudder.passou ? 'bad' : '',
+       APP.rudder.passou ? 'a ponta passou ' + fmt(APP.rudder.excesso,2) + ' m do calado da quilha'
+                         : 'cabe até ' + fmt(APP.rudder.arMax,2) + ' dentro do calado da quilha') +
     ro('Plano lateral total', fmt(APP.latTotal,3) + ' <small>m²</small>', '',
-       'C<sub>lp</sub> = A/(LWL·T) = ' + fmt(APP.latTotal/Math.max(1e-6, H.Lwl*APP.draftTotal),3));
+       'C<sub>lp</sub> = A/(LWL·T) = ' + fmt(APP.latTotal/Math.max(1e-6, H.Lwl*APP.draftTotal),3) +
+       (APP.lemeManda ? ' · aqui o T é o do leme, que passou da quilha' : ''));
 
   el('balSub').textContent = ST.ballast ? ('lastrado · razão ' + fmt(BAL.bal.br,2)) : 'não lastrado · estabilidade de forma';
   el('balGrid').innerHTML =
@@ -4961,7 +5072,7 @@ function renderReadouts(){
     (ST.keel === 'full' ? 'Com <b>patilhão</b> o perfil é o próprio casco prolongado para baixo: a profundidade está no cursor da aba Apêndices, medida da linha de base para baixo. '
                         : 'Quilha <b>' + KEEL[ST.keel].label.toLowerCase() + '</b>: área, calado e afilamento nos cursores da aba Apêndices. ') +
     'Leme <b>' + RUD[ST.rud].label.toLowerCase() + '</b>' +
-    (APP.rudder.cortado ? ', com a envergadura cortada no calado da quilha — a regra dura' : '') + '.';
+    (APP.rudder.passou ? ', com a ponta ' + fmt(APP.rudder.excesso,2) + ' m abaixo do calado da quilha' : '') + '.';
 
   /* título */
   el('tbSA').textContent = fmt(RIG.SAnom,1) + ' m²';
@@ -4986,7 +5097,7 @@ function renderReadouts(){
       '<span class="ok">na faixa da frota</span>' : '<span class="no">fora da faixa</span>');
   el('hudGeo').innerHTML = 'plano lateral ' + fmt(APP.latTotal,2) + ' m² · CE a ' + fmt(BAL.CE.x - xA,2) +
     ' m da popa · CLR a ' + fmt(BAL.clrX - xA,2) + ' m';
-  el('warnLine').textContent = APP.rudder.cortado ? 'leme limitado pelo calado da quilha' : '';
+  el('warnLine').textContent = APP.rudder.passou ? 'a ponta do leme passou do calado da quilha' : '';
 
   /* notas dos blocos */
   el('appNote').innerHTML =
@@ -4995,9 +5106,11 @@ function renderReadouts(){
       ? 'Com <b>patilhão</b>, o perfil desenhado abaixo da linha de quilha acrescenta <b>' + fmt(K.area,3) + ' m²</b> (profundidade de ' + fmt(K.dep,2) + ' m abaixo da linha de base); o que está acima dessa linha já vinha medido da tabela. '
       : 'A quilha pedida é <b>' + fmt(100*ST.ck,1) + '%</b> dela = <b>' + fmt(K.area,3) + ' m²</b>; o valor sugerido veio de ' + EST.keelSrc + '. ') +
     'O leme pedido é <b>' + fmt(100*ST.cr,1) + '%</b> dela = <b>' + fmt(APP.rudder.area,3) + ' m²</b>; sugerido por ' + EST.rudSrc + '. ' +
-    '<b>O leme não passa do calado da quilha</b>: ' + (APP.rudder.cortado
-      ? 'a envergadura foi cortada nesse limite e a razão de aspecto caiu de ' + fmt(APP.rudder.arIdeal,2) + ' para ' + fmt(APP.rudder.ar,2) + '.'
-      : 'aqui a envergadura ideal coube dentro do limite.');
+    '<b>A proposta do painel não passa do calado da quilha</b>: ' + (APP.rudder.passou
+      ? 'aqui o cursor de razão de aspecto foi além, e a ponta ficou ' + fmt(APP.rudder.excesso,2) + ' m abaixo dele — o calado total é do leme.'
+      : (APP.rudder.ajustada
+          ? 'a AR típica deste leme não cabia, então abriu na maior que cabe, ' + fmt(APP.rudder.ar,2) + '.'
+          : 'aqui a envergadura pedida coube dentro dele.'));
 
   el('balNote').innerHTML = ST.ballast
     ? 'Peso de lastro estimado pela razão de lastro (Larsson Fig 5.33, frota entre 0,25 e 0,50; YD-41 em 0,39): <b>' +
@@ -5028,7 +5141,7 @@ function renderReadouts(){
     fmt(100*EST.ArTeale/H.Alat,1) + '% da área lateral do casco), Larsson daria <b>' + fmt(EST.ArLars,3) + ' m²</b> (' +
     fmt(100*EST.ArLars/H.Alat,1) + '%). O padrão adotado foi ' + (ST.keel === 'full' ? 'Teale' : 'Larsson') +
     '; em uso ' + fmt(100*ST.cr,1) + '% = <b>' + fmt(APP.rudder.area,3) + ' m²</b>, envergadura ' + fmt(APP.rudder.span,2) +
-    ' m, AR ' + fmt(APP.rudder.ar,2) + (APP.rudder.cortado ? ' <b>(cortada no calado da quilha, pretendida ' + fmt(APP.rudder.arIdeal,2) + ')</b>' : '') + '.';
+    ' m, AR ' + fmt(APP.rudder.ar,2) + (APP.rudder.passou ? ' <b>(ponta ' + fmt(APP.rudder.excesso,2) + ' m abaixo do calado da quilha)</b>' : '') + '.';
   if(el('docBal')) el('docBal').innerHTML = ST.ballast
     ? 'Neste projeto: razão ' + fmt(BAL.bal.br,3) + ' × ' + fmt(H.disp,0) + ' kg = <b>' + fmt(BAL.bal.mass,0) +
       ' kg de lastro</b>; KG = ' + fmt(BAL.bal.KG,3) + ' m, KB + BM = ' + fmt(H.KB + H.BMt,3) + ' m, <b>GM = ' + fmt(BAL.bal.GM,3) + ' m</b>.'
@@ -5336,9 +5449,11 @@ function montarParams(){
       function(){ return ST.rudAR; },
       function(v){ ST.rudAR = v; ST.touched.rudAR = 1; },
       function(){ return 'pá de <b>' + fmt(APP.rudder.span,2) + ' m</b> de envergadura por ' + fmt(APP.rudder.cRoot,2) +
-        ' m de corda na raiz · real <b>' + fmt(APP.rudder.ar,2) + '</b>' +
-        (APP.rudder.cortado ? ' <s>· cortada no calado da quilha</s>' : ' <s>· coube inteira dentro do calado</s>'); },
-      function(){ return [0.8, 4.5]; }, null, 0.05),
+        ' m de corda na raiz' +
+        (APP.rudder.passou
+          ? ' <s>· a ponta passou ' + fmt(APP.rudder.excesso,2) + ' m do calado da quilha</s>'
+          : ' <s>· cabe até ' + fmt(APP.rudder.arMax,2) + ' dentro do calado da quilha</s>'); },
+      function(){ return [0.3, 6.0]; }, null, 0.05),
 
     P('cr', 'Área do leme', 'em % da área lateral submersa do casco', 1,
       function(){ return 100*ST.cr; },
@@ -5714,7 +5829,8 @@ var PASSOS = [
       A.push({ lvl:'warn', t:'Esta tabela parece já trazer o madeiramento morto. Somar uma quilha por cima pode contar a mesma área duas vezes.' });
     if(pat)
       A.push({ lvl:'ok', t:'Patilhão de ' + fmt(K.area,3) + ' m², com o fundo ' + fmt(K.dep,2) +
-        ' m abaixo da linha de base e calado total de ' + fmt(APP.draftTotal,2) + ' m. É até essa profundidade que o leme pode descer, e não além dela.' });
+        ' m abaixo da linha de base e calado de ' + fmt(APP.draftKeel,2) + ' m na quilha. ' +
+        'É até aí que o leme desce sem ser ele a tocar o fundo primeiro — no passo 4 você decide se passa disso.' });
     else if(K){
       if(K.ar < 0.55) A.push({ lvl:'warn', t:'<b>Razão de aspecto ' + fmt(K.ar,2) + '</b> — muito baixa para uma quilha de asa. Aprofunde a quilha ou reduza a área.' });
       else A.push({ lvl:'ok', t:'Quilha de ' + fmt(K.area,3) + ' m² e razão de aspecto ' + fmt(K.ar,2) + ', com calado total de ' + fmt(APP.draftTotal,2) + ' m.' });
@@ -5745,13 +5861,14 @@ var PASSOS = [
                     ST.cr = null; ST.rudAR = null; },
   titulo:'O leme: governar sem perder o barco',
   show:{ sails:false, spars:false, plane:true, ce:false, clr:true, lead:false, dims:true, grid:true, stations:false , keel:true, rud:true},
-  nota:'o leme aparece à popa, abaixo da linha d’água, e também soma ao plano lateral — repare se a ponta dele parou na mesma profundidade da ponta da quilha. O ponto <b style="color:var(--green)">verde</b> à ré é o centro de área do leme.',
+  nota:'o leme aparece à popa, abaixo da linha d’água, e também soma ao plano lateral. Arraste a razão de aspecto e veja a pá afinar e descer com a mesma área — e repare onde a ponta dela para em relação à ponta da quilha. O ponto <b style="color:var(--green)">verde</b> à ré é o centro de área do leme.',
   ideia:
     '<p>O leme faz duas coisas ao mesmo tempo: <b>governa</b> e <b>segura</b> — a área dele entra no plano lateral como a da quilha. Área de menos e o barco não obedece na hora de cambar; área demais e o leme fica pesado na mão e freia o barco.</p>' +
-    '<p>Há uma regra que este painel obedece sempre, mesmo quando ela custa caro: <b>o leme nunca é mais fundo que a quilha</b>. Se fosse, encontraria o fundo antes dela e seria o primeiro a quebrar — e sem leme não há barco. Quando o corte acontece, a envergadura é aparada no calado da quilha, a razão de aspecto real cai e a corda engorda para manter a área pedida. O painel mostra as duas razões, a pretendida e a real.</p>' +
+    '<p>Há uma regra de oficina que atravessa esta página: <b>o leme não deve ser mais fundo que a quilha</b>. Se for, encontra o fundo antes dela e é o primeiro a quebrar — e sem leme não há barco. Por isso a <b>proposta</b> do painel nunca passa do calado da quilha: quando a razão de aspecto típica do tipo de leme não cabe, ele abre na maior que cabe, e é esse valor que aparece no cursor.</p>' +
+    '<p>Mas a decisão é sua, e o cursor vai além: a pá desce para onde você mandar, <b>abaixo da linha de base e abaixo da ponta da quilha</b>, e o painel acende o aviso dizendo <b>quantos centímetros</b> ela passou e de quem passou a ser o calado total. Há barco projetado assim de propósito — o dinghy de praia, com a bolina içada, tem o leme como ponto mais fundo, e leme de levantar existe justamente para isso. O que não pode é acontecer sem você saber.</p>' +
     '<p>Uma sutileza que vale a aula: um leme pendurado sob o casco tem razão de aspecto <b>efetiva do dobro</b> da geométrica, porque o fundo do casco funciona como espelho e impede a fuga da água pela raiz. O leme de espelho de popa não tem esse espelho — por isso precisa ser proporcionalmente maior.</p>' +
-    '<p>A pá começa no fundo do casco e desce: ela fica <b>abaixo da linha d’água</b> e passa bem abaixo do calado do casco, até o limite da ponta da quilha. Quando o fundo do casco no lugar do leme já está <b>acima</b> da linha d’água — a popa levantada de um barco pequeno —, o painel começa a pá na própria linha d’água: o que fica fora da água não governa.</p>' +
-    '<p>Você tem dois cursores aqui, e eles dizem coisas diferentes. A <b>área</b> diz <i>quanto</i> leme o barco tem; a <b>razão de aspecto</b> diz <i>que forma</i> essa área tem — alta é funda e estreita, que rende mais por arrasto; baixa é rasa e larga, que encalha menos e perdoa mais. A quilha é quem dá a última palavra: se a envergadura pedida não couber no calado dela, o painel corta e avisa.</p>',
+    '<p>A pá começa no fundo do casco e desce, bem <b>abaixo da linha d’água</b> e abaixo do calado do casco. Quando o fundo do casco no lugar do leme já está <b>acima</b> da linha d’água — a popa levantada de um barco pequeno —, o painel começa a pá na própria linha d’água: o que fica fora da água não governa.</p>' +
+    '<p>Você tem dois cursores aqui, e eles dizem coisas diferentes. A <b>área</b> diz <i>quanto</i> leme o barco tem; a <b>razão de aspecto</b> diz <i>que forma</i> essa área tem — alta é funda e estreita, que rende mais sustentação por arrasto; baixa é rasa e larga, que governa menos e encalha depois. Repare que a <b>área não muda</b> quando você mexe na razão de aspecto: o que a envergadura ganha, a corda perde. É a mesma pá com outra forma.</p>',
   eq:'A<sub>leme</sub> ≈ <b>1,6% da SA</b> em LWL 6 m → <b>0,8%</b> em LWL 15 m &nbsp;·&nbsp; ou ≈ <b>10% do plano lateral</b>',
   leg:'A primeira é Larsson, Fig 6.39, escrita para casco moderno; a segunda é Teale, Fig 17, escrita para casco de plano lateral grande. O painel usa uma ou outra conforme a quilha que você escolheu, e mostra as duas.',
   escolhas:[
@@ -5762,30 +5879,37 @@ var PASSOS = [
                    defaultsForHull(); structural(); })
   ],
   params:['cr','rudAR'],
-  dica:'Puxe a razão de aspecto para cima e veja a pá afinar e aprofundar com a mesma área — até a quilha não deixar mais. Depois escolha “no espelho de popa” e veja a área saltar: sem o espelho do fundo do casco, o leme perde metade da razão de aspecto efetiva e precisa compensar em tamanho.',
+  dica:'Puxe a razão de aspecto para cima e veja a pá afinar e aprofundar com a mesma área — e o aviso acender quando a ponta passar do calado da quilha. Depois escolha “no espelho de popa” e veja a área saltar: sem o espelho do fundo do casco, o leme perde metade da razão de aspecto efetiva e precisa compensar em tamanho.',
   leituras:function(){
     var R = APP.rudder;
     return ro('Área do leme', fmt(R.area,3) + ' <small>m²</small>', 'hi',
               'Larsson daria ' + fmt(EST.ArLars,3) + ' m² · Teale ' + fmt(EST.ArTeale,3) + ' m²') +
       ro('Leme / plano lateral', fmt(100*R.area/Math.max(1e-6,APP.latTotal),1) + ' <small>%</small>', '',
          'Teale põe a régua em torno de 10%') +
-      ro('Razão de aspecto real', fmt(R.ar,2), R.cortado ? 'bad' : 'ok',
-         R.cortado ? 'cortada: você pediu ' + fmt(R.arIdeal,2) + ' e a quilha não deixou' : 'como pedida · efetiva no fundo do casco ≈ ' + fmt(2*R.ar,2)) +
+      ro('Razão de aspecto', fmt(R.ar,2), R.passou ? 'bad' : 'ok',
+         'efetiva no fundo do casco ≈ ' + fmt(2*R.ar,2) + ' · ' +
+         (R.passou ? 'passou da que cabe no calado da quilha, ' + fmt(R.arMax,2)
+                   : 'cabe até ' + fmt(R.arMax,2) + ' dentro do calado da quilha')) +
       ro('Envergadura', fmt(R.span,2) + ' <small>m</small>', '',
          'corda ' + fmt(R.cRoot,2) + ' m na raiz, ' + fmt(R.cTip,2) + ' m na ponta') +
-      ro('Calado do leme', fmt(R.draft,2) + ' <small>m</small>',
-         (R.draft <= APP.draftTotal + 1e-6) ? 'ok' : 'bad',
-         'calado total do barco ' + fmt(APP.draftTotal,2) + ' m — o leme nunca passa disso') +
+      ro('Calado do leme', fmt(R.draft,2) + ' <small>m</small>', R.passou ? 'bad' : 'ok',
+         R.passou ? 'passou ' + fmt(R.excesso,2) + ' m do calado da quilha (' + fmt(APP.draftKeel,2) +
+                    ' m) — é o leme que encontra o fundo primeiro'
+                  : 'dentro do calado da quilha, ' + fmt(APP.draftKeel,2) + ' m — a quilha toca primeiro') +
       ro('Centro do leme', fmt(R.cx - xPopa(),2) + ' <small>m da popa</small>', '',
          'quanto mais a ré, mais braço de alavanca para governar');
   },
   veredito:function(){
     var A = [], R = APP.rudder;
-    if(R.cortado) A.push({ lvl: R.ar < 0.8 ? 'bad' : 'warn',
-      t:'<b>Leme limitado pela quilha</b>, como mandado: a ponta parou no calado de ' + fmt(APP.draftTotal,2) +
-        ' m. A razão de aspecto caiu de ' + fmt(R.arIdeal,2) + ' para ' + fmt(R.ar,2) +
-        ' e as cordas engordaram para segurar a área. É o preço de não deixar o leme mais fundo que a quilha.' });
-    else A.push({ lvl:'ok', t:'Leme livre: a razão de aspecto pedida coube dentro do calado da quilha.' });
+    if(R.passou) A.push({ lvl: R.excesso > 0.10 ? 'bad' : 'warn',
+      t:'<b>A ponta do leme passou ' + fmt(R.excesso,2) + ' m do calado da quilha</b> (' + fmt(APP.draftKeel,2) +
+        ' m). O calado total de ' + fmt(APP.draftTotal,2) + ' m agora é do leme: é ele que encontra o fundo primeiro, ' +
+        'e sem leme não há barco. Baixe a razão de aspecto, reduza a área ou aprofunde a quilha — ou assuma a pá sacrificável, como no barco de praia com leme de levantar.' });
+    else if(R.ajustada) A.push({ lvl:'warn',
+      t:'<b>A quilha não deixa a razão de aspecto típica deste leme.</b> O painel abriu em ' + fmt(R.ar,2) +
+        ', a maior que cabe no calado dela (' + fmt(APP.draftKeel,2) + ' m); a típica seria ' + fmt(RUD[ST.rud].ar,2) +
+        '. Pá rasa e larga arrasta o mesmo e governa menos — ou a quilha desce, ou o cursor passa dela de propósito.' });
+    else A.push({ lvl:'ok', t:'Leme de razão de aspecto ' + fmt(R.ar,2) + ', inteiro dentro do calado da quilha.' });
     if(R.area/Math.max(1e-6,APP.latTotal) > 0.22)
       A.push({ lvl:'warn', t:'O leme está com mais de 22% do plano lateral. Isso é muito: o barco fica sensível e o leme, pesado.' });
     return A;
@@ -5799,7 +5923,8 @@ var PASSOS = [
   ],
   fonte:'<p><strong>Área:</strong> Larsson &amp; Eliasson, Fig 6.39, dá a área do leme como percentagem da área vélica, de 1,6% em LWL 6 m a 0,8% em LWL 15 m. Teale, Fig 17, escreve a regra em cima do plano lateral, cerca de 10% dele — que é a régua certa para casco tradicional de patilhão. O painel escolhe a fonte conforme a quilha e imprime as duas.</p>' +
         '<p><strong>Razão de aspecto:</strong> 2,8 a 3,3 no leme suspenso (a YD-41 do livro usa 3,3), 2,2 com skeg, 1,8 no leme de espelho — que fura a superfície e não ganha a imagem-espelho do fundo.</p>' +
-        '<p><strong>A regra dura</strong> — leme nunca mais fundo que a quilha — não vem de estatística nenhuma: vem da oficina. O leme é a peça que não pode faltar, e um leme mais fundo que a quilha é o primeiro a encontrar a pedra.</p>'
+        '<p><strong>A regra de oficina</strong> — o leme não deve ser mais fundo que a quilha — não vem de estatística nenhuma: vem do pátio do estaleiro. O leme é a peça que não pode faltar, e um leme mais fundo que a quilha é o primeiro a encontrar a pedra. Por isso ela manda na <strong>proposta</strong> do painel, que nunca abre com a ponta do leme abaixo da ponta da quilha.</p>' +
+        '<p>Ela não é, porém, uma lei da física, e há escola que projeta ao contrário: no barco de praia e no de calado raso, com a bolina içada, o leme <strong>é</strong> o ponto mais fundo, e o ferragem de levantar existe para ele tocar o fundo e subir sem quebrar — pá de leme é peça barata e refazível, quilha lastrada arrancada é estaleiro. Por isso o cursor vai além do calado da quilha, e o painel mede e avisa em vez de cortar em silêncio: cortar deixaria o cursor sem efeito nenhum, já que a área é fixa e o que a envergadura não toma vai todo para a corda.</p>'
 },
 
 /* ------------------------------------------------------------------ 5 --- */
@@ -6082,7 +6207,7 @@ var GRANDES = {
   quilha:    function(){ return [['plano lateral', fmt(APP.latTotal,2) + ' m²', 'casco + apêndices'],
                                  ['calado', fmt(APP.draftTotal,2) + ' m', 'total']]; },
   leme:      function(){ return [['leme', fmt(APP.rudder.area,2) + ' m²', fmt(100*APP.rudder.area/Math.max(1e-6,APP.latTotal),0) + '% do plano'],
-                                 ['razão de aspecto', fmt(APP.rudder.ar,2), APP.rudder.cortado ? 'cortada pela quilha' : 'como pedida']]; },
+                                 ['razão de aspecto', fmt(APP.rudder.ar,2), APP.rudder.passou ? 'passou da quilha' : 'dentro da quilha']]; },
   lastro:    function(){ return [['GM', fmt(BAL.bal.GM,2) + ' m', ST.ballast ? 'com lastro' : 'sem lastro'],
                                  ['AVS', (GZC.stats.vanish === null ? '>180' : fmt(GZC.stats.vanish,0)) + '°', 'anulação do braço']]; },
   armacao:   function(){ return [['velas', String(RIG.sails.length), RIGS[ST.rig].label.toLowerCase()],
@@ -6151,7 +6276,7 @@ function linhasResumo(){
      ? ' · ' + fmt(APP.keel.area,3) + ' m² abaixo da linha de quilha · ' + fmt(APP.keel.dep,2) + ' m abaixo da linha de base'
      : (APP.keel && !APP.keel.embedded ? ' · ' + fmt(APP.keel.area,3) + ' m² · AR ' + fmt(APP.keel.ar,2) : ' · sem apêndice desenhado')));
   ln('Leme', RUD[ST.rud].label + ' · ' + fmt(APP.rudder.area,3) + ' m² · AR ' + fmt(APP.rudder.ar,2) +
-     (APP.rudder.cortado ? ' (cortado pela quilha)' : ''));
+     (APP.rudder.passou ? ' (ponta ' + fmt(APP.rudder.excesso,2) + ' m abaixo da quilha)' : ''));
   ln('Calado total', fmt(APP.draftTotal,2) + ' m');
   ln('Lastro', ST.ballast ? (fmt(BAL.bal.mass,0) + ' kg · razão ' + fmt(ST.br,2)) : 'não lastrado');
   ln('Estabilidade', 'KG ' + fmt(BAL.bal.KG,2) + ' m · GM ' + fmt(BAL.bal.GM,3) + ' m · GZ máx ' + fmt(st.gzMax,3) +

@@ -16,7 +16,7 @@ license: Proprietário — Brana Arquitetura Naval. Uso interno e nos cursos da 
 compatibility: Python 3.8 ou mais novo, só biblioteca padrão. Não usa rede, nem instala nada. Se houver node no caminho, o relatório sai com os números do barco. O painel gerado é um HTML único que roda offline no navegador e no celular.
 metadata:
   category: brana
-  version: "1.2"
+  version: "1.3"
   author: Brana Arquitetura Naval
 ---
 
@@ -175,5 +175,9 @@ Vale saber para descrever ao usuário:
   até o final do espelho, com a profundidade num cursor, medida da linha de base para
   baixo. Entra no plano lateral só o que fica abaixo da linha de quilha e dentro
   d’água, de modo que nada é contado duas vezes.
+- **Leme**: área e razão de aspecto em cursores próprios. A proposta do painel nunca
+  nasce mais funda que a quilha — é a regra de oficina —, mas o cursor é de quem
+  projeta: a pá desce abaixo da linha de base se for pedido, e o painel diz quantos
+  centímetros a ponta passou da quilha e de quem passou a ser o calado total.
 - Fontes: Larsson & Eliasson, *Principles of Yacht Design* (4ª ed.); John Teale,
   *How to Design a Boat* (2ª ed.); ISSC 2009, Comitê V.8.

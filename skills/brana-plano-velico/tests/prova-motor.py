@@ -41,6 +41,7 @@ CASCOS.forEach(function(par){
   var areaAnt = -1, calAnt = -1;
   [0, 0.05, 0.2, 0.5, 1.0].forEach(function(dep){
     ST.patDepth = dep; ST.touched.patDepth = 1;
+    delete ST.touched.rudAR; ST.rudAR = null;      /* aqui se prova a PROPOSTA do painel */
     recompute();
     var K = APP.keel, pre = nome + ' / patilhao ' + dep + ' m: ';
 
@@ -95,45 +96,108 @@ CASCOS.forEach(function(par){
          pre + 'o fundo nao sai tangente na proa (perfil ' + f(sFundo,2) + ' contra quilha ' + f(sQuilha,2) + ')');
     }
 
-    /* plano lateral: casco + patilhao + leme (+ skeg), sem contar duas vezes */
-    var soma = H.Alat + K.area + APP.rudder.area + (APP.skeg ? APP.skeg.area : 0);
+    /* plano lateral: casco + patilhao + leme (+ skeg) MENOS o que o patilhao ja contava */
+    var soma = H.Alat + K.area + APP.rudder.area + (APP.skeg ? APP.skeg.area : 0) - APP.sobreposto;
     ok(Math.abs(APP.latTotal - soma) < 1e-6, pre + 'plano lateral ' + f(APP.latTotal) + ' != soma das partes ' + f(soma));
+    ok(APP.sobreposto > 1e-9, pre + 'com patilhao o leme cai dentro do perfil: a area comum devia ser descontada');
+    ok(APP.sobreposto < APP.rudder.area + (APP.skeg ? APP.skeg.area : 0) + 1e-9,
+       pre + 'area comum maior que os apendices que a geraram');
+    ok(APP.latTotal > H.Alat - 1e-9, pre + 'plano lateral menor que o do casco');
 
-    /* regra dura e leme dentro d'agua */
-    ok(APP.rudder.tipZ >= K.tipZ - 1e-9, pre + 'LEME MAIS FUNDO QUE A QUILHA');
+    /* a PROPOSTA do painel obedece a regra, ou cai no piso de AR avisando */
+    ok(APP.rudder.tipZ >= K.tipZ - 1e-9 || APP.rudder.ar <= 0.8 + 1e-9,
+       pre + 'a proposta passou da quilha sem estar no piso de AR');
+    ok(!APP.rudder.passou || APP.rudder.excesso > 0,
+       pre + 'aviso de passar da quilha sem excesso medido');
     var zTopo = APP.rudder.tipZ + APP.rudder.span*Math.cos(ST.rudRake*Math.PI/180);
     ok(zTopo <= H.zw + 1e-6, pre + 'o leme comeca acima da linha d agua');
     ok(isFinite(BAL.leadPct) && isFinite(BAL.bal.GM), pre + 'equilibrio nao fechou');
   });
 
   /* ------------------------------------------------ leme: razao de aspecto --- */
-  ['spade','skeg','transom'].forEach(function(rt){
-    ST.keel = 'fin'; ST.rud = rt; ST.patDepth = 0;
-    delete ST.touched.rudAR; delete ST.touched.cr;
-    recompute();
-    var areaBase = APP.rudder.area, spanAnt = -1;
-    [1.0, 2.0, 3.0, 4.5].forEach(function(ar){
-      ST.rudAR = ar; ST.touched.rudAR = 1;
+  /* O cursor tem de mandar no DESENHO em qualquer quilha, inclusive patilhao raso,
+     que e onde o clamp antigo o matava. A area e fixa: o que a envergadura ganha,
+     a corda perde. */
+  [['fin', 0], ['center', 0], ['full', 0], ['full', 0.30], ['full', 1.0]].forEach(function(kc){
+    ['spade','skeg','transom'].forEach(function(rt){
+      ST.keel = kc[0]; ST.patDepth = kc[1]; ST.rud = rt;
+      delete ST.touched.rudAR; delete ST.touched.cr; delete ST.touched.ck; delete ST.touched.keelDraftF;
       recompute();
-      var R = APP.rudder, pre = nome + ' / leme ' + rt + ' AR ' + ar + ': ';
-      ok(Math.abs(R.area - areaBase) < 1e-3*Math.max(1,areaBase) + 1e-4,
-         pre + 'a area mudou com a razao de aspecto (' + f(R.area) + ' contra ' + f(areaBase) + ')');
-      ok(R.span > spanAnt - 1e-9, pre + 'envergadura encolheu ao pedir mais AR');
-      spanAnt = R.span;
-      ok(R.cortado ? R.ar < ar + 1e-6 : Math.abs(R.ar - ar) < 1e-6, pre + 'AR real ' + f(R.ar,2) + ' nao bate');
-      ok(R.tipZ >= APP.keel.tipZ - 1e-9, pre + 'LEME MAIS FUNDO QUE A QUILHA');
-      ok(R.area > 1e-6 && isFinite(R.cRoot) && R.cRoot > 0, pre + 'pa degenerada');
+      var tag = nome + ' / ' + kc[0] + (kc[0] === 'full' ? ' dep ' + kc[1] : '') + ' / leme ' + rt;
+
+      /* --- a PROPOSTA do painel obedece a regra, ou avisa que nao coube --- */
+      var R0 = APP.rudder, pre0 = tag + ' (proposta): ';
+      ok(R0.ajustada ? true : Math.abs(R0.ar - RUD[rt].ar) < 1e-6,
+         pre0 + 'sem ajuste a AR devia ser a tipica do tipo (' + f(R0.ar,2) + ' contra ' + RUD[rt].ar + ')');
+      ok(!R0.passou || R0.ar <= 0.8 + 1e-9,
+         pre0 + 'a proposta passou da quilha sem estar no piso de AR (' + f(R0.ar,2) + ')');
+      ok(R0.ar >= 0.79, pre0 + 'proposta com AR degenerada ' + f(R0.ar,2));
+      ok(R0.span > 0.02 && R0.cRoot > 0.01, pre0 + 'pa degenerada: span ' + f(R0.span) + ' corda ' + f(R0.cRoot));
+
+      /* --- com o cursor na mao do aluno, o desenho TEM de mudar --- */
+      var areaBase = APP.rudder.area, spanAnt = -1, polyAnt = null;
+      [0.5, 1.0, 2.0, 3.0, 4.5, 6.0].forEach(function(ar){
+        ST.rudAR = ar; ST.touched.rudAR = 1;
+        recompute();
+        var R = APP.rudder, pre = tag + ' AR ' + ar + ': ';
+
+        ok(Math.abs(R.ar - ar) < 1e-6, pre + 'AR pedida nao e a desenhada: ' + f(R.ar,3));
+        ok(Math.abs(R.area - areaBase) < 1e-3*Math.max(1, areaBase) + 1e-4,
+           pre + 'a area mudou com a razao de aspecto (' + f(R.area) + ' contra ' + f(areaBase) + ')');
+        ok(R.span > spanAnt + 1e-6, pre + 'ENVERGADURA NAO CRESCEU com a AR (' + f(R.span) + ' apos ' + f(spanAnt) + ')');
+        spanAnt = R.span;
+
+        /* o poligono desenhado acompanha: extensao vertical = span x cos(rake) */
+        var zlo = 1e9, zhi = -1e9;
+        R.poly.forEach(function(p){ if(p[1] < zlo) zlo = p[1]; if(p[1] > zhi) zhi = p[1]; });
+        ok(Math.abs((zhi - zlo) - R.span*Math.cos(ST.rudRake*Math.PI/180)) < 1e-6,
+           pre + 'o poligono nao tem a altura da envergadura');
+        if(polyAnt) ok(Math.abs((zhi - zlo) - polyAnt) > 1e-6, pre + 'o DESENHO nao mudou com a AR');
+        polyAnt = zhi - zlo;
+
+        /* a area do poligono continua sendo a area pedida */
+        ok(Math.abs(polyArea(R.poly) - ST.cr*H.Alat) < 1e-6 + 1e-3*R.area,
+           pre + 'area do poligono ' + f(polyArea(R.poly)) + ' != pedida ' + f(ST.cr*H.Alat));
+
+        /* o aviso e honesto e quantificado */
+        var passouDeFato = R.tipZ < APP.keel.tipZ - 0.005;
+        ok(R.passou === passouDeFato, pre + 'o aviso de passar da quilha nao bate com a geometria');
+        if(R.passou) ok(Math.abs(R.excesso - (APP.keel.tipZ - R.tipZ)) < 2e-3,
+           pre + 'excesso ' + f(R.excesso) + ' != ' + f(APP.keel.tipZ - R.tipZ));
+
+        /* calado total = o mais fundo dos dois, e a leitura da quilha e so dela */
+        ok(Math.abs(APP.draftTotal - Math.max(APP.keel.draft || 0, R.draft)) < 2e-3,
+           pre + 'calado total ' + f(APP.draftTotal) + ' nao e o mais fundo dos dois');
+        ok(Math.abs(APP.draftKeel - (H.zw - APP.keel.tipZ)) < 1e-6, pre + 'calado da quilha errado');
+
+        /* o skeg e estrutura: o nariz dele nao passa da quilha */
+        if(APP.skeg){
+          var zn = 1e9; APP.skeg.poly.forEach(function(p){ if(p[1] < zn) zn = p[1]; });
+          ok(zn >= APP.keel.tipZ - 1e-6, pre + 'o nariz do skeg passou da ponta da quilha');
+        }
+
+        /* plano lateral: soma das partes menos o que o patilhao ja contava */
+        var soma = H.Alat + (APP.keel.area || 0) + R.area + (APP.skeg ? APP.skeg.area : 0) - (APP.sobreposto || 0);
+        ok(Math.abs(APP.latTotal - soma) < 1e-6, pre + 'plano lateral ' + f(APP.latTotal) + ' != soma ' + f(soma));
+        ok((APP.sobreposto || 0) >= -1e-9, pre + 'sobreposicao negativa');
+        if(!APP.keel.patilhao) ok(Math.abs(APP.sobreposto || 0) < 1e-9, pre + 'sobreposicao fora do patilhao');
+        ok(APP.latTotal > H.Alat - 1e-9, pre + 'plano lateral menor que o do casco');
+        ok(isFinite(BAL.leadPct) && isFinite(BAL.bal.GM), pre + 'equilibrio nao fechou');
+      });
     });
   });
 
   /* ------------------------------------- troca de tipo de quilha ida e volta --- */
   ['fin','center','dagger','full','fin'].forEach(function(kt){
     ST.keel = kt; delete ST.touched.ck; delete ST.touched.keelDraftF;
+    delete ST.touched.rudAR; ST.rudAR = null;      /* de novo, a proposta do painel */
+    ST.patDepth = 0;
     recompute();
     var pre = nome + ' / quilha ' + kt + ': ';
     ok(isFinite(APP.latTotal) && APP.latTotal > 0, pre + 'plano lateral invalido');
     ok(isFinite(APP.draftTotal) && APP.draftTotal > 0, pre + 'calado invalido');
-    ok(APP.rudder.tipZ >= APP.keel.tipZ - 1e-9, pre + 'LEME MAIS FUNDO QUE A QUILHA');
+    ok(APP.rudder.tipZ >= APP.keel.tipZ - 1e-9 || APP.rudder.ar <= 0.8 + 1e-9,
+       pre + 'a proposta passou da quilha sem estar no piso de AR');
     ok(APP.keel.area >= 0, pre + 'area de quilha negativa');
     ok(isFinite(BAL.bal.KG) && isFinite(GZC.stats.vanish), pre + 'estabilidade nao fechou');
   });

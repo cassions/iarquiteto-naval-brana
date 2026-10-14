@@ -25,8 +25,8 @@ saida         <pasta de trabalho>\Plano Velico - Ana Ribeiro.html
 o painel abre assim (numeros do motor do proprio painel):
   casco        Delta 2306 kg | calado do casco 1.145 m | Cp 0.588 | Cb 0.190
   apendices    Patilhão (full keel) | quilha 1.572 m2 | leme 0.763 m2 | calado total 1.14 m
-  pano         29.2 m2 nominais (k 17.5, SA/Sw 2.11) | Sloop, Triangular (bermudiana)
-  equilibrio   lead 10.5% (faixa 8 a 13) | Dellenbaugh 46.6 graus | GM 0.33 m | AVS 136 graus
+  pano         29.2 m2 nominais (k 17.5, SA/Sw 2.10) | Sloop, Triangular (bermudiana)
+  equilibrio   lead 10.5% (faixa 8 a 13) | Dellenbaugh 47.8 graus | GM 0.33 m | AVS 136 graus
 ```
 
 Repare que ele **abre em patilhão** — a baliza junto da quilha é magra (razão de
