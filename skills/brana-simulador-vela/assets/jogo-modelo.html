@@ -1,0 +1,2236 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Vela na Baia de Todos os Santos - @@NOME@@</title>
+<style>
+:root{
+  --ground:#333333; --graf:#404040; --box:#2E2E2E; --card:#F7F7F7;
+  --red:#9A3231; --red-l:#EE9A98; --red-xl:#F5DADA;
+  --white:#FFFFFF; --light:#E8E8E8; --muted:#BFBFBF;
+  --rule:#555555; --amber:#FBB12F; --green:#9BD79B; --blue:#7FB6DE;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;height:100%;overflow:hidden;background:var(--ground);
+  font-family:Calibri,"Segoe UI",system-ui,sans-serif;color:var(--light);
+  -webkit-user-select:none;user-select:none;touch-action:none}
+canvas{display:block}
+#sea{position:fixed;inset:0;width:100%;height:100%;z-index:0}
+
+/* ---------- caixas flutuantes ---------- */
+.panel{position:fixed;z-index:5;background:rgba(46,46,46,.88);border:1px solid var(--rule);
+  border-radius:6px;padding:8px 10px;backdrop-filter:blur(6px);box-shadow:0 6px 18px rgba(0,0,0,.35)}
+.panel h3{margin:0 0 6px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted);font-weight:600;border-bottom:1px solid var(--rule);padding-bottom:4px}
+.num{font-family:Consolas,"Courier New",monospace;font-variant-numeric:tabular-nums}
+
+#inst{top:10px;left:10px;min-width:214px}
+.big{display:flex;align-items:baseline;gap:6px;margin:2px 0 6px}
+.big .v{font-family:Consolas,monospace;font-size:40px;line-height:.95;color:var(--white)}
+.big .u{font-size:12px;color:var(--muted);letter-spacing:.08em}
+.rows{display:grid;grid-template-columns:auto 1fr;gap:1px 10px;font-size:12.5px}
+.rows .k{color:var(--muted)}
+.rows .v{font-family:Consolas,monospace;text-align:right;color:var(--white)}
+.warn{color:var(--amber)} .bad{color:var(--red-l)} .good{color:var(--green)}
+
+#dials{top:10px;right:10px;width:168px;text-align:center}
+#dialCv{width:148px;height:148px}
+#trimWrap{margin-top:4px}
+#trimCv{width:148px;height:26px}
+
+#cond{right:10px;top:224px;width:248px;max-height:calc(100vh - 244px);overflow:auto}
+#cond h3{cursor:pointer;margin-bottom:0}
+#cond h3 i{float:right;font-style:normal;color:var(--red-l)}
+#cond.closed{max-height:none;overflow:visible}
+#cond.closed .body{display:none}
+#cond.closed h3{border-bottom:0;padding-bottom:0}
+.ctl{margin:7px 0}
+.ctl label{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:2px}
+.ctl label b{color:var(--white);font-family:Consolas,monospace;font-weight:400}
+input[type=range]{-webkit-appearance:none;width:100%;height:16px;background:transparent;margin:0}
+input[type=range]::-webkit-slider-runnable-track{height:4px;background:var(--rule);border-radius:2px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;margin-top:-5px;
+  border-radius:50%;background:var(--red-l);border:1px solid #222;cursor:pointer}
+input[type=range]::-moz-range-track{height:4px;background:var(--rule);border-radius:2px}
+input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--red-l);border:1px solid #222}
+.seg{display:flex;gap:4px;flex-wrap:wrap;margin:4px 0}
+.seg button,.btn{font:inherit;font-size:12px;padding:4px 8px;border-radius:4px;cursor:pointer;
+  background:var(--graf);color:var(--light);border:1px solid var(--rule)}
+.seg button.on{background:var(--red);border-color:var(--red-l);color:#fff}
+.seg button:hover,.btn:hover{border-color:var(--red-l)}
+.tog{display:flex;align-items:center;gap:6px;font-size:12.5px;margin:5px 0;cursor:pointer}
+.hint{font-size:11px;color:var(--muted);line-height:1.35;margin:4px 0 0}
+
+#mini{left:10px;bottom:10px;padding:6px}
+#miniCv{width:200px;height:200px;display:block;border-radius:3px}
+#miniCap{font-size:10.5px;color:var(--muted);margin-top:4px;text-align:center}
+
+#bar{position:fixed;z-index:6;left:50%;transform:translateX(-50%);bottom:10px;display:flex;gap:6px;align-items:center}
+#bar .btn{background:rgba(46,46,46,.88);backdrop-filter:blur(6px)}
+#bar .btn.on{background:var(--red);border-color:var(--red-l);color:#fff}
+
+#toast{position:fixed;z-index:9;left:50%;top:92px;transform:translateX(-50%);
+  background:rgba(154,50,49,.93);color:#fff;padding:8px 16px;border-radius:5px;font-size:15px;
+  opacity:0;transition:opacity .25s;pointer-events:none;text-align:center;max-width:80vw}
+#toast.on{opacity:1}
+
+#task{position:fixed;z-index:7;left:50%;transform:translateX(-50%);top:10px;max-width:min(560px,70vw);
+  background:rgba(46,46,46,.92);border:1px solid var(--rule);border-left:4px solid var(--red);
+  border-radius:5px;padding:9px 13px;display:none;backdrop-filter:blur(6px)}
+#task.on{display:block}
+#taskT{font-size:13.5px;color:var(--white);font-weight:600;letter-spacing:.02em}
+#taskD{font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.4}
+#taskP{height:3px;background:var(--rule);border-radius:2px;margin-top:7px;overflow:hidden}
+#taskP i{display:block;height:100%;width:0;background:var(--green);transition:width .2s}
+
+#veil{position:fixed;inset:0;z-index:20;background:rgba(20,20,20,.82);display:none;
+  overflow:auto;padding:24px 14px;backdrop-filter:blur(3px)}
+#veil.on{display:block}
+.modal{max-width:880px;margin:0 auto;background:var(--box);border:1px solid var(--rule);
+  border-radius:8px;padding:22px 26px 26px}
+.modal h1{font-size:23px;margin:0 0 2px;color:var(--white);font-weight:600}
+.modal h2{font-size:13px;margin:20px 0 6px;color:var(--red-l);letter-spacing:.08em;text-transform:uppercase}
+.modal p,.modal li{font-size:14px;line-height:1.55;color:var(--light)}
+.modal .lead{color:var(--muted)}
+.modal code{font-family:Consolas,monospace;background:#262626;padding:1px 5px;border-radius:3px;font-size:13px}
+.logo{height:26px;vertical-align:middle;margin-right:10px;opacity:.95}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.spec{width:100%;border-collapse:collapse;font-size:13px;margin-top:4px}
+.spec td{padding:3px 6px;border-bottom:1px solid #3d3d3d}
+.spec td:last-child{text-align:right;font-family:Consolas,monospace;color:var(--white);white-space:nowrap}
+.modes{display:grid;grid-template-columns:repeat(auto-fit,minmax(182px,1fr));gap:10px;margin:14px 0 4px}
+.mode{background:var(--graf);border:1px solid var(--rule);border-radius:6px;padding:12px 14px;cursor:pointer;text-align:left}
+.mode:hover{border-color:var(--red-l);background:#4a4a4a}
+.mode b{display:block;font-size:15px;color:var(--white);margin-bottom:3px}
+.mode span{font-size:12.5px;color:var(--muted);line-height:1.35}
+.keys{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px}
+.key{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--muted)}
+.key i{font-style:normal;font-family:Consolas,monospace;background:#1f1f1f;border:1px solid var(--rule);
+  border-bottom-width:2px;border-radius:4px;padding:2px 7px;color:var(--white);font-size:12px}
+details{margin-top:10px;border-top:1px solid var(--rule);padding-top:8px}
+summary{cursor:pointer;color:var(--red-l);font-size:13.5px}
+details p,details li{font-size:13px;color:var(--muted)}
+
+#touch{position:fixed;inset:0;z-index:4;display:none;pointer-events:none}
+#touch .pad{position:absolute;bottom:56px;width:74px;height:74px;border-radius:50%;
+  background:rgba(46,46,46,.75);border:1px solid var(--rule);color:var(--light);
+  display:flex;align-items:center;justify-content:center;font-size:24px;pointer-events:auto}
+#touch .pad:active{background:var(--red)}
+#pL{left:12px} #pR{left:98px}
+#pIn{right:98px} #pOut{right:12px}
+#touch .lbl{position:absolute;bottom:34px;font-size:10px;color:var(--muted);letter-spacing:.1em}
+body.touch #touch{display:block}
+body.touch .pad{bottom:70px}
+body.touch #touch .lbl{bottom:50px}
+body.touch #mini{bottom:160px}
+body.touch #bar{bottom:152px}
+
+@media (max-width:760px){
+  #cond{top:auto;bottom:10px;right:10px;left:10px;width:auto;max-height:46vh}
+  #toast{top:218px}
+  #bar{bottom:58px}
+  #task{top:auto;bottom:186px;left:8px;right:8px;max-width:none;transform:none}
+  #dials{width:122px;padding:6px} #dialCv{width:106px;height:106px} #trimCv{width:106px;height:20px}
+  #inst{min-width:148px;padding:6px 8px} .big .v{font-size:30px}
+  #inst .rows{font-size:11px}
+  #mini{display:none}
+  .grid2{grid-template-columns:1fr}
+  #task{max-width:88vw}
+  .modal{padding:16px 16px 20px}
+}
+</style>
+</head>
+<body>
+<canvas id="sea"></canvas>
+
+<div id="inst" class="panel">
+  <h3>Instrumentos</h3>
+  <div class="big"><span class="v num" id="iSpd">0,0</span><span class="u">nos SOG</span></div>
+  <div class="rows">
+    <span class="k">rumo</span><span class="v" id="iHdg">000</span>
+    <span class="k">vento real</span><span class="v" id="iTw">0 / 000</span>
+    <span class="k">vento aparente</span><span class="v" id="iAw">0 / 000</span>
+    <span class="k">angulo TWA</span><span class="v" id="iTwa">0</span>
+    <span class="k">banda</span><span class="v" id="iHeel">0</span>
+    <span class="k">abatimento</span><span class="v" id="iLee">0</span>
+    <span class="k">VMG</span><span class="v" id="iVmg">0,0</span>
+    <span class="k">alvo da polar</span><span class="v" id="iPol">-</span>
+    <span class="k">sonda</span><span class="v" id="iDep">-</span>
+  </div>
+</div>
+
+<div id="dials" class="panel">
+  <canvas id="dialCv" width="296" height="296"></canvas>
+  <div id="trimWrap"><canvas id="trimCv" width="296" height="52"></canvas></div>
+</div>
+
+<div id="cond" class="panel">
+  <h3 id="condH">Condicoes <i>&minus;</i></h3>
+  <div class="body">
+    <div class="ctl"><label>vento <b><span id="vWs">14</span> nos</b></label>
+      <input type="range" id="ws" min="0" max="45" step="0.5" value="14"></div>
+    <div class="ctl"><label>de onde vem <b><span id="vWd">120</span>&deg;</b></label>
+      <input type="range" id="wd" min="0" max="359" step="1" value="120"></div>
+    <div class="ctl"><label>rajada e rondada <b><span id="vGu">30</span>%</b></label>
+      <input type="range" id="gu" min="0" max="100" step="1" value="30"></div>
+    <hr style="border:0;border-top:1px solid var(--rule);margin:9px 0">
+    <div class="ctl"><label>corrente <b><span id="vCs">1,2</span> nos</b></label>
+      <input type="range" id="cs" min="0" max="5" step="0.1" value="1.2"></div>
+    <div class="ctl"><label>para onde vai <b><span id="vCd">145</span>&deg;</b></label>
+      <input type="range" id="cd" min="0" max="359" step="1" value="145"></div>
+    <label class="tog"><input type="checkbox" id="tide" checked> mare de 6 h inverte a corrente</label>
+    <hr style="border:0;border-top:1px solid var(--rule);margin:9px 0">
+    <div class="ctl"><label>onda Hs <b><span id="vHs">0,6</span> m</b></label>
+      <input type="range" id="hs" min="0" max="4" step="0.1" value="0.6"></div>
+    <div class="ctl"><label>periodo <b><span id="vTp">4,5</span> s</b></label>
+      <input type="range" id="tp" min="2" max="14" step="0.1" value="4.5"></div>
+    <div class="ctl"><label>onda vem de <b><span id="vWv">120</span>&deg;</b></label>
+      <input type="range" id="wv" min="0" max="359" step="1" value="120"></div>
+    <label class="tog"><input type="checkbox" id="wvLock" checked> onda acompanha o vento</label>
+    <div class="seg" style="margin-top:8px">
+      <button data-pre="calmaria">calmaria</button>
+      <button data-pre="brisa" class="on">brisa de tarde</button>
+      <button data-pre="fresco">vento fresco</button>
+      <button data-pre="temporal">temporal</button>
+    </div>
+    <p class="hint">A brisa da Baia de Todos os Santos entra de leste/sudeste e refresca depois do meio-dia. Quem manda na travessia e a corrente de mare: na enchente empurra para dentro da baia, na vazante para a barra.</p>
+  </div>
+</div>
+
+<div id="mini" class="panel">
+  <canvas id="miniCv" width="400" height="400"></canvas>
+  <div id="miniCap">Baia de Todos os Santos</div>
+</div>
+
+<div id="bar">
+  <button class="btn" id="bMenu">menu</button>
+  <button class="btn" id="bMotor">motor</button>
+  <button class="btn" id="bAnchor">fundear</button>
+  <button class="btn" id="bZoom">zoom</button>
+  <button class="btn" id="bPause">pausa</button>
+</div>
+
+<div id="task"><div id="taskT"></div><div id="taskD"></div><div id="taskP"><i></i></div></div>
+<div id="toast"></div>
+
+<div id="touch">
+  <div class="pad" id="pL">&#9664;</div><div class="pad" id="pR">&#9654;</div>
+  <div class="lbl" style="left:34px">LEME</div>
+  <div class="pad" id="pIn">&#10216;</div><div class="pad" id="pOut">&#10217;</div>
+  <div class="lbl" style="right:42px">ESCOTA</div>
+</div>
+
+<div id="veil" class="on"><div class="modal">
+  <h1><img class="logo" src="data:image/png;base64,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" alt="Brana"> Vela na Baia de Todos os Santos</h1>
+  <p class="lead">Simulador de navegacao a vela com <span id="fBarco">o barco</span> do painel de plano velico da Brana.
+  O casco sai da tabela de cotas, o pano sai do plano velico, a estabilidade sai da curva de bracos de
+  endireitamento - e a baia e a de Salvador, com corrente de mare, brisa e vaga.</p>
+
+  <div class="modes">
+    <button class="mode" data-mode="livre"><b>Navegacao livre</b><span>Sem cronometro. Saia do Terminal Nautico e va onde quiser: Frades, Itaparica, Maragojipe, barra afora.</span></button>
+    <button class="mode" data-mode="aula"><b>Aulas de vela</b><span>Oito licoes curtas: orcar, arribar, cambar, virar em roda, trimar a vela e ler a corrente.</span></button>
+    <button class="mode" data-mode="regata"><b>Regata</b><span>Tres percursos com boias e cronometro, entre eles a travessia Salvador-Mar Grande.</span></button>
+    <button class="mode" data-mode="desafio"><b>Desafio da mare</b><span>Vencer o canal de Itaparica com a corrente contra. Quem le a agua chega primeiro.</span></button>
+  </div>
+
+  <h2>Comandos</h2>
+  <div class="keys">
+    <div class="key"><i>A</i><i>D</i> leme (ou setas)</div>
+    <div class="key"><i>W</i><i>S</i> folgar / caçar a escota</div>
+    <div class="key"><i>espaco</i> leme ao meio</div>
+    <div class="key"><i>R</i> rizar</div>
+    <div class="key"><i>F</i> enrolar a vela de proa</div>
+    <div class="key"><i>M</i> motor</div>
+    <div class="key"><i>Z</i> zoom</div>
+    <div class="key"><i>P</i> pausa</div>
+    <div class="key"><i>Esc</i> este menu</div>
+  </div>
+  <p class="hint" style="font-size:12.5px">No celular e no tablet os quatro botoes de baixo fazem leme e escota, e o painel de condicoes fica embaixo.</p>
+
+  <h2 id="fTit">O barco</h2>
+  <div class="grid2">
+    <table class="spec" id="fA"></table>
+    <table class="spec" id="fB"></table>
+  </div>
+  <p class="hint" id="fNota" style="font-size:12.5px"></p>
+
+  <h2>Como a fisica foi montada</h2>
+  <details open><summary>o que esta sendo resolvido a cada quadro</summary>
+  <p>Quatro graus de liberdade integrados a 200 Hz: avanco, deriva, guinada e banda. Em cada passo o
+  simulador monta o vento aparente, tira forca e arrasto de cada vela, tira sustentacao de quilha, leme e casco
+  pelo angulo de abatimento, resolve o momento de guinada em torno do centro de gravidade e equilibra o
+  momento de adernamento contra o braco GZ do casco.</p>
+  <ul>
+    <li><b>Vela:</b> C<sub>L</sub> e C<sub>D</sub> de perfil fino com razao de aspecto real de cada vela (<span id="fARs"></span>),
+    estol a 14&deg; de incidencia e queda pos-estol ate a placa plana (C<sub>D</sub> 1,9 a 90&deg;). Forca motriz = L&middot;sen&beta; &minus; D&middot;cos&beta;,
+    forca lateral = L&middot;cos&beta; + D&middot;sen&beta;, com &beta; = angulo do vento aparente. Vela mal caçada <b>faceia</b> e para de puxar.</li>
+    <li><b>Resistencia:</b> atrito pela linha ITTC-57 com fator de forma 1,15 sobre os <span id="fSw"></span> m&sup2; de superficie molhada,
+    resistencia residual crescendo com o numero de Froude (a parede chega perto de Fn 0,40, que e a velocidade de casco
+    de <span id="fVh"></span> nos), resistencia induzida pela forca lateral e resistencia acrescida na onda proporcional a Hs&sup2;.</li>
+    <li><b>Apendices:</b> quilha e leme (<span id="fAp"></span>) geram sustentacao pelo
+    angulo de ataque local - por isso o barco so governa quando tem arrancada, e o leme <b>estola</b> se voce forcar demais.</li>
+    <li><b>Banda:</b> momento das velas contra &Delta;&middot;g&middot;GZ(&phi;), com GZ interpolado da curva da folha 2 do plano velico
+    (<span id="fGZ"></span>). Amortecimento de rolagem e excitacao da onda incluidos.</li>
+    <li><b>Agua e ar:</b> o vento aparente usa a velocidade <b>no fundo</b>; a hidrodinamica usa a velocidade
+    <b>na agua</b>. A diferenca e a corrente de mare - e e dela que sai o abatimento que leva o barco para cima da pedra.</li>
+  </ul>
+  <p class="hint">A polar que aparece no painel nao e tabela: e o proprio modelo resolvido no equilibrio para cada angulo de vento, recalculado quando voce mexe no cursor do vento.</p>
+  </details>
+  <details><summary>a baia, as profundidades e o que e estimativa</summary>
+  <p>A costa e as ilhas sao tracadas da <b>linha de preamar das cartas raster oficiais da DHN</b> -
+  1110 (Baia de Todos os Santos, 1:65.000), 1107 (parte oeste, 1:30.000) e 2250 (1:300.000) - em projecao
+  equirretangular centrada em 12&deg;52'S. Sobre a linha de costa da carta, o contorno do jogo cai a
+  <b>36 m de erro mediano e 119 m no percentil 90</b> (antes eram 530 m e 3.236 m). As profundidades
+  seguem as sondagens da mesma carta, ajustadas por minimos quadrados com residuo de 2,7 m: canal da
+  barra 21-33 m, canal de Salvador 32-45 m, meio da baia 19-34 m, reconcavo 0-6 m, canal de Itaparica
+  4-13 m.</p>
+  <p><b>Continua sendo desenho de jogo, nao carta nautica.</b> Os riachos de mangue abaixo de ~300 m estao
+  fechados, as areas que secam nao aparecem como terra, e a profundidade e um campo continuo montado da
+  distancia da costa - nao tem baixio isolado, nem laje, nem balizamento. Na agua funda da carta (mais de
+  10 m) o campo cai dentro da faixa em 98% da area; em cima das coroas e dos baixios ele e otimista,
+  porque so sabe a distancia ate a costa. Para navegar de verdade, carta da DHN corrigida pelos Avisos
+  aos Navegantes.</p>
+  <p>A mare e um ciclo de 6 h 12 min que inverte o sentido da corrente e sobe e desce 1,0 m no fundo medido pela sonda.
+  O barco cala <span id="fCal"></span> m: encalha, e sai dali com o motor, a mare enchendo ou as duas coisas.</p>
+  </details>
+
+  <p style="margin-top:18px"><button class="btn" id="bGo" style="font-size:15px;padding:8px 20px;background:var(--red);border-color:var(--red-l);color:#fff">comecar a navegar</button>
+  <span class="hint" style="margin-left:10px">@@NOME@@ &middot; plano velico Brana &middot; @@DATA@@</span></p>
+</div></div>
+
+<script>
+"use strict";
+/* ==================================================================
+   VELA NA BAIA DE TODOS OS SANTOS
+   Veleiro de 12 m - projeto do painel de plano velico da Brana.
+   Arquivo unico, offline, sem biblioteca nenhuma.
+   ================================================================== */
+
+/* ---------- o barco: numeros lidos do PDF do plano velico ---------- */
+var B = @@BARCO@@;
+B.rho = 1025; B.rhoAir = 1.225; B.bowY = B.LOA;
+
+/* ---------- contorno do convés e da linha d'agua ----------
+   Nao ha tabela de cotas aqui: o PDF traz LOA, boca na linha d'agua, Cwp e LCF,
+   e o contorno sai deles - curva de potencia com a boca maxima no LCF, area do
+   plano d'agua igual ao Cwp medido e popa de painel. E desenho em planta, nao
+   hidrostatica: quem calcula deslocamento e estabilidade e o painel. */
+var DECK = [], WLINE = [];
+(function(){
+  function perfil(ymax, tr, na, nf, Lt, xmax, N){
+    var p = [], i, x, y, u;
+    for(i=0;i<=N;i++){
+      x = Lt*i/N;
+      if(x <= xmax){ u = (xmax-x)/Math.max(xmax,1e-3); y = ymax*(1-(1-tr)*Math.pow(u,na)); }
+      else { u = (x-xmax)/Math.max(Lt-xmax,1e-3); y = ymax*(1-Math.pow(u,nf)); }
+      p.push([x, y>0?y:0]);
+    }
+    return p;
+  }
+  var cwp = B.Cwp > 0.4 && B.Cwp < 0.95 ? B.Cwp : 0.70;
+  var n = cwp/(1-cwp); n = n<1.3?1.3:(n>4.5?4.5:n);
+  var xm = B.LCF; if(xm < 0.35*B.LOA) xm = 0.35*B.LOA; if(xm > 0.62*B.LOA) xm = 0.62*B.LOA;
+  DECK = perfil(B.BOA/2, 0.42, n*0.85, n*1.25, B.LOA, xm, 30);
+  var x0 = 0.18*(B.LOA-B.LWL), xw = xm - x0;
+  if(xw < 0.3) xw = 0.3; if(xw > B.LWL-0.3) xw = B.LWL-0.3;
+  var wl = perfil(B.BWL/2, 0.30, n*0.95, n*1.35, B.LWL, xw, 30);
+  for(var i=0;i<wl.length;i++) WLINE.push([wl[i][0]+x0, wl[i][1]]);
+})();
+
+/* ==================================================================
+   1. A BAIA  -  geografia, projecao, profundidade
+   ================================================================== */
+var GEO = {
+  lat0: -12.88, lon0: -38.66,
+  mPerDegLat: 110574, mPerDegLon: 111320 * Math.cos(-12.88 * Math.PI/180)
+};
+function proj(lon, lat){
+  return [ (lon - GEO.lon0) * GEO.mPerDegLon, (lat - GEO.lat0) * GEO.mPerDegLat ];
+}
+function unproj(x, y){
+  return [ x / GEO.mPerDegLon + GEO.lon0, y / GEO.mPerDegLat + GEO.lat0 ];
+}
+
+/* contornos em [lon,lat,...] - tracados da linha de preamar das cartas raster
+   da DHN 1110 (1:65.000), 1107 (1:30.000) e 2250 (1:300.000); os riachos de mangue
+   abaixo de ~300 m sao fechados de proposito, que isto e barco e nao SIG */
+var COAST_LL = {
+  continente: [
+    -38.8903,-13.1997, -38.8853,-13.1942, -38.8684,-13.1865, -38.8552,-13.1693,
+    -38.8367,-13.1563, -38.8262,-13.1505, -38.8030,-13.1441, -38.8100,-13.1379,
+    -38.8211,-13.1376, -38.8404,-13.1291, -38.8572,-13.1174, -38.8722,-13.1198,
+    -38.8737,-13.1116, -38.8824,-13.1101, -38.8995,-13.1129, -38.9071,-13.1114,
+    -38.9082,-13.1076, -38.9019,-13.1057, -38.8948,-13.1089, -38.8845,-13.0992,
+    -38.8773,-13.1031, -38.8578,-13.1065, -38.8309,-13.1202, -38.8238,-13.1206,
+    -38.8144,-13.1142, -38.8088,-13.1056, -38.8036,-13.0673, -38.8099,-13.0628,
+    -38.8246,-13.0648, -38.8273,-13.0578, -38.8156,-13.0561, -38.8116,-13.0501,
+    -38.8019,-13.0564, -38.7912,-13.0419, -38.7920,-13.0341, -38.7981,-13.0284,
+    -38.7918,-13.0242, -38.7860,-12.9952, -38.7790,-12.9955, -38.7725,-12.9892,
+    -38.7796,-12.9776, -38.7789,-12.9736, -38.7691,-12.9736, -38.7644,-12.9668,
+    -38.7659,-12.9645, -38.7737,-12.9666, -38.7763,-12.9629, -38.7686,-12.9558,
+    -38.7623,-12.9557, -38.7657,-12.9491, -38.7608,-12.9414, -38.7619,-12.9219,
+    -38.7541,-12.9119, -38.7573,-12.9071, -38.7552,-12.9007, -38.7525,-12.8981,
+    -38.7423,-12.8979, -38.7344,-12.8821, -38.7350,-12.8777, -38.7418,-12.8744,
+    -38.7518,-12.8765, -38.7569,-12.8650, -38.7705,-12.8791, -38.7757,-12.8792,
+    -38.7807,-12.8738, -38.7935,-12.8423, -38.8014,-12.8472, -38.8059,-12.8558,
+    -38.8139,-12.8623, -38.8223,-12.8649, -38.8367,-12.8598, -38.8425,-12.8523,
+    -38.8571,-12.8495, -38.8592,-12.8315, -38.8670,-12.8261, -38.8684,-12.8217,
+    -38.8676,-12.8103, -38.8614,-12.7977, -38.8722,-12.7903, -38.8766,-12.7814,
+    -38.8822,-12.7771, -38.9075,-12.7895, -38.9107,-12.7967, -38.9089,-12.8129,
+    -38.9122,-12.8183, -38.9155,-12.8183, -38.9166,-12.7870, -38.9072,-12.7811,
+    -38.9000,-12.7700, -38.9029,-12.7626, -38.9116,-12.7567, -38.9109,-12.7477,
+    -38.9143,-12.7403, -38.9165,-12.7410, -38.9178,-12.7540, -38.9211,-12.7540,
+    -38.9247,-12.7493, -38.9293,-12.7355, -38.9301,-12.7131, -38.9273,-12.7110,
+    -38.8869,-12.7110, -38.8827,-12.7167, -38.8769,-12.7182, -38.8719,-12.7377,
+    -38.8739,-12.7445, -38.8719,-12.7608, -38.8622,-12.7739, -38.8644,-12.7803,
+    -38.8611,-12.7896, -38.8545,-12.7961, -38.8587,-12.8226, -38.8510,-12.8287,
+    -38.8298,-12.8266, -38.8248,-12.8295, -38.8214,-12.8402, -38.8116,-12.8418,
+    -38.8083,-12.8320, -38.8030,-12.8266, -38.7853,-12.8193, -38.7767,-12.8117,
+    -38.7691,-12.7782, -38.7597,-12.7658, -38.7492,-12.7601, -38.7506,-12.7441,
+    -38.7430,-12.7363, -38.7474,-12.7325, -38.7487,-12.7227, -38.7567,-12.7182,
+    -38.7558,-12.7090, -38.7403,-12.6835, -38.7314,-12.6831, -38.7265,-12.6785,
+    -38.7255,-12.6695, -38.7325,-12.6602, -38.7273,-12.6576, -38.7251,-12.6525,
+    -38.7259,-12.6394, -38.7214,-12.6347, -38.7200,-12.6136, -38.7120,-12.6091,
+    -38.7090,-12.5938, -38.7017,-12.5912, -38.6989,-12.5932, -38.6984,-12.6111,
+    -38.7052,-12.6198, -38.6954,-12.6304, -38.6869,-12.6264, -38.6769,-12.6324,
+    -38.6698,-12.6274, -38.6606,-12.6276, -38.6518,-12.6297, -38.6419,-12.6406,
+    -38.6407,-12.6457, -38.6447,-12.6508, -38.6421,-12.6622, -38.6510,-12.6633,
+    -38.6525,-12.6741, -38.6483,-12.6932, -38.6414,-12.6926, -38.6377,-12.6986,
+    -38.6309,-12.6993, -38.6246,-12.6907, -38.6190,-12.6921, -38.6184,-12.7088,
+    -38.6248,-12.7150, -38.6215,-12.7253, -38.6095,-12.7248, -38.6045,-12.7339,
+    -38.5990,-12.7356, -38.5876,-12.7145, -38.5748,-12.7119, -38.5707,-12.7141,
+    -38.5641,-12.7103, -38.5563,-12.7129, -38.5519,-12.7243, -38.5399,-12.7237,
+    -38.5311,-12.7368, -38.5259,-12.7389, -38.5117,-12.7362, -38.4991,-12.7282,
+    -38.4949,-12.7310, -38.4999,-12.7405, -38.4953,-12.7463, -38.5035,-12.7544,
+    -38.4992,-12.7630, -38.5007,-12.7778, -38.4876,-12.7919, -38.4926,-12.7957,
+    -38.4955,-12.7909, -38.4993,-12.7902, -38.4993,-12.8089, -38.4879,-12.8146,
+    -38.4860,-12.8219, -38.4891,-12.8306, -38.4792,-12.8337, -38.4721,-12.8440,
+    -38.4804,-12.8588, -38.4788,-12.8766, -38.4862,-12.8839, -38.4915,-12.8979,
+    -38.4897,-12.9047, -38.4816,-12.9105, -38.4831,-12.9185, -38.4926,-12.9200,
+    -38.4923,-12.9131, -38.4967,-12.9095, -38.5034,-12.9209, -38.5123,-12.9220,
+    -38.5179,-12.9284, -38.5043,-12.9414, -38.5026,-12.9502, -38.5336,-13.0013,
+    -38.5331,-13.0100, -38.4946,-13.0118, -38.4874,-13.0171, -38.4689,-13.0145,
+    -38.4584,-13.0067, -38.4534,-13.0080, -38.4489,-13.0004, -38.4424,-12.9986,
+    -38.4255,-12.9798, -38.3914,-12.9580, -38.3804,-12.9552, -38.2800,-12.9560,
+    -38.2800,-12.5000, -39.0600,-12.5000, -39.0600,-13.3000, -38.8903,-13.3000
+  ],
+  itaparica: [
+    -38.7866,-13.1333, -38.7621,-13.1184, -38.7476,-13.0927, -38.7431,-13.0896,
+    -38.7391,-13.0910, -38.7346,-13.0892, -38.7261,-13.0740, -38.7138,-13.0614,
+    -38.6966,-13.0559, -38.6728,-13.0378, -38.6567,-13.0328, -38.6314,-12.9960,
+    -38.6160,-12.9843, -38.6052,-12.9606, -38.6059,-12.9544, -38.6154,-12.9370,
+    -38.6157,-12.9305, -38.6243,-12.9245, -38.6326,-12.9074, -38.6389,-12.9033,
+    -38.6594,-12.8980, -38.6847,-12.8804, -38.6820,-12.8929, -38.6839,-12.8977,
+    -38.6887,-12.8994, -38.6887,-12.9112, -38.6839,-12.9158, -38.6773,-12.9145,
+    -38.6726,-12.9176, -38.6690,-12.9410, -38.6709,-12.9433, -38.6760,-12.9429,
+    -38.6813,-12.9363, -38.6855,-12.9402, -38.6881,-12.9483, -38.6804,-12.9496,
+    -38.6751,-12.9457, -38.6701,-12.9599, -38.6748,-12.9609, -38.6813,-12.9709,
+    -38.6891,-12.9756, -38.6947,-12.9750, -38.6931,-12.9833, -38.6957,-12.9871,
+    -38.6994,-12.9861, -38.7005,-12.9811, -38.7034,-12.9812, -38.7066,-12.9870,
+    -38.7057,-12.9929, -38.7196,-12.9977, -38.7205,-13.0032, -38.7252,-13.0053,
+    -38.7234,-13.0141, -38.7317,-13.0141, -38.7333,-13.0185, -38.7437,-13.0214,
+    -38.7494,-13.0290, -38.7524,-13.0286, -38.7536,-13.0256, -38.7497,-13.0221,
+    -38.7485,-13.0107, -38.7568,-13.0032, -38.7646,-13.0023, -38.7708,-13.0123,
+    -38.7787,-13.0175, -38.7868,-13.0335, -38.7793,-13.0409, -38.7941,-13.0524,
+    -38.7977,-13.0617, -38.7970,-13.0791, -38.7924,-13.0997, -38.7939,-13.1140,
+    -38.7965,-13.1182, -38.7922,-13.1299, -38.7867,-13.1331
+  ],
+  frades: [
+    -38.6407,-12.8140, -38.6366,-12.8138, -38.6294,-12.8063, -38.6305,-12.8033,
+    -38.6279,-12.7990, -38.6281,-12.7939, -38.6231,-12.7874, -38.6237,-12.7842,
+    -38.6200,-12.7733, -38.6211,-12.7700, -38.6182,-12.7648, -38.6196,-12.7587,
+    -38.6251,-12.7577, -38.6357,-12.7704, -38.6379,-12.7700, -38.6402,-12.7661,
+    -38.6448,-12.7699, -38.6508,-12.7689, -38.6571,-12.7765, -38.6562,-12.7796,
+    -38.6504,-12.7820, -38.6451,-12.7898, -38.6473,-12.8056, -38.6408,-12.8139
+  ],
+  mare: [
+    -38.5270,-12.7977, -38.5229,-12.7973, -38.5180,-12.7923, -38.5150,-12.7829,
+    -38.5195,-12.7715, -38.5191,-12.7579, -38.5167,-12.7523, -38.5193,-12.7490,
+    -38.5246,-12.7494, -38.5333,-12.7429, -38.5391,-12.7476, -38.5404,-12.7537,
+    -38.5404,-12.7642, -38.5309,-12.7718, -38.5317,-12.7795, -38.5340,-12.7819,
+    -38.5323,-12.7885, -38.5344,-12.7959, -38.5271,-12.7976
+  ],
+  passos: [
+    -38.6375,-12.7645, -38.6367,-12.7638, -38.6387,-12.7575, -38.6445,-12.7600,
+    -38.6433,-12.7636, -38.6376,-12.7644
+  ],
+  medo: [
+    -38.7067,-12.8597, -38.7044,-12.8597, -38.7041,-12.8586, -38.7094,-12.8557,
+    -38.7100,-12.8572, -38.7068,-12.8596
+  ],
+  madredeus: [
+    -38.6211,-12.7503, -38.6091,-12.7422, -38.5970,-12.7416, -38.5974,-12.7379,
+    -38.6057,-12.7356, -38.6096,-12.7287, -38.6131,-12.7280, -38.6182,-12.7324,
+    -38.6209,-12.7317, -38.6225,-12.7485, -38.6212,-12.7502
+  ],
+  vacas: [
+    -38.6439,-12.7497, -38.6412,-12.7488, -38.6424,-12.7418, -38.6405,-12.7390,
+    -38.6421,-12.7340, -38.6439,-12.7342, -38.6448,-12.7407, -38.6471,-12.7440,
+    -38.6440,-12.7496
+  ],
+  mariaguarda: [
+    -38.6344,-12.7384, -38.6311,-12.7339, -38.6310,-12.7291, -38.6358,-12.7290,
+    -38.6363,-12.7348, -38.6345,-12.7383
+  ],
+  bimbarras: [
+    -38.6339,-12.7261, -38.6321,-12.7257, -38.6277,-12.7183, -38.6277,-12.7117,
+    -38.6345,-12.7110, -38.6350,-12.7075, -38.6403,-12.7013, -38.6445,-12.7053,
+    -38.6340,-12.7260
+  ],
+  saomarcelo: [
+    -38.5232,-12.9726, -38.5219,-12.9722, -38.5216,-12.9733, -38.5229,-12.9737
+  ]
+};
+
+/* poligonos projetados em metros, com a costa alisada por Catmull-Rom
+   centripeto - o contorno a mao tem poucos vertices e sairia poligonal demais */
+var LAND = [];
+function smoothRing(p, sub){
+  var n = p.length/2, out = [];
+  for(var i=0;i<n;i++){
+    var i0 = (i-1+n)%n, i1 = i, i2 = (i+1)%n, i3 = (i+2)%n;
+    var x0=p[i0*2], y0=p[i0*2+1], x1=p[i1*2], y1=p[i1*2+1];
+    var x2=p[i2*2], y2=p[i2*2+1], x3=p[i3*2], y3=p[i3*2+1];
+    for(var j=0;j<sub;j++){
+      var t = j/sub, t2 = t*t, t3 = t2*t;
+      out.push(0.5*((2*x1)+(-x0+x2)*t+(2*x0-5*x1+4*x2-x3)*t2+(-x0+3*x1-3*x2+x3)*t3),
+               0.5*((2*y1)+(-y0+y2)*t+(2*y0-5*y1+4*y2-y3)*t2+(-y0+3*y1-3*y2+y3)*t3));
+    }
+  }
+  return out;
+}
+(function(){
+  for(var k in COAST_LL){
+    var a = COAST_LL[k], p = [];
+    for(var i=0;i<a.length;i+=2){ var q = proj(a[i], a[i+1]); p.push(q[0], q[1]); }
+    LAND.push({ name:k, pts: smoothRing(p, k === 'continente' ? 3 : 4) });
+  }
+})();
+
+/* limites do mundo */
+var WORLD = (function(){
+  var a = proj(-38.950, -13.200), b = proj(-38.380, -12.580);
+  return { x0:a[0], y0:a[1], x1:b[0], y1:b[1], w:b[0]-a[0], h:b[1]-a[1] };
+})();
+
+/* ---------- marcas da baia ---------- */
+function M(lon,lat,nome,tipo){ var p = proj(lon,lat); return {x:p[0], y:p[1], nome:nome, tipo:tipo}; }
+var MARKS = [
+  M(-38.5322,-13.0098,'Farol da Barra','farol'),
+  M(-38.5231,-12.9728,'Forte Sao Marcelo','forte'),
+  M(-38.5137,-12.9718,'Terminal Nautico','marina'),
+  M(-38.5090,-12.9700,'SALVADOR','cidade'),
+  M(-38.6115,-12.9535,'Mar Grande','vila'),
+  M(-38.6203,-12.9321,'Bom Despacho','vila'),
+  M(-38.6798,-12.8936,'Itaparica','vila'),
+  M(-38.6882,-12.9467,'Baiacu','vila'),
+  M(-38.7814,-13.1126,'Cacha Pregos','vila'),
+  M(-38.6353,-12.7862,'Ilha dos Frades','ilha'),
+  M(-38.5255,-12.7706,'Ilha de Mare','ilha'),
+  M(-38.7064,-12.8578,'Ilha do Medo','ilha'),
+  M(-38.6412,-12.7606,'Bom Jesus dos Passos','ilha'),
+  M(-38.6153,-12.7425,'Madre de Deus','vila'),
+  M(-38.5407,-12.6694,'Candeias','vila'),
+  M(-38.4900,-12.8080,'Base Naval de Aratu','vila'),
+  M(-38.6811,-12.6281,'S. Francisco do Conde','vila'),
+  M(-38.9178,-12.7767,'Maragojipe','vila'),
+  M(-38.7594,-12.8734,'Salinas da Margarida','vila'),
+  M(-38.8945,-13.1148,'Jaguaripe','vila'),
+  M(-38.7734,-13.1252,'Ponta do Garcez','ponta'),
+  M(-38.7900,-12.7790,'rio Paraguacu','ponta')
+];
+
+/* ---------- campo de profundidade ----------
+   Nao e carta: e um campo continuo montado da distancia da costa com nos de
+   profundidade espalhados pela baia. Serve para encalhar, nao para navegar.
+   Os valores dos nos foram ajustados por minimos quadrados as sondagens da carta
+   1110 da DHN - canal da barra 21-33 m, canal de Salvador 32-45 m, meio da baia
+   19-34 m, reconcavo 0-6 m, canal de Itaparica 4-13 m - com residuo de 3,8 m. */
+var DEEP_NODES = [];
+(function(){
+  var n = [[-38.4700,-13.1500,81.3],[-38.4300,-13.0000,63.0],[-38.6000,-13.1900,47.9],
+           [-38.8000,-13.1900,20.4],[-38.5480,-13.0350,23.7],[-38.5200,-13.0600,32.3],
+           [-38.5520,-12.9750,44.2],[-38.5550,-12.9400,46.7],[-38.5200,-12.9450,26.5],
+           [-38.5850,-12.9200,25.7],[-38.6000,-12.8800,24.3],[-38.6550,-12.8650,45.8],
+           [-38.5600,-12.8500,19.0],[-38.6000,-12.9550,24.4],[-38.6100,-12.9850,22.0],
+           [-38.5900,-12.7950,8.6],[-38.5200,-12.8000,36.2],[-38.6500,-12.7900,24.7],
+           [-38.5950,-12.7480,7.1],[-38.6600,-12.6900,6.5],[-38.7300,-12.7300,5.3],
+           [-38.8800,-12.7600,6.4],[-38.7450,-12.8700,5.1],[-38.7000,-12.8950,24.2],
+           [-38.7350,-12.9450,6.9],[-38.7750,-13.0100,18.5],[-38.8000,-13.1000,14.3]];
+  for(var i=0;i<n.length;i++){ var p = proj(n[i][0], n[i][1]); DEEP_NODES.push([p[0],p[1],n[i][2]]); }
+})();
+
+var GRID = { n: 768, cell: 0, x0:0, y0:0, dist:null };
+var GRIDC = { n: 128, cell: 0, x0:0, y0:0, dmax:null };
+function buildDepth(){
+  var n = GRID.n;
+  GRID.cell = Math.max(WORLD.w, WORLD.h) / n;
+  GRID.x0 = WORLD.x0; GRID.y0 = WORLD.y0;
+  var cell = GRID.cell, BIG = 1e9;
+  var d = new Float32Array(n*n);
+  var i,j,k;
+  /* 1. mascara de terra - varredura por linha, par-impar */
+  for(k=0;k<n*n;k++) d[k] = BIG;
+  var xs = [];
+  for(j=0;j<n;j++){
+    var wy = GRID.y0 + (j+0.5)*cell;
+    xs.length = 0;
+    for(var p=0;p<LAND.length;p++){
+      var a = LAND[p].pts, nn = a.length/2;
+      for(var ii=0, jj=nn-1; ii<nn; jj=ii++){
+        var yi=a[ii*2+1], yj=a[jj*2+1];
+        if((yi>wy)!==(yj>wy)){
+          var xi=a[ii*2], xj=a[jj*2];
+          xs.push(xi + (xj-xi)*(wy-yi)/(yj-yi));
+        }
+      }
+    }
+    if(!xs.length) continue;
+    xs.sort(function(u,v){return u-v;});
+    for(var s=0;s+1<xs.length;s+=2){
+      var ia = Math.ceil((xs[s]-GRID.x0)/cell - 0.5), ib = Math.floor((xs[s+1]-GRID.x0)/cell - 0.5);
+      if(ia<0) ia=0; if(ib>n-1) ib=n-1;
+      for(i=ia;i<=ib;i++) d[j*n+i] = 0;
+    }
+  }
+  /* 2. transformada de distancia (chamfer 3-4, duas varreduras) */
+  var a = cell, b = cell*1.41421356;
+  for(j=0;j<n;j++) for(i=0;i<n;i++){
+    k = j*n+i; var v = d[k];
+    if(j>0){ if(d[k-n]+a < v) v = d[k-n]+a;
+             if(i>0 && d[k-n-1]+b < v) v = d[k-n-1]+b;
+             if(i<n-1 && d[k-n+1]+b < v) v = d[k-n+1]+b; }
+    if(i>0 && d[k-1]+a < v) v = d[k-1]+a;
+    d[k] = v;
+  }
+  for(j=n-1;j>=0;j--) for(i=n-1;i>=0;i--){
+    k = j*n+i; var v2 = d[k];
+    if(j<n-1){ if(d[k+n]+a < v2) v2 = d[k+n]+a;
+               if(i<n-1 && d[k+n+1]+b < v2) v2 = d[k+n+1]+b;
+               if(i>0 && d[k+n-1]+b < v2) v2 = d[k+n-1]+b; }
+    if(i<n-1 && d[k+1]+a < v2) v2 = d[k+1]+a;
+    d[k] = v2;
+  }
+  GRID.dist = d;
+  /* 3. profundidade maxima da regiao, por nos - grade grossa, interpolada */
+  var nc = GRIDC.n;
+  GRIDC.cell = Math.max(WORLD.w, WORLD.h)/nc; GRIDC.x0 = WORLD.x0; GRIDC.y0 = WORLD.y0;
+  var dm = new Float32Array(nc*nc), S2 = 6000*6000;
+  for(j=0;j<nc;j++){
+    var wy2 = GRIDC.y0 + (j+0.5)*GRIDC.cell;
+    for(i=0;i<nc;i++){
+      var wx2 = GRIDC.x0 + (i+0.5)*GRIDC.cell, sw=0, sv=0;
+      for(k=0;k<DEEP_NODES.length;k++){
+        var dx = wx2-DEEP_NODES[k][0], dy = wy2-DEEP_NODES[k][1];
+        var w = Math.exp(-(dx*dx+dy*dy)/S2);
+        sw += w; sv += w*DEEP_NODES[k][2];
+      }
+      dm[j*nc+i] = sv/sw;
+    }
+  }
+  GRIDC.dmax = dm;
+}
+function gridAt(g, arr, x, y){
+  var n = g.n, cell = g.cell;
+  var fi = (x - g.x0)/cell - 0.5, fj = (y - g.y0)/cell - 0.5;
+  var i = Math.floor(fi), j = Math.floor(fj), u = fi-i, v = fj-j;
+  if(i<0){i=0;u=0;} if(j<0){j=0;v=0;}
+  if(i>n-2){i=n-2;u=1;} if(j>n-2){j=n-2;v=1;}
+  var k = j*n+i;
+  return (arr[k]*(1-u)+arr[k+1]*u)*(1-v) + (arr[k+n]*(1-u)+arr[k+n+1]*u)*v;
+}
+/* profundidade em metros no ponto, ja com a mare */
+function depthAt(x, y, tideH){
+  var d = gridAt(GRID, GRID.dist, x, y);
+  var dm = gridAt(GRIDC, GRIDC.dmax, x, y);
+  return dm * (1 - Math.exp(-d/900)) + (tideH||0);
+}
+function shoreDist(x, y){ return gridAt(GRID, GRID.dist, x, y); }
+function inLand(x, y){
+  for(var p=0;p<LAND.length;p++){
+    var a = LAND[p].pts, inside = false, nn = a.length/2;
+    for(var i=0, j=nn-1; i<nn; j=i++){
+      var xi=a[i*2], yi=a[i*2+1], xj=a[j*2], yj=a[j*2+1];
+      if(((yi>y)!==(yj>y)) && (x < (xj-xi)*(y-yi)/(yj-yi)+xi)) inside = !inside;
+    }
+    if(inside) return true;
+  }
+  return false;
+}
+
+/* ---------- percursos ---------- */
+function WP(lon,lat,nome,r){ var p = proj(lon,lat); return {x:p[0],y:p[1],nome:nome,r:r||90}; }
+var COURSES = {
+  travessia: {
+    nome:'Travessia Salvador - Mar Grande',
+    desc:'A classica do 1 de janeiro. Saida do Terminal Nautico, deixar o Forte Sao Marcelo a boreste e cruzar a baia ate Mar Grande, na costa leste de Itaparica. Cinco milhas de agua funda - 30 m debaixo da quilha no meio do caminho.',
+    start:[-38.5250,-12.9790,280],
+    wps:[ WP(-38.5295,-12.9735,'Forte Sao Marcelo',170),
+          WP(-38.5751,-12.9764,'boia do canal',200),
+          WP(-38.5990,-12.9500,'chegada Mar Grande',220) ]
+  },
+  frades: {
+    nome:'Volta a Ilha dos Frades',
+    desc:'Sobe pelo canal de Salvador, passa ao largo da Ilha de Mare, contorna a Ilha dos Frades pelo norte e pelo oeste e volta. Vento no nariz na ida, popa na volta - ou o contrario, se a brisa virar.',
+    start:[-38.5200,-12.9500,340],
+    wps:[ WP(-38.5463,-12.8136,'travez da Ilha de Mare',250),
+          WP(-38.6308,-12.7515,'norte de Frades',250),
+          WP(-38.6677,-12.7936,'oeste de Frades',250),
+          WP(-38.6467,-12.8266,'sul de Frades',250),
+          WP(-38.5500,-12.9200,'volta ao canal',250),
+          WP(-38.5230,-12.9520,'chegada Salvador',220) ]
+  },
+  barra: {
+    nome:'Triangulo da Barra',
+    desc:'Da boca da baia ate a entrada do canal de Itaparica e de volta. Agua aberta, vaga do mar de fora e corrente forte na barra.',
+    start:[-38.5420,-13.0000,250],
+    wps:[ WP(-38.5943,-12.9254,'boia do meio da baia',200),
+          WP(-38.6823,-12.8704,'entrada do canal',220),
+          WP(-38.5600,-13.0100,'boia da barra',200),
+          WP(-38.5340,-12.9950,'chegada',180) ]
+  },
+  mare: {
+    nome:'Desafio da mare - canal de Itaparica',
+    desc:'Da entrada norte do canal ate Cacha Pregos descendo o canal de Itaparica por dentro, com a corrente de vazante no nariz. O estreito de Matarandiba e a barra de Cacha Pregos secam nas bordas e deixam 3 a 7 m no meio: leia a sonda e escolha a mare.',
+    start:[-38.7031,-12.8880,200],
+    wps:[ WP(-38.7307,-12.9468,'travez de Baiacu',240),
+          WP(-38.7788,-13.0064,'estreito de Matarandiba',240),
+          WP(-38.7865,-13.0411,'barra de Cacha Pregos',220),
+          WP(-38.8105,-13.0575,'boia rasa',220),
+          WP(-38.8005,-13.1036,'chegada Cacha Pregos',230) ]
+  }
+};
+
+/* ==================================================================
+   2. FISICA
+   4 graus de liberdade: avanco, deriva, guinada e banda.
+   ================================================================== */
+var KT = 0.5144444;                       /* no -> m/s */
+var D2R = Math.PI/180, R2D = 180/Math.PI;
+function clamp(v,a,b){ return v<a?a:(v>b?b:v); }
+function wrapPi(a){ while(a>Math.PI) a-=2*Math.PI; while(a<-Math.PI) a+=2*Math.PI; return a; }
+function deg360(a){ a = a*R2D % 360; return a<0 ? a+360 : a; }
+
+/* ---------- curva de bracos de endireitamento ----------
+   serie de senos ajustada aos quatro numeros da folha 2 do plano velico:
+   GM na origem, GZ maximo, anulacao (AVS) e o braco com o barco emborcado. */
+var GZTAB = new Float32Array(181);
+(function(){
+  var ang = [0, B.GZmaxAng*D2R, B.AVS*D2R, 150*D2R];
+  var A = [[1,2,3,4],[0,0,0,0],[0,0,0,0],[0,0,0,0]];
+  var rhs = [B.GM, B.GZmax, 0, B.GZ150];
+  for(var r=1;r<4;r++) for(var c=0;c<4;c++) A[r][c] = Math.sin((c+1)*ang[r]);
+  /* eliminacao de Gauss com pivotamento */
+  var i,j,k,n=4, M=[];
+  for(i=0;i<n;i++){ M.push(A[i].slice()); M[i].push(rhs[i]); }
+  for(i=0;i<n;i++){
+    var piv=i; for(j=i+1;j<n;j++) if(Math.abs(M[j][i])>Math.abs(M[piv][i])) piv=j;
+    var t=M[i]; M[i]=M[piv]; M[piv]=t;
+    for(j=i+1;j<n;j++){ var f=M[j][i]/M[i][i]; for(k=i;k<=n;k++) M[j][k]-=f*M[i][k]; }
+  }
+  var x=[0,0,0,0];
+  for(i=n-1;i>=0;i--){ var s=M[i][n]; for(k=i+1;k<n;k++) s-=M[i][k]*x[k]; x[i]=s/M[i][i]; }
+  for(var d=0;d<=180;d++){
+    var p=d*D2R;
+    GZTAB[d] = x[0]*Math.sin(p)+x[1]*Math.sin(2*p)+x[2]*Math.sin(3*p)+x[3]*Math.sin(4*p);
+  }
+  GZTAB[0]=0;
+})();
+function gz(phi){
+  var s = phi<0 ? -1 : 1, d = Math.abs(phi)*R2D;
+  if(d>=180) return 0;
+  var i = Math.floor(d), f = d-i;
+  return s*(GZTAB[i]*(1-f) + GZTAB[i+1]*f);
+}
+
+/* ---------- coeficientes de vela ----------
+   perfil fino com razao de aspecto real; estol a 14 graus; depois do estol
+   a curva cai ate a placa plana (CD 1,9 a 90 graus). */
+var SAIL_STALL = 14*D2R;
+/* rendimento do pano: torcao, gradiente de vento junto da agua, interferencia
+   entre grande e genoa e o fato de as duas nunca estarem no trim ideal ao mesmo
+   tempo. Calibrado para o barco adernar os 16,6 graus da folha 2 na brisa de 17 nos. */
+var RIGEFF = 0.62;
+/* uma linha por vela do plano velico:
+   0 area efetiva | 1 AR | 2 angulo maximo de escota | 3 x do CE (da popa)
+   4 z do CE (sobre a DWL) | 5 curvatura | 6 area cheia | 7 vela de proa?
+   8 x do punho de amura | 9 comprimento do pe | 10 nome
+   AR = punho^2/area (definicao de Teale): dai saem punho e pe, e o punho de
+   amura sai do CE - o centroide do triangulo esta a um terco dele. */
+var SAILS = [];
+(function(){
+  for(var i=0;i<B.sails.length;i++){
+    var v = B.sails[i];
+    var punho = Math.sqrt(Math.max(0.6, v.ar*v.A)), pe = 2*v.A/punho;
+    var amura = v.x + (pe + (v.fore ? B.J : 0))/3;
+    if(amura > B.LOA) amura = B.LOA;
+    SAILS.push([0, v.ar, (v.fore?72:80)*Math.PI/180, v.x, v.z, v.fore?0.72:0.62,
+                v.A, v.fore?1:0, amura, pe, v.n]);
+  }
+})();
+function sailCoef(alpha, AR, camber, out){
+  var s = alpha<0 ? -1 : 1, a = Math.abs(alpha);
+  var slope = 2*Math.PI*AR/(AR+2);
+  var cl0 = camber;                    /* sustentacao da curvatura do pano */
+  var clS = slope*SAIL_STALL + cl0;
+  var cl, cd0 = 0.07;
+  if(a <= SAIL_STALL){
+    cl = slope*a + cl0;
+  } else {
+    var t = clamp((a - SAIL_STALL)/(Math.PI/2 - SAIL_STALL), 0, 1);
+    cl = clS*(1-t) + 1.10*Math.sin(2*a)*t;
+  }
+  var cdi = cl*cl/(Math.PI*AR*0.88);
+  var cd = cd0 + cdi;
+  if(a > SAIL_STALL){
+    var t2 = clamp((a - SAIL_STALL)/(Math.PI/2 - SAIL_STALL), 0, 1);
+    cd += (1.90 - cd0 - cdi)*Math.sin(t2*Math.PI/2)*Math.sin(t2*Math.PI/2);
+  }
+  out[0] = s*cl; out[1] = cd;
+}
+/* resistencia residual: curva de Cr = Rr/(Delta.g) por numero de Froude, da
+   faixa de um casco de deslocamento moderado (DLR 215). A parede fica em
+   Fn 0,40 - a velocidade de casco de 7,9 nos deste LWL. */
+var CR_FN = [0.10,0.15,0.20,0.25,0.30,0.325,0.35,0.375,0.40,0.425,0.45,0.475,0.50,0.55,0.60,0.70];
+var CR_V  = [0.0002,0.0005,0.0009,0.0017,0.0040,0.0062,0.0100,0.0165,0.0260,0.0380,
+             0.0500,0.0650,0.0800,0.1150,0.1500,0.2200];
+function crFn(fn){
+  if(fn <= CR_FN[0]) return CR_V[0]*fn/CR_FN[0];
+  var n = CR_FN.length;
+  if(fn >= CR_FN[n-1]) return CR_V[n-1] + (fn-CR_FN[n-1])*0.9;
+  for(var i=1;i<n;i++) if(fn <= CR_FN[i]){
+    var t = (fn-CR_FN[i-1])/(CR_FN[i]-CR_FN[i-1]);
+    return CR_V[i-1] + t*(CR_V[i]-CR_V[i-1]);
+  }
+  return CR_V[n-1];
+}
+
+/* perfil de quilha e leme */
+function foilCL(a, slope, aStall){
+  var s = a<0?-1:1, m = Math.abs(a);
+  if(m <= aStall) return slope*a;
+  var clmax = slope*aStall;
+  var t = clamp((m-aStall)/0.30, 0, 1);
+  return s*clmax*(1 - 0.55*t);
+}
+
+/* ---------- estado ----------
+   S e PS (o barco de prova da polar) saem da MESMA fabrica de propriedades:
+   assim o motor de JS ve uma forma so em forces() e nao cai em acesso polimorfico. */
+function novoEstado(){
+  return {
+    x:0, y:0, hdg:0,            /* posicao (m) e rumo (rad, do norte para boreste) */
+    u:0, v:0, r:0,              /* velocidade na agua no referencial do barco, e guinada */
+    heel:0, heelRate:0,
+    rudder:0, rudderCmd:0,
+    sheet:0.35, reef:0, furl:0,
+    motor:false, anchor:false,
+    aground:false, capsized:0,
+    t:0, trail:[], trailT:0,
+    ax:0, aw:0, awa:0, twa:0, tws:0, twd:0, lee:0,
+    sog:0, stw:0, vmg:0, depth:20, luff:0, drive:0, fside:0
+  };
+}
+var S = novoEstado();
+
+var REEFS = [1.0, 0.75, 0.55, 0.0];        /* grande cheia, 1 riz, 2 rizes, arriada */
+var FURLS = [1.0, 0.65, 0.35, 0.0];        /* genoa cheia, meia, lenco, enrolada */
+
+var ENV = {
+  tws: 14*KT, twd: 120*D2R, gust: 0.30,
+  curSpd: 1.2*KT, curDir: 145*D2R, tideOn: true, tideT: 0,
+  hs: 0.6, tp: 4.5, wvDir: 120*D2R, wvLock: true
+};
+
+/* ---------- vento no ponto ---------- */
+var windScratch = [0,0];
+function windAt(x, y, t){
+  /* oscilacao e rajada: duas senoides lentas, uma no modulo e outra na direcao */
+  var g = ENV.gust;
+  var osc = Math.sin(t*0.085 + x*0.00013) * 0.6 + Math.sin(t*0.031 + y*0.00009) * 0.4;
+  var spd = ENV.tws * (1 + g*0.45*osc);
+  var dir = ENV.twd + g*12*D2R*Math.sin(t*0.047 + y*0.00011 + 1.7);
+  /* sombra de vento: terra a barlavento rouba o vento */
+  var sx = Math.sin(dir), sy = Math.cos(dir);
+  var sh1 = 0;
+  if(inLandFast(x + sx*420, y + sy*420)) sh1 += 0.45;
+  if(inLandFast(x + sx*1100, y + sy*1100)) sh1 += 0.22;
+  spd *= (1 - Math.min(0.78, sh1));
+  windScratch[0] = -Math.sin(dir)*spd;
+  windScratch[1] = -Math.cos(dir)*spd;
+  return windScratch;
+}
+/* ponto em terra com rejeicao rapida pela grade de distancia */
+function inLandFast(x, y){
+  if(x<WORLD.x0||x>WORLD.x1||y<WORLD.y0||y>WORLD.y1) return false;
+  return gridAt(GRID, GRID.dist, x, y) < GRID.cell*0.8;
+}
+
+/* ---------- corrente de mare ---------- */
+var TIDE_PERIOD = 6.2*3600;
+function tidePhase(t){ return ENV.tideOn ? Math.cos(2*Math.PI*(ENV.tideT + t)/TIDE_PERIOD) : 1; }
+function tideHeight(t){ return ENV.tideOn ? -1.0*Math.sin(2*Math.PI*(ENV.tideT + t)/TIDE_PERIOD) : 0; }
+var curScratch = [0,0];
+function currentAt(x, y, t){
+  var ph = tidePhase(t);
+  var dep = depthAt(x, y, 0);
+  /* a agua corre mais no canal fundo e quase para junto da praia */
+  var k = clamp(dep/16, 0.15, 1.45);
+  var sp = ENV.curSpd * ph * k;
+  curScratch[0] = Math.sin(ENV.curDir)*sp;
+  curScratch[1] = Math.cos(ENV.curDir)*sp;
+  return curScratch;
+}
+
+/* ---------- vaga ----------
+   tres componentes; altura limitada pela pista (distancia da costa a barlavento)
+   e pela profundidade. */
+var WAVE_C = [[1.00,1.00,0],[0.55,1.43,18*D2R],[0.33,0.72,-24*D2R]];
+function waveField(x, y, t, outSlope){
+  var dir = ENV.wvLock ? ENV.twd : ENV.wvDir;
+  var fetch = 1;
+  var fx = Math.sin(dir)*1800, fy = Math.cos(dir)*1800;
+  if(inLandFast(x+fx, y+fy)) fetch = 0.35;
+  if(inLandFast(x+fx*0.4, y+fy*0.4)) fetch = 0.15;
+  var dep = Math.max(1.2, depthAt(x, y, 0));
+  var shoal = clamp(dep/8, 0.35, 1);
+  var amp = ENV.hs*0.5*fetch*shoal;
+  var eta = 0, sx = 0, sy = 0;
+  for(var i=0;i<3;i++){
+    var c = WAVE_C[i], d = dir + c[2];
+    var kx = -Math.sin(d), ky = -Math.cos(d);     /* propaga para onde vai */
+    var T = ENV.tp/c[1], w = 2*Math.PI/T, kk = w*w/9.81;
+    var ph = kk*(kx*x + ky*y) - w*t;
+    var a = amp*c[0];
+    eta += a*Math.cos(ph);
+    var s = -a*kk*Math.sin(ph);
+    sx += s*kx; sy += s*ky;
+  }
+  if(outSlope){ outSlope[0] = sx; outSlope[1] = sy; outSlope[2] = amp; }
+  return eta;
+}
+
+/* ---------- forcas ----------
+   st: estado; W: vento no fundo [m/s]; C: corrente [m/s]; opt.noYaw para a polar */
+var clcd = [0,0];
+function forces(st, W, C, F){
+  var hdg = st.hdg, fx = Math.sin(hdg), fy = Math.cos(hdg), sx = Math.cos(hdg), sy = -Math.sin(hdg);
+  var u = st.u, v = st.v, r = st.r, phi = st.heel;
+  var cphi = Math.cos(phi), acphi = Math.abs(cphi);
+
+  /* velocidade no fundo */
+  var vgx = fx*u + sx*v + C[0], vgy = fy*u + sy*v + C[1];
+
+  /* vento aparente */
+  var awx = W[0]-vgx, awy = W[1]-vgy;
+  var aws = Math.hypot(awx, awy);
+  var ff = -(awx*fx + awy*fy), fs = -(awx*sx + awy*sy);
+  var beta = Math.atan2(fs, ff);
+  var ab = Math.abs(beta), sgnb = beta<0?-1:1;
+  var q = 0.5*B.rhoAir*aws*aws*acphi;
+
+  var drive = 0, side = 0, mheel = 0, myaw = 0, luff = 0, atot = 0;
+  for(var i=0;i<SAILS.length;i++){
+    var sl = SAILS[i];
+    var A = sl[6]*(sl[7] ? FURLS[st.furl] : REEFS[st.reef]);
+    sl[0] = A;
+    if(A < 0.01) continue;
+    atot += A;
+    var del = sl[2]*st.sheet;
+    var alpha = ab - del;
+    var fl = 1;
+    if(alpha < 0){                       /* vela faceando: para de puxar */
+      fl = clamp(1 + alpha/(9*D2R), 0, 1);
+      luff += A*(1-fl);
+    }
+    /* acima de 90 graus de incidencia a vela ja e so um freio: CL some, CD vai
+       para a placa plana. Clampar evita sustentacao invertida na popa redonda. */
+    sailCoef(clamp(alpha, 0, Math.PI/2), sl[1], sl[5], clcd);
+    var L = q*A*clcd[0]*fl*RIGEFF, D = q*A*(clcd[1]*fl + 0.09*(1-fl))*RIGEFF;
+    var dr = L*Math.sin(ab) - D*Math.cos(beta);
+    var si = -(L*Math.cos(beta) + D*Math.sin(ab))*sgnb;
+    drive += dr; side += si;
+    mheel += si*(sl[4] - B.zCLR)*cphi;
+    myaw  += si*(sl[3] - B.LCB);
+  }
+  luff = atot>0 ? luff/atot : 0;
+
+  /* obra morta e mastro ao vento */
+  var qw = 0.5*B.rhoAir*aws*aws, Awind = AWIND;
+  var Fw = qw*Awind*0.85;
+  drive += -Fw*Math.cos(beta);
+  side  += -Fw*Math.sin(ab)*sgnb;
+  mheel += -Fw*Math.sin(ab)*sgnb*1.9;
+
+  /* ---------- hidrodinamica (na agua) ---------- */
+  var V = Math.hypot(u, v), Vs = V*V;
+  var qh = 0.5*B.rho*Math.max(Vs, 0.0004);
+  var res = 0, fy_h = 0, mz_h = 0;
+
+  if(u > 0.02 || u < -0.02){
+    /* o centro hidrodinamico do casco fica bem a vante do centroide geometrico
+       (corpo esbelto: a sustentacao nasce nas secoes de proa). E dai que vem o
+       leme de barlavento que o plano velico anuncia na folha 3. */
+    var xk = B.xKeel-B.LCB, xh = B.xHullLift-B.LCB, xr = B.xRud-B.LCB;
+    /* quilha */
+    var ak = Math.atan2(v + r*xk, u);
+    var clk = foilCL(ak, 3.60, 12*D2R)*cphi;
+    var Fk = -qh*B.Akeel*clk;
+    fy_h += Fk; mz_h += Fk*xk;
+    res += qh*B.Akeel*(0.009 + clk*clk/(Math.PI*2.68*0.85));
+    /* casco (plano lateral, razao de aspecto muito baixa) */
+    var ah = Math.atan2(v + r*xh, u);
+    var clh = foilCL(ah, 1.30, 20*D2R)*cphi;
+    var Fh = -qh*B.Alat*clh;
+    fy_h += Fh; mz_h += Fh*xh;
+    res += qh*B.Alat*clh*clh/(Math.PI*0.45*0.7);
+    /* leme */
+    var ar_ = Math.atan2(v + r*xr, u) + st.rudder;
+    var clr = foilCL(ar_, 4.04, 17*D2R)*cphi;
+    var Fr = -qh*B.Arud*clr;
+    fy_h += Fr; mz_h += Fr*xr;
+    res += qh*B.Arud*(0.010 + clr*clr/(Math.PI*3.6*0.85));
+    F.rudStall = Math.abs(ar_) > 17*D2R ? 1 : 0;
+    F.rudAtk = ar_;
+  } else { F.rudStall = 0; F.rudAtk = 0; }
+
+  /* arrasto transversal do casco */
+  fy_h += -0.5*B.rho*(B.Alat+B.Akeel)*0.80*v*Math.abs(v);
+
+  /* atrito e resistencia residual */
+  var uu = Math.abs(u);
+  var Re = Math.max(uu,0.05)*0.7*B.LWL/1.19e-6;
+  var Cf = 0.075/Math.pow(Math.log(Re)/Math.LN10 - 2, 2);
+  res += 0.5*B.rho*B.Swet*Cf*1.15*uu*uu;
+  res += B.disp*9.81*crFn(uu/Math.sqrt(9.81*B.LWL));
+  /* resistencia acrescida na vaga */
+  if(F.waveAmp > 0.02){
+    var rel = Math.cos(wrapPi((ENV.wvLock?ENV.twd:ENV.wvDir) - hdg));
+    res += 0.22*B.rho*9.81*F.waveAmp*F.waveAmp*B.BWL*B.BWL/B.LWL*(0.35 + 0.65*clamp(rel,0,1));
+  }
+  /* banda engorda a superficie molhada e empena o casco */
+  res *= (1 + 0.22*Math.abs(Math.sin(phi)));
+
+  var thrust = 0;
+  if(st.motor) thrust = clamp(THRUST - 0.28*THRUST*uu, 0, THRUST);
+  if(st.aground) res += B.disp + 0.45*B.disp*uu*uu;
+
+  F.Fx = drive - (u>0?res:-res) + thrust;
+  F.Fy = side + fy_h;
+  F.Mz = myaw + mz_h - NR1*r - NR2*r*Math.abs(r);
+  /* momento de guinada que vem da banda (casco assimetrico) */
+  F.Mz += -0.105*Math.sin(phi)*qh*B.Alat*B.LWL;
+  F.Mheel = mheel;
+  F.aws = aws; F.beta = beta; F.drive = drive; F.side = side; F.luff = luff;
+  F.vgx = vgx; F.vgy = vgy; F.res = res;
+  return F;
+}
+
+/* ---------- passo de integracao ---------- */
+var FOUT = {Fx:0,Fy:0,Mz:0,Mheel:0,aws:0,beta:0,drive:0,side:0,luff:0,vgx:0,vgy:0,res:0,waveAmp:0,rudStall:0,rudAtk:0};
+var MX = B.disp*1.08, MY = B.disp*2.60, IZ = B.disp*Math.pow(0.26*B.LOA,2)*1.25;
+/* inercia de rolagem com raio de giracao 0,47 da boca e amortecimento em 12% do
+   critico - periodo natural de rolagem perto de 2*pi*raiz(I/(Delta.g.GM)) */
+var IROLL = B.disp*Math.pow(0.47*B.BOA, 2);
+var CROLL = 2*0.12*Math.sqrt(IROLL*B.disp*9.81*Math.max(B.GM,0.05));
+var NR1 = 0.149*B.disp*B.LWL*B.LWL, NR2 = 0.092*B.disp*B.LWL*B.LWL;
+/* emborca passado o ponto em que o braco de endireitamento ja nao volta */
+var CAPSIZE = Math.min(100, Math.max(60, B.AVS*0.92))*D2R;
+var AWIND = 0.05*B.LOA*B.LOA, THRUST = 0.36*B.disp;
+var slopeOut = [0,0,0];
+
+function stepPhysics(dt){
+  var W = windAt(S.x, S.y, S.t);
+  var wx = W[0], wy = W[1];
+  var C = currentAt(S.x, S.y, S.t);
+  var cx = C[0], cy = C[1];
+  waveField(S.x, S.y, S.t, slopeOut);
+  FOUT.waveAmp = slopeOut[2];
+
+  /* leme segue o comando com velocidade finita */
+  var dr = S.rudderCmd - S.rudder;
+  var mx = 1.6*dt;
+  S.rudder += clamp(dr, -mx, mx);
+
+  var Wv = [wx, wy], Cv = [cx, cy];
+  forces(S, Wv, Cv, FOUT);
+
+  if(S.anchor){
+    S.u *= 0.90; S.v *= 0.90; S.r *= 0.90;
+  } else {
+    S.u += FOUT.Fx/MX*dt;
+    S.v += FOUT.Fy/MY*dt;
+    S.r += FOUT.Mz/IZ*dt;
+  }
+
+  /* banda: velas contra o braco de endireitamento, mais a onda */
+  var slopeLat = slopeOut[0]*Math.cos(S.hdg) - slopeOut[1]*Math.sin(S.hdg);
+  var Mwave = -slopeLat*B.disp*9.81*B.GM*1.25;
+  var Mr = FOUT.Mheel - B.disp*9.81*gz(S.heel) - CROLL*S.heelRate
+           - 0.097*IROLL*S.heelRate*Math.abs(S.heelRate) + Mwave;
+  S.heelRate += Mr/IROLL*dt;
+  S.heel += S.heelRate*dt;
+  if(S.heel > Math.PI) S.heel = Math.PI;
+  if(S.heel < -Math.PI) S.heel = -Math.PI;
+
+  /* guinada e posicao */
+  S.hdg = wrapPi(S.hdg + S.r*dt);
+  var fx = Math.sin(S.hdg), fy = Math.cos(S.hdg), sx = Math.cos(S.hdg), sy = -Math.sin(S.hdg);
+  var vgx = fx*S.u + sx*S.v + cx, vgy = fy*S.u + sy*S.v + cy;
+  S.x += vgx*dt; S.y += vgy*dt;
+  S.t += dt;
+
+  /* encalhe */
+  var th = tideHeight(S.t);
+  S.depth = depthAt(S.x, S.y, th);
+  if(!S.aground && S.depth < B.draft){ S.aground = true; onAground(); }
+  else if(S.aground && S.depth > B.draft + 0.15){ S.aground = false; toast('Saiu do raso'); }
+
+  /* emborcamento */
+  if(S.capsized > 0){
+    S.capsized -= dt;
+    if(S.capsized <= 0){ S.heel = 0; S.heelRate = 0; S.u *= 0.2; S.v = 0; }
+  } else if(Math.abs(S.heel) > CAPSIZE){
+    S.capsized = 4.0;
+    onCapsize();
+  }
+
+  /* leituras */
+  S.sog = Math.hypot(vgx, vgy);
+  S.stw = Math.hypot(S.u, S.v);
+  S.aw = FOUT.aws; S.awa = FOUT.beta; S.luff = FOUT.luff;
+  S.drive = FOUT.drive; S.fside = FOUT.side;
+  var twf = Math.atan2(-(wx*sx + wy*sy), -(wx*fx + wy*fy));
+  S.twa = twf;
+  S.tws = Math.hypot(wx, wy);
+  S.twd = Math.atan2(-wx, -wy);
+  /* VMG positivo quando o barco ganha barlavento */
+  S.vmg = vgx*Math.sin(S.twd) + vgy*Math.cos(S.twd);
+  S.lee = Math.atan2(S.v, Math.max(S.u, 0.05));
+}
+
+/* ---------- polar: o mesmo modelo resolvido no equilibrio ---------- */
+var POLAR = { tws:0, ang:[], spd:[], sheet:[], best:{up:0,upA:0,dn:0,dnA:0}, max:0 };
+var PS = novoEstado();
+var PF = {Fx:0,Fy:0,Mz:0,Mheel:0,aws:0,beta:0,drive:0,side:0,luff:0,vgx:0,vgy:0,res:0,waveAmp:0,rudStall:0,rudAtk:0};
+function equilibrium(tws, twa, sheet){
+  PS.hdg = 0; PS.u = 1.2; PS.v = 0; PS.r = 0; PS.heel = 0; PS.heelRate = 0;
+  PS.rudder = 0; PS.sheet = sheet; PS.reef = S.reef; PS.furl = S.furl;
+  var W = [-Math.sin(twa)*tws, -Math.cos(twa)*tws], C = [0,0];
+  var dt = 0.35;
+  for(var i=0;i<150;i++){
+    forces(PS, W, C, PF);
+    PS.u = clamp(PS.u + PF.Fx/MX*dt, -1, 14);
+    PS.v = clamp(PS.v + PF.Fy/MY*dt, -4, 4);
+    var Mr = PF.Mheel - B.disp*9.81*gz(PS.heel) - CROLL*PS.heelRate;
+    PS.heelRate = clamp(PS.heelRate + Mr/IROLL*dt, -1.5, 1.5);
+    PS.heel = clamp(PS.heel + PS.heelRate*dt, -1.4, 1.4);
+  }
+  return { u: PS.u, v: PS.v, heel: PS.heel, spd: Math.hypot(PS.u, PS.v) };
+}
+/* a polar e montada aos poucos, poucos angulos por quadro, para a conta nao
+   travar o desenho quando o cursor do vento se mexe */
+var PJOB = null;
+function startPolar(tws){
+  PJOB = { tws:tws, a:0, ang:[], spd:[], sheet:[], max:0,
+           bestUp:-1, bestUpA:0, bestDn:-1, bestDnA:180 };
+}
+function stepPolarJob(nAng){
+  if(!PJOB) return;
+  for(var k=0;k<nAng && PJOB.a<=180;k++, PJOB.a+=5){
+    var a = PJOB.a, tw = a*D2R, bs = 0, bsh = 0, sh, e;
+    for(sh=0; sh<=1.001; sh+=1/7){
+      e = equilibrium(PJOB.tws, tw, sh);
+      if(e.spd > bs && Math.abs(e.heel) < 60*D2R){ bs = e.spd; bsh = sh; }
+    }
+    for(var q2=-1; q2<=1; q2+=2){
+      sh = clamp(bsh + q2/14, 0, 1);
+      e = equilibrium(PJOB.tws, tw, sh);
+      if(e.spd > bs && Math.abs(e.heel) < 60*D2R){ bs = e.spd; bsh = sh; }
+    }
+    PJOB.ang.push(a); PJOB.spd.push(bs); PJOB.sheet.push(bsh);
+    if(bs > PJOB.max) PJOB.max = bs;
+    var vu = bs*Math.cos(tw), vd = -bs*Math.cos(tw);
+    if(vu > PJOB.bestUp){ PJOB.bestUp = vu; PJOB.bestUpA = a; }
+    if(vd > PJOB.bestDn){ PJOB.bestDn = vd; PJOB.bestDnA = a; }
+  }
+  if(PJOB.a > 180){
+    POLAR.tws = PJOB.tws; POLAR.ang = PJOB.ang; POLAR.spd = PJOB.spd;
+    POLAR.sheet = PJOB.sheet; POLAR.max = PJOB.max;
+    POLAR.best = { up:PJOB.bestUp, upA:PJOB.bestUpA, dn:PJOB.bestDn, dnA:PJOB.bestDnA };
+    PJOB = null;
+  }
+}
+function buildPolar(tws){
+  POLAR.tws = tws; POLAR.ang.length = 0; POLAR.spd.length = 0; POLAR.sheet.length = 0;
+  POLAR.max = 0;
+  var bestUp = -1, bestUpA = 0, bestDn = -1, bestDnA = 180;
+  for(var a=0; a<=180; a+=5){
+    var tw = a*D2R, bs = 0, bsh = 0, sh, e;
+    for(sh=0; sh<=1.001; sh+=1/7){
+      e = equilibrium(tws, tw, sh);
+      if(e.spd > bs && Math.abs(e.heel) < 60*D2R){ bs = e.spd; bsh = sh; }
+    }
+    for(var q2=-1; q2<=1; q2+=2){
+      sh = clamp(bsh + q2/14, 0, 1);
+      e = equilibrium(tws, tw, sh);
+      if(e.spd > bs && Math.abs(e.heel) < 60*D2R){ bs = e.spd; bsh = sh; }
+    }
+    POLAR.ang.push(a); POLAR.spd.push(bs); POLAR.sheet.push(bsh);
+    if(bs > POLAR.max) POLAR.max = bs;
+    var vmgU = bs*Math.cos(tw), vmgD = -bs*Math.cos(tw);
+    if(vmgU > bestUp){ bestUp = vmgU; bestUpA = a; }
+    if(vmgD > bestDn){ bestDn = vmgD; bestDnA = a; }
+  }
+  POLAR.best = { up:bestUp, upA:bestUpA, dn:bestDn, dnA:bestDnA };
+}
+function polarAt(twa){
+  var a = Math.abs(twa)*R2D, i = Math.floor(a/5);
+  if(i >= POLAR.spd.length-1) return POLAR.spd[POLAR.spd.length-1];
+  var f = (a - i*5)/5;
+  return POLAR.spd[i]*(1-f) + POLAR.spd[i+1]*f;
+}
+
+/* ==================================================================
+   3. DESENHO
+   ================================================================== */
+var cv = document.getElementById('sea'), ctx = cv.getContext('2d');
+var DPR = Math.min(window.devicePixelRatio||1, 2);
+var VW = 0, VH = 0;
+var ZOOMS = [0.035, 0.12, 0.5, 1.4, 2.6, 5.0], zi = 4;
+var CAM = { x:0, y:0, s:ZOOMS[zi], tx:0, ty:0 };
+
+function resize(){
+  VW = cv.clientWidth; VH = cv.clientHeight;
+  cv.width = Math.round(VW*DPR); cv.height = Math.round(VH*DPR);
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+}
+window.addEventListener('resize', resize);
+
+function w2sx(x){ return (x - CAM.x)*CAM.s + VW/2; }
+function w2sy(y){ return -(y - CAM.y)*CAM.s + VH/2; }
+
+/* ---------- carta de fundo (uma vez) ---------- */
+var CHART = document.createElement('canvas'), chartSide = 0;
+function depthColor(d){
+  if(d <= 0.05) return [63,59,53];
+  if(d < 1.2)  return [150,196,188];
+  if(d < 2.5)  return [122,178,180];
+  if(d < 5)    return [95,155,168];
+  if(d < 10)   return [68,128,152];
+  if(d < 18)   return [50,104,132];
+  if(d < 30)   return [40,84,112];
+  if(d < 45)   return [33,69,95];
+  return [27,57,80];
+}
+function buildChart(){
+  var n = GRID.n;
+  CHART.width = n; CHART.height = n;
+  chartSide = GRID.cell*n;
+  var c = CHART.getContext('2d'), img = c.createImageData(n,n), p = img.data;
+  for(var j=0;j<n;j++){
+    for(var i=0;i<n;i++){
+      var x = GRID.x0 + (i+0.5)*GRID.cell, y = GRID.y0 + (j+0.5)*GRID.cell;
+      var d = GRID.dist[j*n+i];
+      var dep = d <= 0 ? 0 : gridAt(GRIDC, GRIDC.dmax, x, y)*(1-Math.exp(-d/900));
+      var col = depthColor(dep);
+      var k = ((n-1-j)*n + i)*4;      /* y do mundo cresce para o norte */
+      var nz = ((i*7919 + j*104729) % 17) - 8;
+      p[k] = col[0]+nz*0.5; p[k+1] = col[1]+nz*0.5; p[k+2] = col[2]+nz*0.5; p[k+3] = 255;
+    }
+  }
+  c.putImageData(img, 0, 0);
+}
+
+/* ---------- particulas ---------- */
+function Parts(n){ var a=[]; for(var i=0;i<n;i++) a.push({x:0,y:0,life:Math.random()}); return a; }
+var PWIND = Parts(70), PCUR = Parts(90);
+function seedPart(p){
+  var m = 1.25/CAM.s;
+  p.x = CAM.x + (Math.random()-0.5)*VW*m;
+  p.y = CAM.y + (Math.random()-0.5)*VH*m;
+  p.life = 0.4 + Math.random()*0.8;
+}
+function stepParts(dt){
+  var i, p, m = 1.25/CAM.s, halfW = VW*m*0.5, halfH = VH*m*0.5;
+  var wdir = ENV.twd, ws = ENV.tws;
+  for(i=0;i<PWIND.length;i++){
+    p = PWIND[i]; p.life -= dt*0.35;
+    if(p.life <= 0 || Math.abs(p.x-CAM.x) > halfW || Math.abs(p.y-CAM.y) > halfH) seedPart(p);
+    p.x += -Math.sin(wdir)*ws*dt; p.y += -Math.cos(wdir)*ws*dt;
+  }
+  var ph = tidePhase(S.t), cs = ENV.curSpd*ph, cd = ENV.curDir;
+  for(i=0;i<PCUR.length;i++){
+    p = PCUR[i]; p.life -= dt*0.25;
+    if(p.life <= 0 || Math.abs(p.x-CAM.x) > halfW || Math.abs(p.y-CAM.y) > halfH) seedPart(p);
+    p.x += Math.sin(cd)*cs*dt; p.y += Math.cos(cd)*cs*dt;
+  }
+}
+
+/* ---------- barcos de ambiente ---------- */
+function rota(){ var a=[]; for(var i=0;i<arguments.length;i+=2){ var p=proj(arguments[i],arguments[i+1]); a.push([p[0],p[1]]); } return a; }
+var AI = [
+  { tipo:'ferry', nome:'ferry', spd:6.2, t:0, dir:1, path:rota(-38.5255,-12.9795, -38.5534,-12.9664, -38.5800,-12.9600, -38.5990,-12.9500) },
+  { tipo:'ferry', nome:'ferry', spd:6.0, t:0.55, dir:-1, path:rota(-38.5232,-12.9645, -38.5453,-12.9645, -38.5674,-12.9645, -38.5895,-12.9504, -38.6079,-12.9262) },
+  { tipo:'saveiro', nome:'saveiro', spd:3.4, t:0.2, dir:1, path:rota(-38.6000,-12.8600, -38.5995,-12.8036, -38.5713,-12.7736, -38.5463,-12.8136) },
+  { tipo:'saveiro', nome:'saveiro', spd:3.0, t:0.7, dir:1, path:rota(-38.7045,-12.9102, -38.7045,-12.9363, -38.7255,-12.9634, -38.7421,-12.9895) },
+  { tipo:'veleiro', nome:'veleiro', spd:4.8, t:0.1, dir:1, path:rota(-38.5597,-13.0003, -38.5597,-12.9667, -38.5807,-12.9341, -38.6149,-12.9005) },
+  { tipo:'navio', nome:'navio', spd:8.0, t:0.35, dir:1, path:rota(-38.5400,-13.0600, -38.5520,-13.0100, -38.5300,-12.9650, -38.5150,-12.9450) }
+];
+function stepAI(dt){
+  for(var i=0;i<AI.length;i++){
+    var a = AI[i], L = 0, k;
+    if(!a.segs){ a.segs = []; a.len = 0;
+      for(k=0;k+1<a.path.length;k++){
+        var d = Math.hypot(a.path[k+1][0]-a.path[k][0], a.path[k+1][1]-a.path[k][1]);
+        a.segs.push(d); a.len += d;
+      }
+    }
+    a.t += a.dir*a.spd*KT*dt/a.len;
+    if(a.t > 1){ a.t = 1; a.dir = -1; }
+    if(a.t < 0){ a.t = 0; a.dir = 1; }
+    var want = a.t*a.len, acc = 0;
+    for(k=0;k<a.segs.length;k++){
+      if(acc + a.segs[k] >= want || k === a.segs.length-1){
+        var f = (want-acc)/a.segs[k];
+        a.x = a.path[k][0] + (a.path[k+1][0]-a.path[k][0])*f;
+        a.y = a.path[k][1] + (a.path[k+1][1]-a.path[k][1])*f;
+        a.hdg = Math.atan2((a.path[k+1][0]-a.path[k][0])*a.dir, (a.path[k+1][1]-a.path[k][1])*a.dir);
+        break;
+      }
+      acc += a.segs[k];
+    }
+  }
+}
+
+/* ---------- cena ---------- */
+function drawScene(dt){
+  ctx.clearRect(0,0,VW,VH);
+  var s = CAM.s;
+
+  /* fundo: carta */
+  ctx.imageSmoothingEnabled = true;
+  var bx = w2sx(GRID.x0), by = w2sy(GRID.y0 + chartSide), bw = chartSide*s;
+  ctx.drawImage(CHART, bx, by, bw, bw);
+
+  /* fora da carta */
+  ctx.fillStyle = '#1b3950';
+  if(bx > 0) ctx.fillRect(0,0,bx,VH);
+  if(by > 0) ctx.fillRect(0,0,VW,by);
+  if(bx+bw < VW) ctx.fillRect(bx+bw,0,VW-(bx+bw),VH);
+  if(by+bw < VH) ctx.fillRect(0,by+bw,VW,VH-(by+bw));
+
+  if(s > 0.22) drawWaves();
+  if(s > 0.15) drawCurrent();
+  drawLand();
+  if(s > 0.12) drawMarks();
+  drawCourse();
+  if(s > 0.25) drawAI();
+  if(s > 0.5) drawWind();
+  drawBoat();
+}
+
+/* vaga: cristas desenhadas onde a superficie passa de zero */
+function drawWaves(){
+  var dir = ENV.wvLock ? ENV.twd : ENV.wvDir;
+  var amp = ENV.hs;
+  if(amp < 0.05) return;
+  var T = ENV.tp, L = 9.81*T*T/(2*Math.PI);
+  var kx = -Math.sin(dir), ky = -Math.cos(dir);
+  var px = -ky, py = kx;                       /* ao longo da crista */
+  var halfW = VW/CAM.s*0.72, halfH = VH/CAM.s*0.72;
+  var R = Math.hypot(halfW, halfH);
+  var c = S.t*Math.sqrt(9.81*L/(2*Math.PI));   /* celeridade */
+  var d0 = (CAM.x*kx + CAM.y*ky);
+  var n0 = Math.round((d0 - c)/L);
+  ctx.save();
+  ctx.lineCap = 'round';
+  var nL = Math.min(90, Math.ceil(2*R/L)+2);
+  for(var i=-nL;i<=nL;i++){
+    var dd = (n0+i)*L + c;
+    var cx = kx*dd, cy = ky*dd;
+    /* a crista e a reta que passa por (cx,cy) na direcao (px,py) */
+    var x1 = cx + px*R, y1 = cy + py*R, x2 = cx - px*R, y2 = cy - py*R;
+    var a = clamp(amp*0.26, 0.04, 0.4);
+    ctx.strokeStyle = 'rgba(255,255,255,'+a.toFixed(3)+')';
+    ctx.lineWidth = clamp(CAM.s*amp*0.9, 0.8, 7);
+    ctx.beginPath(); ctx.moveTo(w2sx(x1), w2sy(y1)); ctx.lineTo(w2sx(x2), w2sy(y2)); ctx.stroke();
+    ctx.strokeStyle = 'rgba(10,30,45,'+(a*0.8).toFixed(3)+')';
+    var off = L*0.42;
+    ctx.beginPath(); ctx.moveTo(w2sx(x1+kx*off), w2sy(y1+ky*off));
+    ctx.lineTo(w2sx(x2+kx*off), w2sy(y2+ky*off)); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawCurrent(){
+  var ph = tidePhase(S.t), cs = ENV.curSpd*ph;
+  if(Math.abs(cs) < 0.02) return;
+  var dx = Math.sin(ENV.curDir)*cs, dy = Math.cos(ENV.curDir)*cs;
+  var L = clamp(cs*9, 6, 70);
+  ctx.save();
+  ctx.lineWidth = 1.2; ctx.lineCap = 'round';
+  for(var i=0;i<PCUR.length;i++){
+    var p = PCUR[i];
+    var a = clamp(p.life, 0, 1)*0.30;
+    ctx.strokeStyle = 'rgba(190,230,245,'+a.toFixed(3)+')';
+    var ux = dx/Math.max(cs,.01), uy = dy/Math.max(cs,.01);
+    ctx.beginPath();
+    ctx.moveTo(w2sx(p.x), w2sy(p.y));
+    ctx.lineTo(w2sx(p.x+ux*L), w2sy(p.y+uy*L));
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawWind(){
+  var dx = -Math.sin(ENV.twd), dy = -Math.cos(ENV.twd);
+  var L = clamp(ENV.tws*3.2, 10, 90);
+  ctx.save(); ctx.lineWidth = 1.1; ctx.lineCap='round';
+  for(var i=0;i<PWIND.length;i++){
+    var p = PWIND[i], a = clamp(p.life,0,1)*0.17;
+    ctx.strokeStyle = 'rgba(255,255,255,'+a.toFixed(3)+')';
+    ctx.beginPath();
+    ctx.moveTo(w2sx(p.x), w2sy(p.y));
+    ctx.lineTo(w2sx(p.x+dx*L), w2sy(p.y+dy*L));
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawLand(){
+  ctx.save();
+  for(var p=0;p<LAND.length;p++){
+    var a = LAND[p].pts;
+    ctx.beginPath();
+    ctx.moveTo(w2sx(a[0]), w2sy(a[1]));
+    for(var i=2;i<a.length;i+=2) ctx.lineTo(w2sx(a[i]), w2sy(a[i+1]));
+    ctx.closePath();
+    ctx.fillStyle = '#403c35';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(226,214,186,.55)';
+    ctx.lineWidth = Math.max(1, Math.min(2.5, CAM.s*2));
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawMarks(){
+  ctx.save();
+  ctx.textAlign = 'center';
+  for(var i=0;i<MARKS.length;i++){
+    var m = MARKS[i], X = w2sx(m.x), Y = w2sy(m.y);
+    if(X < -120 || X > VW+120 || Y < -60 || Y > VH+60) continue;
+    var big = (m.tipo === 'cidade');
+    if(CAM.s < 0.3 && !big && m.tipo !== 'ilha' && m.tipo !== 'vila') continue;
+    if(m.tipo === 'farol'){
+      ctx.fillStyle = '#FBB12F';
+      ctx.beginPath(); ctx.arc(X, Y, 4, 0, 6.2832); ctx.fill();
+      ctx.strokeStyle = 'rgba(251,177,47,.35)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(X, Y, 9 + 4*Math.sin(S.t*2), 0, 6.2832); ctx.stroke();
+    } else if(m.tipo === 'forte'){
+      ctx.fillStyle = '#d8cfae';
+      ctx.beginPath(); ctx.arc(X, Y, 4.5, 0, 6.2832); ctx.fill();
+    } else if(m.tipo === 'marina'){
+      ctx.fillStyle = '#9BD79B';
+      ctx.fillRect(X-3.5, Y-3.5, 7, 7);
+    } else {
+      ctx.fillStyle = 'rgba(232,232,232,.8)';
+      ctx.beginPath(); ctx.arc(X, Y, 2.2, 0, 6.2832); ctx.fill();
+    }
+    ctx.font = (big?'600 12px':'11px') + ' Calibri,sans-serif';
+    ctx.fillStyle = big ? 'rgba(255,255,255,.92)' : 'rgba(232,232,232,.72)';
+    ctx.fillText(m.nome, X, Y - 8);
+  }
+  ctx.restore();
+}
+
+function drawAI(){
+  ctx.save();
+  for(var i=0;i<AI.length;i++){
+    var a = AI[i];
+    if(a.x === undefined) continue;
+    var X = w2sx(a.x), Y = w2sy(a.y);
+    if(X < -60 || X > VW+60 || Y < -60 || Y > VH+60) continue;
+    var L = (a.tipo==='navio'?90:(a.tipo==='ferry'?38:12))*CAM.s;
+    var Bw = (a.tipo==='navio'?16:(a.tipo==='ferry'?10:4))*CAM.s;
+    L = Math.max(L, 5); Bw = Math.max(Bw, 2);
+    ctx.save(); ctx.translate(X, Y); ctx.rotate(a.hdg);
+    ctx.fillStyle = a.tipo==='saveiro' ? '#b9a07a' : (a.tipo==='navio' ? '#6d6f72' : '#8d9499');
+    ctx.beginPath();
+    ctx.moveTo(0, L*0.5);
+    ctx.quadraticCurveTo(Bw*0.58, L*0.18, Bw*0.5, -L*0.12);
+    ctx.lineTo(Bw*0.42, -L*0.5); ctx.lineTo(-Bw*0.42, -L*0.5);
+    ctx.lineTo(-Bw*0.5, -L*0.12);
+    ctx.quadraticCurveTo(-Bw*0.58, L*0.18, 0, L*0.5);
+    ctx.closePath();
+    ctx.fill();
+    if(a.tipo==='saveiro'||a.tipo==='veleiro'){
+      ctx.fillStyle = 'rgba(245,240,230,.8)';
+      ctx.beginPath(); ctx.moveTo(0,L*0.22); ctx.quadraticCurveTo(Bw*1.4, -L*0.05, 0, -L*0.3); ctx.closePath(); ctx.fill();
+    }
+    ctx.restore();
+    /* esteira */
+    ctx.strokeStyle = 'rgba(255,255,255,.12)'; ctx.lineWidth = Math.max(1,Bw*0.28);
+    ctx.beginPath(); ctx.moveTo(X - Math.sin(a.hdg)*L*0.5, Y + Math.cos(a.hdg)*L*0.5);
+    ctx.lineTo(X - Math.sin(a.hdg)*L*2.2, Y + Math.cos(a.hdg)*L*2.2); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+/* ---------- o veleiro ---------- */
+function drawBoat(){
+  var s = CAM.s, X = w2sx(S.x), Y = w2sy(S.y);
+  var hd = S.hdg, phi = S.heel;
+
+  /* esteira */
+  if(S.trail.length > 1){
+    ctx.save(); ctx.lineCap='round';
+    for(var i=1;i<S.trail.length;i++){
+      var p0 = S.trail[i-1], p1 = S.trail[i];
+      var a = i/S.trail.length*0.35;
+      ctx.strokeStyle = 'rgba(255,255,255,'+a.toFixed(3)+')';
+      ctx.lineWidth = Math.max(1, s*1.6*(i/S.trail.length));
+      ctx.beginPath(); ctx.moveTo(w2sx(p0[0]), w2sy(p0[1])); ctx.lineTo(w2sx(p1[0]), w2sy(p1[1])); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  /* de longe o barco vira uma marca legivel, senao some */
+  if(s < 0.9){
+    ctx.save();
+    ctx.translate(X, Y);
+    ctx.transform(Math.cos(hd), Math.sin(hd), Math.sin(hd), -Math.cos(hd), 0, 0);
+    var R0 = clamp(12*s, 5, 11);
+    ctx.fillStyle = '#F7F7F7';
+    ctx.beginPath(); ctx.moveTo(0, R0); ctx.lineTo(R0*0.62, -R0*0.8);
+    ctx.lineTo(0, -R0*0.45); ctx.lineTo(-R0*0.62, -R0*0.8); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = '#9A3231'; ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.moveTo(0, R0); ctx.lineTo(0, -R0*0.45); ctx.stroke();
+    ctx.restore();
+    return;
+  }
+
+  ctx.save();
+  ctx.translate(X, Y);
+  /* referencial do barco: x para boreste, y para a proa (a tela tem y invertido) */
+  ctx.transform(Math.cos(hd), Math.sin(hd), Math.sin(hd), -Math.cos(hd), 0, 0);
+  var k = s;                            /* metros -> pixels */
+  var cp = Math.cos(phi);
+  var lean = Math.sin(phi)*0.35*B.BOA*k;  /* deslocamento visual da banda */
+
+  if(S.capsized > 0) ctx.globalAlpha = 0.65;
+
+  /* sombra submersa (linha d'agua) */
+  ctx.save();
+  ctx.translate(lean*0.5, 0);
+  ctx.fillStyle = 'rgba(12,35,50,.45)';
+  hullPath(WLINE, k, cp*0.9, 1);
+  ctx.fill();
+  ctx.restore();
+
+  /* casco */
+  ctx.save();
+  ctx.translate(lean, 0);
+  var grd = ctx.createLinearGradient(-B.BOA*0.5*k, 0, B.BOA*0.5*k, 0);
+  grd.addColorStop(0, phi<0 ? '#8b9196' : '#C9CDD1');
+  grd.addColorStop(1, phi<0 ? '#C9CDD1' : '#8b9196');
+  ctx.fillStyle = grd;
+  hullPath(DECK, k, cp, 1);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(30,34,38,.85)'; ctx.lineWidth = Math.max(0.8, k*0.09);
+  hullPath(DECK, k, cp, 1); ctx.stroke();
+  /* cabine */
+  ctx.fillStyle = 'rgba(70,76,80,.9)';
+  ctx.beginPath();
+  ctx.ellipse(0, (0.535*B.LOA-B.LCB)*k, 0.28*B.BOA*cp*k, 0.19*B.LOA*k, 0, 0, 6.2832);
+  ctx.fill();
+  /* poco */
+  ctx.strokeStyle = 'rgba(40,44,48,.7)'; ctx.lineWidth = Math.max(0.6,k*0.06);
+  ctx.beginPath(); ctx.ellipse(0, (0.26*B.LOA-B.LCB)*k, 0.215*B.BOA*cp*k, 0.125*B.LOA*k, 0, 0, 6.2832); ctx.stroke();
+  ctx.restore();
+
+  /* velas: uma curva por vela, do punho de amura para re */
+  var sgn = (S.awa < 0) ? -1 : 1;       /* vela cai para sota-vento */
+  var flog = S.luff, tnow = S.t;
+  for(var vi=0; vi<SAILS.length; vi++){
+    var sl = SAILS[vi];
+    var frac = sl[7] ? FURLS[S.furl] : REEFS[S.reef];
+    if(frac < 0.01) continue;
+    var dS = sl[2]*S.sheet*sgn;
+    var amuraY = (sl[8] - B.LCB)*k;
+    var peL = sl[9]*frac*0.98*k;
+    var fl = flog*Math.sin(tnow*(sl[7]?11:9)+vi)*0.28;
+    var clewX = -Math.sin(dS)*peL*cp, clewY = amuraY - Math.cos(dS)*peL;
+    ctx.save(); ctx.translate(lean*(sl[7]?0.8:0.6), 0);
+    ctx.beginPath();
+    ctx.moveTo(0, amuraY);
+    ctx.quadraticCurveTo(-Math.sin(dS+(0.47+fl)*sgn)*peL*0.62*cp,
+                         amuraY - Math.cos(dS)*peL*0.55, clewX, clewY);
+    ctx.quadraticCurveTo(-Math.sin(dS)*peL*0.48*cp, amuraY - Math.cos(dS)*peL*0.5, 0, amuraY);
+    ctx.closePath();
+    ctx.fillStyle = flog > 0.5 ? 'rgba(236,236,230,.55)' : 'rgba(246,246,240,.88)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(60,64,68,.8)'; ctx.lineWidth = Math.max(0.7,k*0.07); ctx.stroke();
+    if(!sl[7]){                          /* retranca da vela de mastro */
+      ctx.strokeStyle = 'rgba(40,44,48,.95)'; ctx.lineWidth = Math.max(1,k*0.1);
+      ctx.beginPath(); ctx.moveTo(0, amuraY); ctx.lineTo(clewX, clewY); ctx.stroke();
+    }
+    ctx.restore();
+  }
+  /* mastro */
+  ctx.fillStyle = '#2e3236';
+  for(var mi2=0; mi2<B.masts.length; mi2++){
+    ctx.beginPath();
+    ctx.arc(lean*0.6, (B.masts[mi2]-B.LCB)*k, Math.max(1.2, k*0.18), 0, 6.2832); ctx.fill();
+  }
+
+  /* leme */
+  ctx.save();
+  ctx.translate(0, (B.xRud-B.LCB)*k);
+  ctx.rotate(S.rudder);
+  ctx.strokeStyle = '#9A3231'; ctx.lineWidth = Math.max(1.2, k*0.16);
+  ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0, -0.092*B.LOA*k); ctx.stroke();
+  ctx.restore();
+
+  /* grimpa no topo do mastro: vento aparente */
+  if(k > 1.2){
+    ctx.save();
+    ctx.translate(lean*0.6, (B.masts[0]-B.LCB)*k);
+    ctx.rotate(Math.PI - S.awa);
+    ctx.strokeStyle = '#EE9A98'; ctx.lineWidth = Math.max(1, k*0.1);
+    var gl = 0.217*B.LOA*k, gw = 0.042*B.LOA*k;
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0, gl); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, gl); ctx.lineTo(-gw, gl*0.73); ctx.lineTo(gw, gl*0.73); ctx.closePath();
+    ctx.fillStyle = '#EE9A98'; ctx.fill();
+    ctx.restore();
+  }
+  ctx.restore();
+
+  /* espuma na proa */
+  if(S.sog > 1.2 && s > 0.6){
+    ctx.save();
+    var fa = clamp((S.sog-1.2)/3.5, 0, 1)*0.5;
+    ctx.strokeStyle = 'rgba(255,255,255,'+fa.toFixed(2)+')';
+    ctx.lineWidth = Math.max(1, s*0.5);
+    var bx2 = S.x + Math.sin(hd)*(B.bowY-B.LCB), by2 = S.y + Math.cos(hd)*(B.bowY-B.LCB);
+    ctx.beginPath();
+    var ang = Math.atan2(-Math.cos(hd), Math.sin(hd));
+    ctx.arc(w2sx(bx2), w2sy(by2), Math.max(2, s*1.6), ang - 1.25, ang + 1.25);
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+function hullPath(outline, k, cp, side){
+  ctx.beginPath();
+  var i, p;
+  for(i=0;i<outline.length;i++){
+    p = outline[i];
+    var X = p[1]*cp*k, Y = (p[0]-B.LCB)*k;
+    if(i===0) ctx.moveTo(X, Y); else ctx.lineTo(X, Y);
+  }
+  for(i=outline.length-1;i>=0;i--){
+    p = outline[i];
+    ctx.lineTo(-p[1]*cp*k, (p[0]-B.LCB)*k);
+  }
+  ctx.closePath();
+}
+
+/* ---------- percurso ---------- */
+var RACE = { on:false, course:null, idx:0, t0:0, time:0, done:false, best:null };
+function drawCourse(){
+  if(!RACE.on || !RACE.course) return;
+  var wps = RACE.course.wps;
+  ctx.save();
+  for(var i=0;i<wps.length;i++){
+    var w = wps[i], X = w2sx(w.x), Y = w2sy(w.y);
+    var done = i < RACE.idx, next = i === RACE.idx;
+    var R = Math.max(5, w.r*CAM.s);
+    ctx.strokeStyle = done ? 'rgba(155,215,155,.45)' : (next ? '#FBB12F' : 'rgba(232,232,232,.35)');
+    ctx.lineWidth = next ? 2 : 1.2;
+    ctx.setLineDash(next ? [6,5] : []);
+    ctx.beginPath(); ctx.arc(X, Y, R, 0, 6.2832); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = done ? '#9BD79B' : (next ? '#FBB12F' : '#E8E8E8');
+    ctx.beginPath(); ctx.arc(X, Y, 4.5, 0, 6.2832); ctx.fill();
+    ctx.font = '600 11px Calibri,sans-serif'; ctx.textAlign='center';
+    ctx.fillStyle = next ? '#FBB12F' : 'rgba(232,232,232,.7)';
+    ctx.fillText((i+1)+' '+w.nome, X, Y - R - 5);
+    if(next){
+      var dx = w.x - S.x, dy = w.y - S.y, d = Math.hypot(dx,dy);
+      ctx.strokeStyle = 'rgba(251,177,47,.25)'; ctx.lineWidth = 1; ctx.setLineDash([4,6]);
+      ctx.beginPath(); ctx.moveTo(w2sx(S.x), w2sy(S.y)); ctx.lineTo(X, Y); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  }
+  ctx.restore();
+}
+
+/* ==================================================================
+   4. PAINEIS DE BORDO
+   ================================================================== */
+var dcv = document.getElementById('dialCv'), dctx = dcv.getContext('2d');
+var tcv = document.getElementById('trimCv'), tctx = tcv.getContext('2d');
+var mcv = document.getElementById('miniCv'), mctx = mcv.getContext('2d');
+var MINI = document.createElement('canvas');
+
+function drawDial(){
+  var W = dcv.width, H = dcv.height, R = W/2 - 28, cx = W/2, cy = H/2;
+  dctx.clearRect(0,0,W,H);
+  dctx.save(); dctx.translate(cx,cy);
+  /* zona morta, em torno do vento real */
+  var twa = S.twa||0;
+  dctx.save(); dctx.rotate(-twa);
+  dctx.fillStyle = 'rgba(154,50,49,.22)';
+  dctx.beginPath(); dctx.moveTo(0,0);
+  dctx.arc(0,0,R, -Math.PI/2 - 36*D2R, -Math.PI/2 + 36*D2R); dctx.closePath(); dctx.fill();
+  dctx.restore();
+  /* rosa */
+  dctx.strokeStyle = '#555'; dctx.lineWidth = 2;
+  dctx.beginPath(); dctx.arc(0,0,R,0,6.2832); dctx.stroke();
+  dctx.save(); dctx.rotate(-S.hdg);
+  dctx.font = '600 20px Calibri,sans-serif'; dctx.textAlign='center'; dctx.textBaseline='middle';
+  var lab = ['N','E','S','W'];
+  for(var i=0;i<36;i++){
+    var a = i*10*D2R, L = (i%9===0) ? 14 : (i%3===0 ? 9 : 5);
+    dctx.strokeStyle = (i%9===0) ? '#E8E8E8' : '#777';
+    dctx.lineWidth = (i%9===0) ? 2.5 : 1.5;
+    dctx.beginPath();
+    dctx.moveTo(Math.sin(a)*R, -Math.cos(a)*R);
+    dctx.lineTo(Math.sin(a)*(R-L), -Math.cos(a)*(R-L));
+    dctx.stroke();
+    if(i%9===0){
+      dctx.fillStyle = (i===0) ? '#EE9A98' : '#BFBFBF';
+      dctx.fillText(lab[i/9], Math.sin(a)*(R-30), -Math.cos(a)*(R-30));
+    }
+  }
+  dctx.restore();
+  /* seta do vento real */
+  function arrow(ang, col, len, wid){
+    dctx.save(); dctx.rotate(ang);
+    dctx.fillStyle = col;
+    dctx.beginPath();
+    dctx.moveTo(0, -len); dctx.lineTo(wid, -len+wid*1.5); dctx.lineTo(wid*0.4, -len+wid*1.5);
+    dctx.lineTo(wid*0.4, -len*0.25); dctx.lineTo(-wid*0.4, -len*0.25); dctx.lineTo(-wid*0.4, -len+wid*1.5);
+    dctx.lineTo(-wid, -len+wid*1.5); dctx.closePath(); dctx.fill();
+    dctx.restore();
+  }
+  arrow(-twa, '#7FB6DE', R-4, 11);
+  arrow(-(S.awa||0), '#EE9A98', R-26, 8);
+  /* barco sempre apontando para cima */
+  dctx.fillStyle = '#C9CDD1';
+  dctx.beginPath();
+  dctx.moveTo(0,-30); dctx.lineTo(9,-6); dctx.lineTo(7,26); dctx.lineTo(-7,26); dctx.lineTo(-9,-6);
+  dctx.closePath(); dctx.fill();
+  /* leme */
+  dctx.save(); dctx.translate(0,24); dctx.rotate(S.rudder);
+  dctx.strokeStyle = '#9A3231'; dctx.lineWidth = 4;
+  dctx.beginPath(); dctx.moveTo(0,0); dctx.lineTo(0,14); dctx.stroke();
+  dctx.restore();
+  /* banda */
+  dctx.restore();
+  dctx.font = '15px Consolas,monospace'; dctx.textAlign='left'; dctx.textBaseline='alphabetic';
+  dctx.fillStyle = '#7FB6DE'; dctx.fillText('vento real', 4, 16);
+  dctx.fillStyle = '#EE9A98'; dctx.fillText('aparente', 4, H-5);
+}
+
+function drawTrim(){
+  var W = tcv.width, H = tcv.height;
+  tctx.clearRect(0,0,W,H);
+  var pad = 10, w = W - pad*2;
+  /* faixa boa: onde a incidencia fica entre 8 e 18 graus */
+  var ab = Math.abs(S.awa||0);
+  var s1 = clamp((ab - 20*D2R)/(80*D2R), 0, 1);
+  var s2 = clamp((ab - 7*D2R)/(80*D2R), 0, 1);
+  tctx.fillStyle = '#404040'; tctx.fillRect(pad, H/2-7, w, 14);
+  tctx.fillStyle = 'rgba(155,215,155,.45)';
+  tctx.fillRect(pad + s1*w, H/2-7, Math.max(3,(s2-s1)*w), 14);
+  tctx.strokeStyle = '#555'; tctx.lineWidth = 1.5; tctx.strokeRect(pad, H/2-7, w, 14);
+  var x = pad + S.sheet*w;
+  tctx.fillStyle = S.luff > 0.35 ? '#FBB12F' : '#EE9A98';
+  tctx.fillRect(x-3, H/2-12, 6, 24);
+  tctx.fillStyle = '#BFBFBF'; tctx.font = '15px Calibri,sans-serif';
+  tctx.textAlign='left'; tctx.fillText('caçada', 2, H-2);
+  tctx.textAlign='right'; tctx.fillText('folgada', W-2, H-2);
+}
+
+function buildMini(){
+  var n = 400; MINI.width = n; MINI.height = n;
+  var c = MINI.getContext('2d');
+  c.fillStyle = '#2d5673'; c.fillRect(0,0,n,n);
+  var sx = n/WORLD.w, sy = n/WORLD.h, s = Math.min(sx,sy);
+  MINI.s = s; MINI.ox = (n - WORLD.w*s)/2; MINI.oy = (n - WORLD.h*s)/2;
+  for(var p=0;p<LAND.length;p++){
+    var a = LAND[p].pts;
+    c.beginPath();
+    for(var i=0;i<a.length;i+=2){
+      var X = MINI.ox + (a[i]-WORLD.x0)*s, Y = n - MINI.oy - (a[i+1]-WORLD.y0)*s;
+      if(i===0) c.moveTo(X,Y); else c.lineTo(X,Y);
+    }
+    c.closePath(); c.fillStyle = '#403c35'; c.fill();
+    c.strokeStyle = 'rgba(226,214,186,.5)'; c.lineWidth = 1; c.stroke();
+  }
+}
+function mx(x){ return MINI.ox + (x-WORLD.x0)*MINI.s; }
+function my(y){ return 400 - MINI.oy - (y-WORLD.y0)*MINI.s; }
+function drawMini(){
+  mctx.clearRect(0,0,400,400);
+  mctx.drawImage(MINI,0,0);
+  var i;
+  if(RACE.on && RACE.course){
+    for(i=0;i<RACE.course.wps.length;i++){
+      var w = RACE.course.wps[i];
+      mctx.fillStyle = i < RACE.idx ? '#9BD79B' : (i===RACE.idx ? '#FBB12F' : 'rgba(232,232,232,.6)');
+      mctx.beginPath(); mctx.arc(mx(w.x), my(w.y), 4, 0, 6.2832); mctx.fill();
+    }
+  }
+  /* janela da camera */
+  var hw = VW/CAM.s/2*MINI.s, hh = VH/CAM.s/2*MINI.s;
+  mctx.strokeStyle = 'rgba(255,255,255,.35)'; mctx.lineWidth = 1.5;
+  mctx.strokeRect(mx(CAM.x)-hw, my(CAM.y)-hh, hw*2, hh*2);
+  /* barco */
+  var X = mx(S.x), Y = my(S.y);
+  mctx.save(); mctx.translate(X,Y); mctx.rotate(S.hdg);
+  mctx.fillStyle = '#EE9A98';
+  mctx.beginPath(); mctx.moveTo(0,-7); mctx.lineTo(4,5); mctx.lineTo(-4,5); mctx.closePath(); mctx.fill();
+  mctx.restore();
+  /* vento */
+  mctx.save(); mctx.translate(368,32); mctx.rotate(ENV.twd);
+  mctx.strokeStyle = '#7FB6DE'; mctx.lineWidth = 2;
+  mctx.beginPath(); mctx.moveTo(0,-16); mctx.lineTo(0,16); mctx.stroke();
+  mctx.beginPath(); mctx.moveTo(0,16); mctx.lineTo(-5,8); mctx.lineTo(5,8); mctx.closePath();
+  mctx.fillStyle = '#7FB6DE'; mctx.fill();
+  mctx.restore();
+}
+
+/* ==================================================================
+   5. INTERFACE
+   ================================================================== */
+function el(id){ return document.getElementById(id); }
+var toastT = 0;
+function toast(msg, ms){
+  var t = el('toast'); t.innerHTML = msg; t.classList.add('on');
+  toastT = (ms||2200)/1000;
+}
+function fmt(v, d){ return v.toFixed(d===undefined?1:d).replace('.', ','); }
+function onAground(){ toast('<b>Encalhou.</b> Liga o motor, espera a mare ou cai fora de re.', 3600); }
+function onCapsize(){ toast('<b>Emborcou.</b> AVS deste casco: ' + nm(B.AVS,0) +
+  ' graus - passado o AVS o braco pede a emborcadura.', 4200); }
+
+/* --- cursores --- */
+function bindRange(id, spanId, apply, dec){
+  var r = el(id), sp = el(spanId);
+  function go(){
+    var v = parseFloat(r.value);
+    sp.textContent = dec ? fmt(v, dec) : v;
+    apply(v);
+  }
+  r.addEventListener('input', go); go();
+}
+var polarTimer = null;
+function schedulePolar(){
+  if(polarTimer) clearTimeout(polarTimer);
+  polarTimer = setTimeout(function(){ startPolar(ENV.tws); }, 220);
+}
+bindRange('ws','vWs', function(v){ ENV.tws = v*KT; schedulePolar(); }, 1);
+bindRange('wd','vWd', function(v){ ENV.twd = v*D2R; });
+bindRange('gu','vGu', function(v){ ENV.gust = v/100; });
+bindRange('cs','vCs', function(v){ ENV.curSpd = v*KT; }, 1);
+bindRange('cd','vCd', function(v){ ENV.curDir = v*D2R; });
+bindRange('hs','vHs', function(v){ ENV.hs = v; }, 1);
+bindRange('tp','vTp', function(v){ ENV.tp = v; }, 1);
+bindRange('wv','vWv', function(v){ ENV.wvDir = v*D2R; });
+el('tide').addEventListener('change', function(){ ENV.tideOn = this.checked; });
+el('wvLock').addEventListener('change', function(){ ENV.wvLock = this.checked; });
+
+var PRESETS = {
+  calmaria: {ws:4, gu:15, cs:0.6, hs:0.15, tp:3.0},
+  brisa:    {ws:14, gu:30, cs:1.2, hs:0.6, tp:4.5},
+  fresco:   {ws:22, gu:45, cs:2.2, hs:1.2, tp:5.5},
+  temporal: {ws:34, gu:70, cs:3.0, hs:2.4, tp:7.0}
+};
+var segs = document.querySelectorAll('#cond .seg button');
+for(var i=0;i<segs.length;i++) segs[i].addEventListener('click', function(){
+  for(var j=0;j<segs.length;j++) segs[j].classList.remove('on');
+  this.classList.add('on');
+  var p = PRESETS[this.getAttribute('data-pre')];
+  el('ws').value = p.ws; el('gu').value = p.gu; el('cs').value = p.cs;
+  el('hs').value = p.hs; el('tp').value = p.tp;
+  ['ws','gu','cs','hs','tp'].forEach(function(k){
+    el(k).dispatchEvent(new Event('input'));
+  });
+  toast('Condicao: ' + this.textContent, 1500);
+});
+
+/* abre e fecha o painel de condicoes */
+el('condH').addEventListener('click', function(){
+  var c = el('cond'); c.classList.toggle('closed');
+  this.querySelector('i').innerHTML = c.classList.contains('closed') ? '+' : '−';
+});
+if(window.innerWidth < 760){ el('cond').classList.add('closed'); el('condH').querySelector('i').innerHTML = '+'; }
+
+/* --- teclado --- */
+var keys = {};
+window.addEventListener('keydown', function(e){
+  var k = e.key.toLowerCase();
+  if(['arrowleft','arrowright','arrowup','arrowdown',' '].indexOf(k) >= 0) e.preventDefault();
+  if(keys[k]) return;
+  keys[k] = true;
+  if(k === 'r'){ S.reef = (S.reef+1)%4; schedulePolar();
+    toast(['Pano de mastro cheio','Um riz','Dois rizes','Vela de mastro arriada'][S.reef], 1600); }
+  if(k === 'f'){ S.furl = (S.furl+1)%4; schedulePolar();
+    toast([NOMEPROA+' cheia',NOMEPROA+' a meio',NOMEPROA+' em lenco',NOMEPROA+' enrolada'][S.furl], 1600); }
+  if(k === 'm'){ toggleMotor(); }
+  if(k === 'z'){ cycleZoom(); }
+  if(k === 'p'){ togglePause(); }
+  if(k === 'escape'){ el('veil').classList.toggle('on'); }
+  if(k === ' '){ S.rudderCmd = 0; }
+});
+window.addEventListener('keyup', function(e){ keys[e.key.toLowerCase()] = false; });
+window.addEventListener('blur', function(){ keys = {}; });
+
+function toggleMotor(){
+  S.motor = !S.motor; el('bMotor').classList.toggle('on', S.motor);
+  toast(S.motor ? 'Motor ligado - ' + Math.round(THRUST) + ' N de empuxo' : 'Motor desligado', 1500);
+}
+function toggleAnchor(){
+  if(!S.anchor && S.depth > 14){ toast('Fundo demais para fundear aqui ('+fmt(S.depth)+' m)', 2000); return; }
+  S.anchor = !S.anchor; el('bAnchor').classList.toggle('on', S.anchor);
+  toast(S.anchor ? 'Fundeado em '+fmt(S.depth)+' m' : 'Ferro levantado', 1600);
+}
+function cycleZoom(){ zi = (zi+1)%ZOOMS.length; CAM.s = ZOOMS[zi]; }
+var paused = false;
+function togglePause(){ paused = !paused; el('bPause').classList.toggle('on', paused);
+  toast(paused ? 'Pausado' : 'Navegando', 1200); }
+el('bMenu').onclick = function(){ el('veil').classList.add('on'); };
+el('bMotor').onclick = toggleMotor;
+el('bAnchor').onclick = toggleAnchor;
+el('bZoom').onclick = cycleZoom;
+el('bPause').onclick = togglePause;
+
+/* --- toque --- */
+var touchState = {l:false,r:false,i:false,o:false};
+function bindPad(id, key){
+  var e = el(id);
+  function on(ev){ ev.preventDefault(); touchState[key] = true; }
+  function off(ev){ ev.preventDefault(); touchState[key] = false; }
+  e.addEventListener('touchstart', on); e.addEventListener('touchend', off);
+  e.addEventListener('touchcancel', off);
+  e.addEventListener('mousedown', on); e.addEventListener('mouseup', off);
+  e.addEventListener('mouseleave', off);
+}
+bindPad('pL','l'); bindPad('pR','r'); bindPad('pIn','i'); bindPad('pOut','o');
+if('ontouchstart' in window) document.body.classList.add('touch');
+
+/* ==================================================================
+   6. MODOS - livre, aulas, regata
+   ================================================================== */
+var MODE = 'livre';
+function startAt(lon, lat, hdgDeg){
+  var p = proj(lon, lat);
+  S.x = p[0]; S.y = p[1]; S.hdg = hdgDeg*D2R;
+  S.u = 0.4; S.v = 0; S.r = 0; S.heel = 0; S.heelRate = 0;
+  S.rudder = 0; S.rudderCmd = 0; S.sheet = 0.45; S.reef = 0; S.furl = 0;
+  S.anchor = false; S.aground = false; S.capsized = 0; S.trail.length = 0;
+  el('bAnchor').classList.remove('on');
+  CAM.x = S.x; CAM.y = S.y;
+}
+function setMode(m){
+  MODE = m;
+  RACE.on = false; RACE.done = false; RACE.idx = 0; RACE.time = 0; RACE.t0 = -1;
+  LESSON.on = false;
+  el('task').classList.remove('on');
+  if(m === 'livre'){
+    startAt(-38.5250,-12.9790, 235);
+    S.motor = true; el('bMotor').classList.add('on');
+    toast('Terminal Nautico. Motor ligado, largue e ice pano.', 3000);
+  } else if(m === 'aula'){
+    startAt(-38.5250,-12.9790, 235);
+    S.motor = true; el('bMotor').classList.add('on');
+    LESSON.on = true; LESSON.i = -1; nextLesson();
+  } else {
+    var c = COURSES[m];
+    RACE.on = true; RACE.course = c; RACE.idx = 0;
+    startAt(c.start[0], c.start[1], c.start[2]);
+    S.motor = false; el('bMotor').classList.remove('on');
+    showTask(c.nome, c.desc + ' Cronometro comeca quando o barco passar de 1 no.', 0);
+    RACE.best = loadBest(m);
+  }
+  buildPolar(ENV.tws);
+}
+function loadBest(k){
+  try{ var v = localStorage.getItem('bts_best_'+k); return v ? parseFloat(v) : null; }catch(e){ return null; }
+}
+function saveBest(k, v){ try{ localStorage.setItem('bts_best_'+k, String(v)); }catch(e){} }
+function showTask(t, d, p){
+  el('taskT').innerHTML = t; el('taskD').innerHTML = d;
+  el('taskP').firstChild.style.width = (p*100)+'%';
+  el('task').classList.add('on');
+}
+function hhmmss(s){
+  var m = Math.floor(s/60), ss = s - m*60;
+  return m + ':' + (ss<10?'0':'') + ss.toFixed(1).replace('.', ',');
+}
+function stepRace(dt){
+  if(!RACE.on || RACE.done) return;
+  if(RACE.t0 < 0){
+    if(S.sog > 0.5) RACE.t0 = S.t;
+  } else RACE.time = S.t - RACE.t0;
+  var w = RACE.course.wps[RACE.idx];
+  var d = Math.hypot(w.x - S.x, w.y - S.y);
+  if(d < w.r){
+    RACE.idx++;
+    if(RACE.idx >= RACE.course.wps.length){
+      RACE.done = true;
+      var best = RACE.best, msg = '<b>Chegada!</b> ' + hhmmss(RACE.time);
+      if(best === null || RACE.time < best){ saveBest(MODE, RACE.time); RACE.best = RACE.time; msg += ' - novo recorde'; }
+      else msg += ' (recorde ' + hhmmss(best) + ')';
+      toast(msg, 6000);
+      showTask('Percurso cumprido', 'Tempo ' + hhmmss(RACE.time) + '. Esc para escolher outro.', 1);
+      return;
+    }
+    toast('Boia ' + RACE.idx + ' rondada', 1800);
+  }
+  var nw = RACE.course.wps[RACE.idx];
+  var dd = Math.hypot(nw.x - S.x, nw.y - S.y);
+  var brg = deg360(Math.atan2(nw.x - S.x, nw.y - S.y));
+  showTask(RACE.course.nome + ' &middot; ' + hhmmss(RACE.time),
+    'Proxima: <b>' + (RACE.idx+1) + ' ' + nw.nome + '</b> a ' + fmt(dd/1852, 2) + ' M, rumo ' +
+    brg.toFixed(0) + '&deg;' + (RACE.best ? ' &middot; recorde ' + hhmmss(RACE.best) : ''),
+    RACE.idx/RACE.course.wps.length);
+}
+
+/* ---------- aulas ---------- */
+var LESSON = { on:false, i:-1, hold:0, done:false };
+var LESSONS = [
+  { t:'1. Largar do cais',
+    d:'O motor ja esta ligado. Com <b>A</b> e <b>D</b> no leme, saia do Terminal Nautico e passe de 2 nos de SOG.',
+    chk:function(dt){ return clamp(S.sog/ (2*KT), 0, 1); } },
+  { t:'2. Pano ao vento, de traves',
+    d:'Desligue o motor (<b>M</b>) e governe ate o vento ficar de traves - TWA perto de 90&deg;. Segure 8 segundos.',
+    chk:function(dt){ var ok = !S.motor && Math.abs(Math.abs(S.twa)*R2D - 90) < 22;
+      LESSON.hold = ok ? LESSON.hold + dt : Math.max(0, LESSON.hold - dt*0.6); return clamp(LESSON.hold/8,0,1); } },
+  { t:'3. Trimar',
+    d:'A fita embaixo da rosa mostra a escota. <b>W</b> folga, <b>S</b> caça. Pare de facear e passe de 70% do alvo da polar por 6 s.',
+    chk:function(dt){ var alvo = polarAt(S.twa);
+      var ok = S.luff < 0.1 && alvo > 0.5 && S.stw > 0.70*alvo;
+      LESSON.hold = ok ? LESSON.hold + dt : Math.max(0, LESSON.hold - dt*0.5); return clamp(LESSON.hold/6,0,1); } },
+  { t:'4. Orcar - subir contra o vento',
+    d:'Traga a proa para o vento ate TWA 45&deg; e mantenha o barco andando acima de 3 nos por 6 s. Repare na banda.',
+    chk:function(dt){ var a = Math.abs(S.twa)*R2D;
+      var ok = a < 52 && a > 33 && S.stw > 3*KT;
+      LESSON.hold = ok ? LESSON.hold + dt : Math.max(0, LESSON.hold - dt*0.5); return clamp(LESSON.hold/6,0,1); } },
+  { t:'5. A zona morta',
+    d:'Agora aponte a proa para o vento, TWA abaixo de 20&deg;. O pano faceia, o barco para e o leme deixa de governar. Essa e a zona onde nao se navega.',
+    chk:function(dt){ return Math.abs(S.twa)*R2D < 20 ? 1 : 0; } },
+  { t:'6. Cambar',
+    d:'Passe a proa pelo vento e caia do outro bordo: saia de TWA negativo para positivo (ou o contrario) e estabilize entre 35&deg; e 55&deg;.',
+    chk:function(dt){
+      var a = S.twa*R2D;
+      if(LESSON.sign === undefined) LESSON.sign = a > 0 ? 1 : -1;
+      var now = a > 0 ? 1 : -1;
+      if(now !== LESSON.sign && Math.abs(a) > 33 && Math.abs(a) < 58) return 1;
+      return 0.2; } },
+  { t:'7. Arribar e correr de popa',
+    d:'Agora o contrario: abra o leme, folgue a escota toda e corra com o vento em popa, TWA acima de 150&deg; por 8 s.',
+    chk:function(dt){ var ok = Math.abs(S.twa)*R2D > 150;
+      LESSON.hold = ok ? LESSON.hold + dt : Math.max(0, LESSON.hold - dt*0.6); return clamp(LESSON.hold/8,0,1); } },
+  { t:'8. Voltar e fundear',
+    d:'Volte para perto do Terminal Nautico (marca verde) e fundeie com o botao <b>fundear</b>, em menos de 14 m de agua.',
+    chk:function(dt){ var p = proj(-38.5215,-12.9762);
+      var d = Math.hypot(p[0]-S.x, p[1]-S.y);
+      if(S.anchor && d < 400) return 1;
+      return clamp(1 - (d-400)/4000, 0, 0.95); } }
+];
+function nextLesson(){
+  LESSON.i++; LESSON.hold = 0; LESSON.sign = undefined;
+  if(LESSON.i >= LESSONS.length){
+    LESSON.on = false;
+    showTask('Aulas concluidas', 'Voce ja sabe o bastante para a travessia. Esc para escolher uma regata.', 1);
+    toast('<b>Parabens.</b> Oito licoes cumpridas.', 5000);
+    return;
+  }
+  var L = LESSONS[LESSON.i];
+  showTask(L.t, L.d, 0);
+  toast(L.t, 2600);
+}
+function stepLesson(dt){
+  if(!LESSON.on) return;
+  var L = LESSONS[LESSON.i];
+  var p = L.chk(dt);
+  el('taskP').firstChild.style.width = (clamp(p,0,1)*100)+'%';
+  if(p >= 1) nextLesson();
+}
+
+/* --- menu --- */
+var modeBtns = document.querySelectorAll('.mode');
+for(var mi=0; mi<modeBtns.length; mi++){
+  modeBtns[mi].addEventListener('click', function(){
+    var m = this.getAttribute('data-mode');
+    if(m === 'regata'){ showCourses(); return; }
+    if(m === 'desafio'){ m = 'mare'; el('cs').value = 2.4; el('cs').dispatchEvent(new Event('input'));
+      el('cd').value = 130; el('cd').dispatchEvent(new Event('input')); }
+    el('veil').classList.remove('on');
+    setMode(m);
+  });
+}
+function showCourses(){
+  var host = document.querySelector('.modes');
+  host.innerHTML = '';
+  var ks = ['travessia','frades','barra','mare'];
+  for(var i=0;i<ks.length;i++){
+    (function(k){
+      var c = COURSES[k], b = document.createElement('button');
+      b.className = 'mode';
+      var best = loadBest(k);
+      b.innerHTML = '<b>'+c.nome+'</b><span>'+c.desc+(best?'<br><b style="color:#9BD79B">recorde '+hhmmss(best)+'</b>':'')+'</span>';
+      b.onclick = function(){ el('veil').classList.remove('on'); setMode(k); };
+      host.appendChild(b);
+    })(ks[i]);
+  }
+  var back = document.createElement('button');
+  back.className = 'mode';
+  back.innerHTML = '<b>voltar</b><span>escolher outro modo</span>';
+  back.onclick = function(){ location.reload(); };
+  host.appendChild(back);
+}
+el('bGo').onclick = function(){ el('veil').classList.remove('on'); if(!started) setMode('livre'); };
+el('veil').addEventListener('click', function(e){ if(e.target === this) this.classList.remove('on'); });
+
+/* ==================================================================
+   7. LACO
+   ================================================================== */
+var started = false, last = 0, acc = 0, hudAcc = 0;
+function input(dt){
+  var rate = 52*D2R, back = 30*D2R, maxR = 32*D2R;
+  var L = keys['a'] || keys['arrowleft'] || touchState.l;
+  var R = keys['d'] || keys['arrowright'] || touchState.r;
+  if(L) S.rudderCmd = clamp(S.rudderCmd - rate*dt, -maxR, maxR);
+  else if(R) S.rudderCmd = clamp(S.rudderCmd + rate*dt, -maxR, maxR);
+  else {
+    if(S.rudderCmd > 0) S.rudderCmd = Math.max(0, S.rudderCmd - back*dt);
+    else S.rudderCmd = Math.min(0, S.rudderCmd + back*dt);
+  }
+  var sr = 0.42;
+  if(keys['w'] || keys['arrowup'] || touchState.o) S.sheet = clamp(S.sheet + sr*dt, 0, 1);
+  if(keys['s'] || keys['arrowdown'] || touchState.i) S.sheet = clamp(S.sheet - sr*dt, 0, 1);
+}
+function updateHUD(){
+  el('iSpd').textContent = fmt(S.sog/KT);
+  el('iHdg').textContent = deg360(S.hdg).toFixed(0).padStart(3,'0') + '°';
+  el('iTw').textContent = fmt(S.tws/KT,0) + ' / ' + deg360(S.twd).toFixed(0).padStart(3,'0');
+  el('iAw').textContent = fmt(S.aw/KT,0) + ' / ' + (Math.abs(S.awa)*R2D).toFixed(0) + (S.awa>=0?' E':' B');
+  var twaD = Math.abs(S.twa)*R2D;
+  el('iTwa').textContent = twaD.toFixed(0) + '°' + (S.twa>=0?' E':' B');
+  var hl = el('iHeel');
+  hl.textContent = fmt(Math.abs(S.heel)*R2D,0) + '°' + (S.heel>=0?' E':' B');
+  hl.className = 'v ' + (Math.abs(S.heel)*R2D > 35 ? 'bad' : (Math.abs(S.heel)*R2D > 24 ? 'warn' : ''));
+  el('iLee').textContent = fmt(Math.abs(S.lee||0)*R2D,1) + '°';
+  el('iVmg').textContent = fmt(S.vmg/KT) + ' kn';
+  var alvo = POLAR.spd.length ? polarAt(S.twa) : 0;
+  var pe = el('iPol');
+  if(alvo > 0.3){
+    var pct = S.stw/alvo*100;
+    pe.textContent = fmt(alvo/KT) + ' kn  ' + pct.toFixed(0) + '%';
+    pe.className = 'v ' + (pct > 92 ? 'good' : (pct > 75 ? '' : 'warn'));
+  } else { pe.textContent = '-'; pe.className = 'v'; }
+  var de = el('iDep');
+  de.textContent = fmt(S.depth) + ' m';
+  de.className = 'v ' + (S.depth < B.draft+0.8 ? 'bad' : (S.depth < 5 ? 'warn' : ''));
+}
+function loop(ts){
+  requestAnimationFrame(loop);
+  if(!last) last = ts;
+  var dt = Math.min((ts - last)/1000, 0.1); last = ts;
+  if(cv.clientWidth !== VW || cv.clientHeight !== VH) resize();
+  if(!paused && started){
+    input(dt);
+    acc += dt;
+    var h = 1/120, n = 0;
+    while(acc >= h && n < 40){ stepPhysics(h); acc -= h; n++; }
+    if(acc > 0.5) acc = 0;
+    stepAI(dt); stepParts(dt); stepRace(dt); stepLesson(dt); stepPolarJob(2);
+    S.trailT = (S.trailT||0) + dt;
+    if(S.trailT > 0.25){ S.trailT = 0; S.trail.push([S.x,S.y]); if(S.trail.length > 120) S.trail.shift(); }
+  }
+  /* camera */
+  var lead = clamp(S.sog*4, 0, 90);
+  var tx = S.x + Math.sin(S.hdg)*lead, ty = S.y + Math.cos(S.hdg)*lead;
+  var k = 1 - Math.pow(0.0015, dt);
+  CAM.x += (tx - CAM.x)*k; CAM.y += (ty - CAM.y)*k;
+
+  drawScene(dt);
+  hudAcc += dt;
+  if(hudAcc > 0.08){ hudAcc = 0; updateHUD(); drawDial(); drawTrim(); drawMini(); }
+  if(toastT > 0){ toastT -= dt; if(toastT <= 0) el('toast').classList.remove('on'); }
+}
+
+/* ---------- ficha do barco no menu, montada dos numeros do PDF ---------- */
+var NOMEPROA = 'vela de proa';
+function nm(v, d){ return (v===undefined||v===null||isNaN(v)) ? '-' : fmt(v, d===undefined?3:d); }
+function linha(a, b){ return '<tr><td>' + a + '</td><td>' + b + '</td></tr>'; }
+function preencheFicha(){
+  var i, v, proa = null, pano = [];
+  for(i=0;i<B.sails.length;i++){
+    v = B.sails[i];
+    pano.push(v.n + ' ' + nm(v.A,2));
+    if(v.fore && !proa) proa = v;
+  }
+  if(proa) NOMEPROA = proa.n;
+  el('fBarco').innerHTML = 'o veleiro de ' + nm(B.LOA,1) + ' m';
+  el('fTit').innerHTML = 'O barco - ' + B.armacao;
+  el('fA').innerHTML =
+    linha('armacao', B.armacao) +
+    linha('LOA / LWL', nm(B.LOA) + ' / ' + nm(B.LWL) + ' m') +
+    linha('boca na linha d\'agua', nm(B.BWL) + ' m') +
+    linha('calado', nm(B.draft) + ' m') +
+    linha('deslocamento', Math.round(B.disp) + ' kg') +
+    linha('superficie molhada', nm(B.Swet) + ' m&sup2;') +
+    linha('area velica nominal', nm(B.SAnom,2) + ' m&sup2;') +
+    linha('pano desenhado', nm(B.SAdraw,2) + ' m&sup2; (' + pano.join(' + ') + ')');
+  el('fB').innerHTML =
+    linha('SA / Vol^(2/3)', nm(B.SAnom/Math.pow(B.disp/B.rho, 2/3), 1)) +
+    linha('I / J', nm(B.I) + ' / ' + nm(B.J) + ' m') +
+    linha('P / E', nm(B.P) + ' / ' + nm(B.E) + ' m') +
+    linha('GM / KG', nm(B.GM) + ' / ' + nm(B.KG) + ' m') +
+    linha('GZ maximo', nm(B.GZmax) + ' m a ' + nm(B.GZmaxAng,0) + '&deg;') +
+    linha('anulacao do braco (AVS)', nm(B.AVS,0) + '&deg;') +
+    linha('Dellenbaugh', nm(B.dellen,1) + '&deg;') +
+    linha('quilha / leme', nm(B.Akeel) + ' / ' + nm(B.Arud) + ' m&sup2;');
+  var perigo = B.AVS < 105;
+  el('fNota').innerHTML = 'Lastro: <b>' + B.lastro + '</b>. ' +
+    (perigo ? 'O AVS de ' + nm(B.AVS,0) + '&deg; e baixo - passar de ' + nm(B.AVS*0.65,0) +
+              '&deg; de banda aqui e perigoso de verdade, e o simulador emborca o barco.'
+            : 'Com AVS de ' + nm(B.AVS,0) + '&deg; o barco volta sozinho de quase qualquer banda; ' +
+              'o simulador so o emborca passados ' + nm(CAPSIZE*180/Math.PI,0) + '&deg;.');
+  var ars = [];
+  for(i=0;i<B.sails.length;i++) ars.push(B.sails[i].n + ' AR ' + nm(B.sails[i].ar,1));
+  el('fARs').innerHTML = ars.join(', ');
+  el('fSw').innerHTML = nm(B.Swet);
+  el('fVh').innerHTML = nm(1.34*Math.sqrt(B.LWL/0.3048), 1);
+  el('fAp').innerHTML = 'quilha ' + nm(B.Akeel) + ' m&sup2; com AR efetiva ' + nm(2*B.ARkeel,1) +
+                        ' e leme ' + nm(B.Arud) + ' m&sup2; com AR ' + nm(1.2*B.ARrud,1);
+  el('fGZ').innerHTML = 'GM ' + nm(B.GM) + ' m na origem, maximo ' + nm(B.GZmax) + ' m a ' +
+                        nm(B.GZmaxAng,0) + '&deg;, anulacao a ' + nm(B.AVS,0) + '&deg;';
+  el('fCal').innerHTML = nm(B.draft,2);
+  document.getElementById('miniCap').textContent = 'Baia de Todos os Santos';
+}
+
+/* ---------- arranque ---------- */
+function boot(){
+  preencheFicha();
+  resize();
+  buildDepth();
+  buildChart();
+  buildMini();
+  buildPolar(ENV.tws);
+  startAt(-38.5250,-12.9790, 235);
+  requestAnimationFrame(loop);
+}
+el('bGo').addEventListener('click', function(){ el('veil').classList.remove('on'); started = true; setMode('livre'); });
+for(var bi=0; bi<modeBtns.length; bi++) modeBtns[bi].addEventListener('click', function(){ started = true; });
+boot();
+</script>
+</body>
+</html>
